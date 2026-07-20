@@ -6,6 +6,20 @@ kanban-plugin: board
 
 ## README
 
+- [ ] ** **Description** **
+- [ ] - Gameplay description with game loop and levels content
+- [ ] * Highscore with how scores are saved and why
+- [ ] - Visual identity and Pygame implementation
+- [ ] - Implementation with libraries used, assets origins, classes to link the 2 together, etc. (technicalities)
+- [ ] ** **Instructions** **
+- [ ] - Installation with ways of playing the game, from the package or the repo, which files to keep next to the executable, different OS support, etc.
+- [ ] - Controls with keys to play and keyboard / mouse / controller support or not
+- [ ] - Available settings and their effects
+- [ ] * Configuration with structure and default values
+- [ ] - Maze Generation with how the package is used with configuration
+- [ ] ** **Resources** **
+- [ ] - General Software Architecture (class UML, MVC structure, data progression through modules (parsing then initializing then looping on characters, etc.))
+- [ ] - Project Management with planning, work distribution and link to this conception branch with illustrated README (details on how to open with obsidian)
 
 
 ## Menues
@@ -35,6 +49,8 @@ kanban-plugin: board
 ## Config file
 
 - [ ] ** **JSON** **
+- [ ] Default configuration in code: any missing or incorrect key must fall back to failsafe
+- [ ] Unknown keys must be ignored
 - [ ] MUST support comments for lines starting with a #
 - [ ] [Snippet](https://stackoverflow.com/questions/29959191/how-to-parse-json-file-with-c-style-comments)
 - [ ] ** **Config** **
@@ -46,18 +62,28 @@ kanban-plugin: board
 - [ ] ** **Levels** **
 	key: `level_#` (ID)
 - [ ] Configuration for each level
-- [ ] `maze_width` int > 3
-- [ ] `maze_height` int > 2
-- [ ] `timer` int > 0
-- [ ] `gum_score` int >= 0
-- [ ] `supgum_score` int >= 0
-- [ ] `ghost_score` int >= 0
-- [ ] `level_score` int >= 0 ? (on level complete)
-- [ ] `seed` int (random if non existent)
-- [ ] `pac_man_speed` int >= 0
-- [ ] `ghost_speed` int >= 0
-- [ ] `super_duration` int >= 0
-- [ ] `life_regen` int >= 0 ? (life regained on level start)
+- [ ] `Maze`:
+	- `width` int > 3
+	- `height` int > 3
+	- `seed` int (default value on level 1, random if non existent on others)
+- [ ] `Gameplay`:
+	- `timer` int > 0
+	- `life_regen` int >= 0 ? (life regained on level start)
+	- `super_duration` int >= 0
+	- `ghost_downtime` int >= 0
+	- `pac_man_speed` int >= 0
+	- `sup_pac_man_speed` int >= 0
+	- `Ghosts`: (for each)
+		- `move_strat` str
+		- `sup_move_start` str
+		- `speed` int >= 0
+		- `sup_speed` int >= 0
+		- `downtime` int >= 0
+- [ ] `Scores`:
+	- `gum` int >= 0
+	- `supgum` int >= 0
+	- `ghost` int >= 0
+	- `level` int >= 0 ? (on level complete)
 
 
 ## Maze
@@ -169,9 +195,11 @@ kanban-plugin: board
 - [ ] Error message with inaccessible file
 - [ ] Saved with a name and a score
 - [ ] Saved with highest level reached ?
+- [ ] Saved with time taken on all levels ?
 - [ ] ** **Loading** **
 - [ ] Loaded when game launches
 - [ ] Error message with inaccessible file
+- [ ] Put in Queue iterator with score key to keep sorted
 - [ ] Maximum 10 scores can be saves
 - [ ] Player names policy (10 characters max, letters ans spaces)
 - [ ] Scores policy (non negative)
@@ -182,10 +210,20 @@ kanban-plugin: board
 - [ ] Turns a flag on that prevent highscore saving
 
 
+## Error handling
+
+- [ ] ** **Highscores** **
+	Error message in main menu with specific error and consequence (can't save any score, had to reset score, etc.)
+- [ ] ** **Config** **
+	Error message in main menu with specific invalid key, and fact that it was replaced with default value (indicate where possible that missing values with be defaulted)
+- [ ] ** **In game** **
+	Special screen for corrupted game assets or unexpected exception (back to main menu)
+
+
 
 
 %% kanban:settings
 ```
-{"kanban-plugin":"board","list-collapse":[false,false,false,false,false,false,false,false,false,false,false,false,false]}
+{"kanban-plugin":"board","list-collapse":[false,false,false,false,false,false,false,false,false,false,false,false,false,false],"lane-width":300}
 ```
 %%
