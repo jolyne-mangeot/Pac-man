@@ -1,0 +1,4 @@
+pygame == 2.6.1
+pydantic == 2.13.4
+mypy >= 2.1.0
+types-setuptools

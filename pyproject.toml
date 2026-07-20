@@ -1,0 +1,21 @@
+[project]
+name = "pacman"
+version = "1.0.0"
+description = "Pac-Man inspired Pygame team project as part of a learning course."
+authors = [
+	{name = "Belladone-Bzz"},
+	{name = "jolyne-mangeot"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+	"pygame (==2.6.1)",
+	"pydantic (==2.13.4)",
+	"mypy (>=2.1.0)"
+]
+license = "MIT"
+license-files = ["LICENCE"]
+
+[project.urls]
+Homepage = "https://github.com/jolyne-mangeot/pac-man"
+Issues = "https://github.com/jolyne-mangeot/pac-man/issues"

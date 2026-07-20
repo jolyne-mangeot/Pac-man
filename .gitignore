@@ -1,0 +1,15 @@
+# python cache
+**/__pycache__
+**/.mypy_cache
+
+# pip project folder
+**/*.egg-info
+venv/*
+
+# project related files
+**/test
+**/tmp
+**/dist
+
+# vscode related folders
+**/.vscode
