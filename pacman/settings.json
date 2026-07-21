@@ -1,2 +1,6 @@
 {
+	"lang" : "fr-fr",
+	"res" : [640, 480],
+	"bgm_vol" : 10,
+	"sfx_vol" : 10
 }
