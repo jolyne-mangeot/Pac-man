@@ -4,7 +4,7 @@ from pydantic import Field, field_validator, ValidationInfo
 from enum import Enum
 import pygame as pg
 
-from utils import JSONModel
+from .utils import JSONModel
 
 
 class Languages(Enum):
@@ -47,7 +47,7 @@ class Settings(JSONModel):
 
     @field_validator("res", mode="before")
     @classmethod
-    def lang_validator(cls, value: list[int]) -> Resolutions:
+    def res_validator(cls, value: list[int]) -> Resolutions:
         try:
             return Resolutions(value)
         except Exception:
@@ -63,14 +63,3 @@ class Settings(JSONModel):
             return cast(KeySet,
                         cls.model_fields[str(info.field_name)].get_default())
         return value
-
-
-if __name__ == "__main__":
-    settings: Settings = Settings(
-        lang="fr-fr",
-        res=Resolutions.SMALL,
-        sfx_vol=9,
-        bgm_vol=15,
-        up_keys=[16000, 12],
-    )
-    print(settings)

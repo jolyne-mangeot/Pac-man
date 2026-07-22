@@ -12,6 +12,6 @@ setup(
     description="Pac-Man inspired Pygame team project "
     "as part of a learning course.",
     author="Belladone-Bzz, jolyne-mangeot",
-    packages=["pacman"],
+    packages=["pacman", "pacman/models", "pacman/models/jsons"],
     install_requires=requirements,
 )

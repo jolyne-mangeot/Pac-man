@@ -7,7 +7,7 @@
 venv/*
 
 # project related files
-**/test
+**/test.py
 **/tmp
 **/dist
 

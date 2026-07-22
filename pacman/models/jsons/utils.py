@@ -2,31 +2,29 @@
 from json import JSONDecoder, load
 from typing import Any, ClassVar, Annotated
 from collections.abc import Callable
-from pydantic import (
-    BaseModel, Field,
-    field_validator, ValidationInfo, ValidationError)
+from pydantic import BaseModel, Field, field_validator, ValidationInfo
 
 
 class JSONModel(BaseModel):
     file_name: ClassVar[str] = ""
 
-    @field_validator("*", mode="plain")
+    @field_validator("*", mode="before")
     @classmethod
     def validate_or_fallback(cls, value: Any, info: ValidationInfo) -> Any:
         try:
-            field_info: Any = cls.model_fields[str(info.field_name)].asdict()
+            field_info: Any = (
+                cls.model_fields[str(info.field_name)].asdict())
 
             class DummyClass(BaseModel):
-                dummy_field: Any = Annotated[
-                    field_info["annotation"],
+                dummy_field: Annotated[
+                    Any,
+                    *field_info["metadata"],
                     Field(**field_info["attributes"])]
 
             DummyClass(dummy_field=value)
             return value
-        except ValidationError:
-            return field_info.get_default()
         except Exception:
-            return None
+            return field_info["attributes"]["default"]
 
 
 class JSONCommentedDecoder(JSONDecoder):
@@ -46,7 +44,7 @@ def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
     path: str = (file_path if file_path != ""
                  else "pacman/" + model.file_name + ".json")
     with open(path, "r") as file:
-        return model.model_validate_json(load(file, cls=JSONCommentedDecoder))
+        return model(**load(file, cls=JSONCommentedDecoder))
 
 
 def model_to_json(model: JSONModel, file_path: str = "") -> None:
