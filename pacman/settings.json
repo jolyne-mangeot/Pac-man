@@ -1,6 +1,14 @@
 {
-	"lang" : "fr-fr",
-	"res" : [640, 480],
-	"bgm_vol" : 10,
-	"sfx_vol" : 10
+    "lang": "fr-fr",
+    "res": "fullscreen",
+    "sfx_vol": 10,
+    "bgm_vol": 10,
+    "key_config": {
+        "up_key": "w",
+        "down_key": "s",
+        "left_key": "a",
+        "right_key": "d",
+        "confirm_key": "return",
+        "return_key": "escape"
+    }
 }

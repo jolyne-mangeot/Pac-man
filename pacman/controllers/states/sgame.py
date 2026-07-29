@@ -1,8 +1,7 @@
 
 import pygame as pg
-from .state import State
 
-from pacman.controllers import Control
+from pacman.controllers import Control, State
 
 
 class GameMenu(State):

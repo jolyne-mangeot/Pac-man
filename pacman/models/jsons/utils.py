@@ -3,6 +3,7 @@ from json import JSONDecoder, load
 from typing import Any, ClassVar, Annotated
 from collections.abc import Callable
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
+from pydantic_core import PydanticUseDefault
 
 
 class JSONModel(BaseModel):
@@ -16,15 +17,15 @@ class JSONModel(BaseModel):
                 cls.model_fields[str(info.field_name)].asdict())
 
             class DummyClass(BaseModel):
-                dummy_field: Annotated[
+                field_copy: Annotated[
                     Any,
                     *field_info["metadata"],
                     Field(**field_info["attributes"])]
 
-            DummyClass(dummy_field=value)
+            DummyClass(field_copy=value)
             return value
         except Exception:
-            return field_info["attributes"]["default"]
+            raise PydanticUseDefault
 
 
 class JSONCommentedDecoder(JSONDecoder):
@@ -40,11 +41,20 @@ class JSONCommentedDecoder(JSONDecoder):
         return super().decode(s)
 
 
-def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
+def json_to_model(
+        model: type[JSONModel], file_path: str = "",
+        extra_args: dict[str, Any] = {}, sub_dict: str = "") -> JSONModel:
     path: str = (file_path if file_path != ""
                  else "pacman/" + model.file_name + ".json")
-    with open(path, "r") as file:
-        return model(**load(file, cls=JSONCommentedDecoder))
+    try:
+        with open(path, "r") as file:
+            config_dict: dict[str, Any] = load(file, cls=JSONCommentedDecoder)
+            if sub_dict != "":
+                config_dict = config_dict[sub_dict]
+            config_dict.update(extra_args)
+            return model(**config_dict)
+    except (FileNotFoundError, PermissionError):
+        return model(**extra_args)
 
 
 def model_to_json(model: JSONModel, file_path: str = "") -> None:

@@ -9,9 +9,11 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-	"pygame (==2.6.1)",
-	"pydantic (==2.13.4)",
-	"mypy (>=2.1.0)"
+	"pygame",
+	"pydantic",
+	"mypy",
+	"types-setuptools",
+	"setuptools"
 ]
 license = "MIT"
 license-files = ["LICENCE"]
