@@ -84,7 +84,7 @@ class Option(ABC):
 
 
 class Spacer(Option):
-    """Class Spacer, child of Option
+    """Class Spacer, subclass of Option
 
     Dummy class to be declared with no argument, useful to separate options in
     a list and create more organised menues. Created to avoid handling None
@@ -123,7 +123,7 @@ class Spacer(Option):
 
 
 class ActivateOption(Option):
-    """Class ActivateOption, child of Option
+    """Class ActivateOption, subclass of Option
 
     Made for options to execute functions or methods. Accepts partial returning
     Any, meaning arguments have to be preentered.
@@ -156,7 +156,7 @@ class ActivateOption(Option):
 
 
 class ToggleOption(Option):
-    """Class ToggleOption, child of Option
+    """Class ToggleOption, subclass of Option
 
     ### Attributes:
     - *Option instance parameters and attributes*
@@ -193,7 +193,7 @@ class ToggleOption(Option):
 
 
 class SliderOption(Option):
-    """Class SliderOption, child of Option
+    """Class SliderOption, subclass of Option
 
     Useful for numeric sliders. Using a range and different factors for each
     direction inputs, updates the container accordingly. Can choose if the
@@ -263,7 +263,7 @@ class SliderOption(Option):
 
 
 class SelectionOption(Option):
-    """Class SelectionOption, child of Option
+    """Class SelectionOption, subclass of Option
 
     Option to use if the value in the container needs to be part of a list of
     options. When interacted with, this option will update the value with ones
@@ -340,7 +340,7 @@ class SelectionOption(Option):
 
 
 class InputOption(Option):
-    """Class InputOption, child of Option
+    """Class InputOption, subclass of Option
 
     Option made to receive input and update a string with it. Handles named key
     input (like up, down, space) and raw text. Named key input should be

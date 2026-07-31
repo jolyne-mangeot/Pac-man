@@ -418,6 +418,8 @@ class Menu:
         if self.select_index < 0:
             if self.loop_cursor is True:
                 self.select_index = max_indicator + self.select_index
+            else:
+                self.select_index = 0
         elif self.select_index > max_indicator:
             if self.loop_cursor is True:
                 self.select_index = self.select_index % max_indicator

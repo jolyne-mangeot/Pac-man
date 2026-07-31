@@ -169,7 +169,7 @@ class Control:
 class State(ABC):
     """Abstract class State
 
-    Parent of all state classes used to setp-up game menues, which instances
+    Parent of all state classes used to set-up game menues, which instances
     are held by control to smoothly switch between them, update them and give
     them all pertinent information.
 
