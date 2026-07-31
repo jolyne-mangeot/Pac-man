@@ -1,7 +1,8 @@
 
-import pygame as pg
 from abc import ABC, abstractmethod
 from typing import cast
+
+import pygame as pg
 
 from pacman.models import Settings, KeyConfig, Config, Dialogs, json_to_model
 

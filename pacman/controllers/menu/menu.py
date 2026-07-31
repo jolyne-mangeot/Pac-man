@@ -1,6 +1,7 @@
 
+from typing import Any
+
 import pygame as pg
-from typing import cast, Any
 
 from pacman.models import KeyConfig
 from .utils import Option
@@ -107,7 +108,7 @@ class Menu:
             from_top if from_top != -1 else int(screen.get_height() / 2))
         self.spacer: int = spacer
         self.options: list[Option] = options
-        self.loop_cursor: bool =loop_cursor
+        self.loop_cursor: bool = loop_cursor
         self.deselected_color: pg.Color = deselected_color
         self.selected_color: pg.Color = selected_color
         self.picked_color: pg.Color = picked_color
@@ -156,7 +157,8 @@ class Menu:
         self.rendered["selected"][index] = sel
         self.rendered["picked"][index] = pik
 
-    def pre_render(self, option: Option) -> tuple[tuple[pg.Surface, pg.Rect]]:
+    def pre_render(self, option: Option
+                   ) -> tuple[tuple[pg.Surface, pg.Rect], ...]:
         """Pre-renders the option given as argument in three states: picked,
         deselected and selected, each with their associated fonts and colors,
         then returns a tuple of each state, as a tuple of pygame Surface and
@@ -318,16 +320,18 @@ class Menu:
         confirm and return, the method to move the cursor based on the given
         arrangement is called.
 
-        Returns Any as options can also do.
+        Returns Any as options input_event method can also do.
         """
         curr_option: Option = self.options[self.select_index]
         input: str = ""
-        if event.type == pg.KEYDOWN and (curr_option.using_text_input is False
+        if (event.type == pg.TEXTINPUT
+                and curr_option.using_text_input is True):
+            input = event.text
+        elif event.type == pg.KEYDOWN and (
+                curr_option.using_text_input is False
                 or pg.key.name(event.key) in (
                     "backspace", "return", "escape")):
             input = pg.key.name(event.key)
-        elif event.type == pg.TEXTINPUT:
-            input = event.text
         else:
             return
         action_key: str = key_unicode_to_action(key_config, input)
@@ -341,9 +345,12 @@ class Menu:
                 self.options[self.picked_index].deactivate()
                 self.last_picked = self.picked_index
                 self.picked_index = -1
+        if action_key == "return_key" and self.picked_index != -1:
+            self.options[self.picked_index].deactivate()
+            self.last_picked = self.picked_index
+            self.picked_index = -1
         if self.picked_index != -1:
-            output: str = cast(Option, curr_option).input_event(
-                action_key, input)
+            output: str = curr_option.input_event(action_key, input)
             if curr_option.pickable is False:
                 self.picked_index = -1
             if output == "action_done":
@@ -364,6 +371,7 @@ class Menu:
         is used to move the selection cursor along the options, using the
         move_cursor method with a set factor.
         """
+        print(key_input)
         if key_input == "up_key":
             self.move_cursor(-1)
         elif key_input == "down_key":
@@ -414,14 +422,18 @@ class Menu:
         the case, otherwise sitting at the first reached limit.
         """
         self.select_index += operant
-        max_indicator = len(self.rendered["deselected"]) - 1
+        max_indicator = len(self.options)
         if self.select_index < 0:
             if self.loop_cursor is True:
                 self.select_index = max_indicator + self.select_index
             else:
-                self.select_index = 0
-        elif self.select_index > max_indicator:
+                self.select_index = next((
+                    index for index in range(max_indicator)
+                    if self.options[index].selectable), 0)
+        elif self.select_index > max_indicator - 1:
             if self.loop_cursor is True:
                 self.select_index = self.select_index % max_indicator
             else:
-                self.select_index = max_indicator
+                self.select_index = next((
+                    index for index in range(max_indicator - 1, 0, -1)
+                    if self.options[index].selectable), 0)

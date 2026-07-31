@@ -1,7 +1,8 @@
 
-import pygame as pg
 from functools import partial
 from typing import Any
+
+import pygame as pg
 
 from pacman.controllers import (
     Control, State,
@@ -83,7 +84,7 @@ class OptionsMenu(State):
                         key, f"{str(getattr(dialogs, key)) + ":":<20}"
                         "{value}", self.settings["key_config"], 1,
                         False, True, False,
-                        excluded_input=("return", "escape", "backspace")
+                        excluded_input=["return", "escape", "backspace"]
                     ) for key in ACTION_LIST],
                 Spacer(), Spacer(),
                 ActivateOption("reset", dialogs.reset_settings,
@@ -145,11 +146,11 @@ class OptionsMenu(State):
         input_event method.
         """
         return_key: str = self.control.settings.key_config.return_key
-        if event.type == pg.KEYDOWN and event.unicode == return_key:
+        if (self.options_menu.picked_index == -1 and event.type == pg.KEYDOWN
+                and pg.key.name(event.key) == return_key):
             return self.switch_state("main_menu")
         self.options_menu.get_event(
-            self.control.settings.key_config,
-            event, "chart")
+            self.control.settings.key_config, event, "chart")
 
     def update(self) -> None:
         """Called after the events have been parsed, rerender all options in

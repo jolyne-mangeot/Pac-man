@@ -1,6 +1,7 @@
 
-import pygame as pg
 from functools import partial
+
+import pygame as pg
 
 from pacman.controllers import Control, State, Menu, ActivateOption
 from pacman.models import Dialogs
@@ -78,7 +79,7 @@ class MainMenu(State):
         method.
         """
         return_key: str = self.control.settings.key_config.return_key
-        if event.type == pg.KEYDOWN and event.unicode == return_key:
+        if event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key:
             return self.switch_state("quit")
         self.main_menu.get_event(
             self.control.settings.key_config, event, "vertical")

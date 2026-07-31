@@ -1,13 +1,16 @@
 
-from typing import ClassVar
 from pydantic import Field
 
 from .utils import JSONModel
 
 
 class Dialogs(JSONModel):
-    file_name: ClassVar[str] = ""
+    """Class Dialogs, subclass of JSONModel
 
+    Instantiate fields for each and every piece of text in the program. Default
+    values are in english, and should be updated in a different language from
+    a dictionary parsed from its corresponding json file.
+    """
     title: str = Field(default="Pac-Man")
     play: str = Field(default="Play")
     highscores: str = Field(default="Highscores")

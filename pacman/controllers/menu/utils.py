@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import partial
 from typing import Any
-import pygame as pg
 
 
 class Option(ABC):
@@ -418,7 +417,7 @@ class InputOption(Option):
         self.revert_to_default: bool = revert_to_default
         self.erase_text_on_pick: bool = erase_text_on_pick
         self.input_require_return: bool = input_require_return
-        self.excluded_input: tuple[str] = excluded_input
+        self.excluded_input: list[str] = excluded_input
         self.char_checker: Callable[[str], bool] = char_checker
 
     def __str__(self) -> str:
@@ -467,8 +466,8 @@ class InputOption(Option):
         - if the input is not in the excluded_input,
         - if the input passes the char_checker function
         """
-        return (len(self.container[self.name]) < self.value_len and 
-            input not in self.excluded_input and self.char_checker(input))
+        return (len(self.container[self.name]) < self.value_len and
+                input not in self.excluded_input and self.char_checker(input))
 
     def handle_input(self, action_key: str, raw_input: str) -> str:
         """Takes an action_key and raw_input, both string. Action_key should
@@ -476,7 +475,7 @@ class InputOption(Option):
         a named key input like "space" or "escape". For full text handling,
         toggle the use_text_input flag to True and handle_text_input will be
         called by the input_event method.
-        
+
         Checks the rawr_input with is_input_valid. If there is at least one
         space in the value, appends the raw_input, and if the
         input_require_return flag is False and the value's len has reached
@@ -500,7 +499,7 @@ class InputOption(Option):
 
     def handle_text_input(self, raw_input: str) -> str:
         """Takes a raw_input string as argument.
-        
+
         Checks the raw_input with is_input_valid. If there is at least one
         space in the value, appends the raw_input, and if the
         input_require_return flag is False and the value's len has reached
@@ -523,7 +522,7 @@ class InputOption(Option):
 
     def input_event(self, action_key: str, raw_input: str) -> Any:
         """Takes an action_key and a raw_input arguments, both strings.
-        
+
         Checks for "activate" action as it is linked to
         the raw_input of the return key and would cause problems in the handler
         methods, returning an empty string in this case, and otherwise calls
