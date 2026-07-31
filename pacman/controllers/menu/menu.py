@@ -24,7 +24,7 @@ class Menu:
     """A class that represents an options menu."""
     def __init__(
             self, screen: pg.Surface, from_left: int = -1, from_top: int = -1,
-            spacer: int = 50, options: list[Option | None] = [None],
+            spacer: int = 50, options: list[Option] = [],
             deselected_color: pg.Color = pg.Color(0, 0, 0),
             selected_color: pg.Color = pg.Color(0, 0, 0),
             picked_color: pg.Color = pg.Color(255, 0, 0),
@@ -40,7 +40,7 @@ class Menu:
         self.from_top: int = (
             from_top if from_top != -1 else int(screen.get_height() / 2))
         self.spacer: int = spacer
-        self.options: list[Option | None] = options
+        self.options: list[Option] = options
         self.deselected_color: pg.Color = deselected_color
         self.selected_color: pg.Color = selected_color
         self.picked_color: pg.Color = picked_color
@@ -50,43 +50,52 @@ class Menu:
         self.images: list[pg.Surface] = images
         self.select_index: int = 0
         self.picked_index: int = -1
+        self.last_picked: int = -1
         self.rendered: dict[str, list[tuple[pg.Surface, pg.Rect]]]
         self.pre_render_all_options()
 
     def pre_render_all_options(self) -> None:
-        self.rendered = {"picked": [], "deselected": [], "selected": []}
+        self.rendered = {"deselected": [], "selected": [], "picked": []}
+        des: tuple[pg.Surface, pg.Rect]
+        sel: tuple[pg.Surface, pg.Rect]
+        pik: tuple[pg.Surface, pg.Rect]
         for option in self.options:
-            self.pre_render(option)
+            des, sel, pik = self.pre_render(option)
+            self.rendered["deselected"].append(des)
+            self.rendered["selected"].append(sel)
+            self.rendered["picked"].append(pik)
 
-    def pre_render(self, option: Option | None, index: int = -1) -> None:
+    def pre_render_option(self, index: int = -1) -> None:
+        des: tuple[pg.Surface, pg.Rect]
+        sel: tuple[pg.Surface, pg.Rect]
+        pik: tuple[pg.Surface, pg.Rect]
+        if index == -1:
+            if self.picked_index != -1:
+                index = self.picked_index
+            else:
+                index = self.last_picked
+        des, sel, pik = self.pre_render(self.options[
+            index if index != -1 else self.last_picked])
+        self.rendered["deselected"][index] = des
+        self.rendered["selected"][index] = sel
+        self.rendered["picked"][index] = pik
+
+    def pre_render(self, option: Option) -> tuple[tuple[pg.Surface, pg.Rect]]:
         """re-renders the options in three states: picked, deselected,
         and selected.
         """
-        render: str = ""
-        if option is not None:
-            render = str(option)
-        picked_render = self.selected_ft.render(
-            "◄ " + str(render) + " ►", True, self.picked_color)
-        picked_rect = picked_render.get_rect()
-
+        render: str = str(option) if option is not None else ""
         deselect_render = self.deselect_ft.render(
-            str(render), True, self.deselected_color)
-        deselected_rect = deselect_render.get_rect()
-
+            render, True, self.deselected_color)
         select_render = self.selected_ft.render(
-            "◄ " + str(render) + " ►", True, self.selected_color)
-        selected_rect = select_render.get_rect()
+            "◄ " + render + " ►", True, self.selected_color)
+        picked_render = self.selected_ft.render(
+            "◄ " + render + " ►", True, self.picked_color)
 
-        if index == -1:
-            self.rendered["picked"].append((picked_render, picked_rect))
-            self.rendered["deselected"].append(
-                (deselect_render, deselected_rect))
-            self.rendered["selected"].append((select_render, selected_rect))
-        else:
-            self.rendered["picked"][index] = (picked_render, picked_rect)
-            self.rendered["deselected"][index] = (
-                deselect_render, deselected_rect)
-            self.rendered["selected"][index] = (select_render, selected_rect)
+        return (
+            (deselect_render, deselect_render.get_rect()),
+            (select_render, select_render.get_rect()),
+            (picked_render, picked_render.get_rect()))
 
     def draw_vertical_options(self) -> None:
         """For all launch_menu states, enumerate buttons and places them before
@@ -211,40 +220,45 @@ class Menu:
                 self.screen.blit(select_render[0], select_render[1])
 
     def get_event(self, key_config: KeyConfig,
-                  key_input: str, disposition: str) -> Any:
-        action_key: str = key_unicode_to_action(key_config, key_input)
+                  event: pg.event.Event, disposition: str) -> Any:
+        curr_option: Option = self.options[self.select_index]
+        input: str = ""
+        if event.type == pg.KEYDOWN and (curr_option.using_text_input is False
+                or pg.key.name(event.key) in (
+                    "backspace", "return", "escape")):
+            input = pg.key.name(event.key)
+        elif event.type == pg.TEXTINPUT:
+            input = event.text
+        else:
+            return
+        action_key: str = key_unicode_to_action(key_config, input)
         if action_key == "confirm_key":
             if self.picked_index == -1:
-                if isinstance(self.options[self.select_index], (
-                        ActivateOption, ToggleOption)):
-                    return cast(
-                        Option, self.options[self.select_index]).input_event(
-                        action_key, key_input)
                 self.picked_index = self.select_index
+                self.last_index = -1
+                self.options[self.picked_index].activate()
+                action_key = "activate"
             else:
+                self.options[self.picked_index].deactivate()
+                self.last_picked = self.picked_index
                 self.picked_index = -1
-        elif action_key == "return_key":
-            if self.picked_index != -1:
+        if self.picked_index != -1:
+            output: str = cast(Option, curr_option).input_event(
+                action_key, input)
+            if curr_option.pickable is False:
                 self.picked_index = -1
-            else:
-                return "done"
-        if (self.picked_index != -1
-                and self.options[self.picked_index] is not None):
-            output: str = cast(
-                Option, self.options[self.picked_index]).input_event(
-                    action_key, key_input)
-            self.pre_render(self.options[self.picked_index], self.picked_index)
             if output == "action_done":
+                self.options[self.picked_index].deactivate()
+                self.last_picked = self.picked_index
                 self.picked_index = -1
                 return ""
             else:
                 return output
-        else:
-            {
-                "horizontal": self.get_event_horizontal,
-                "vertical": self.get_event_vertical,
-                "chart": self.get_event_chart}[disposition](action_key)
-            return ""
+        {
+            "horizontal": self.get_event_horizontal,
+            "vertical": self.get_event_vertical,
+            "chart": self.get_event_chart}[disposition](action_key)
+        return ""
 
     def get_event_vertical(self, key_input: str) -> None:
         """Processes vertical movement (up and down) in the menu based on key
@@ -278,7 +292,7 @@ class Menu:
 
     def move_cursor(self, operant: int) -> None:
         self.change_selected_option(operant)
-        while self.options[self.select_index] is None:
+        while self.options[self.select_index].selectable is False:
             self.change_selected_option(operant)
 
     def change_selected_option(self, operant: int) -> None:

@@ -86,6 +86,8 @@ class Settings(JSONModel):
     sfx_vol: int = Field(ge=0, le=10, default=10)
     bgm_vol: int = Field(ge=0, le=10, default=10)
 
+    haha: str = ""
+
     key_config: KeyConfig = Field(default=KeyConfig())
 
     @field_validator("lang", mode="before")

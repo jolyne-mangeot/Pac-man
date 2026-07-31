@@ -148,8 +148,8 @@ class Control:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.done = True
-            if event.type == pg.KEYDOWN:
-                print(pg.key.name(event.key), end="", flush=True)
+            # if event.type == pg.KEYDOWN:
+            #     print(pg.key.name(event.key), end="", flush=True)
             self.current_state.get_event(event)
 
     def game_loop(self) -> None:

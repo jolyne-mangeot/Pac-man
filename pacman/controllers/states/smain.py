@@ -33,12 +33,11 @@ class MainMenu(State):
         del self.main_menu
 
     def get_event(self, event: pg.event.Event) -> None:
-        if event.type == pg.KEYDOWN:
-            if event.unicode == self.control.settings.key_config.return_key:
-                self.control.done = True
-            self.main_menu.get_event(
-                self.control.settings.key_config,
-                pg.key.name(event.key), "vertical")
+        return_key: str = self.control.settings.key_config.return_key
+        if event.type == pg.KEYDOWN and event.unicode == return_key:
+            return self.switch_state("quit")
+        self.main_menu.get_event(
+            self.control.settings.key_config, event, "vertical")
 
     def update(self) -> None:
         self.draw()

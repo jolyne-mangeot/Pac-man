@@ -1,13 +1,17 @@
 {
-    "lang": "fr-fr",
-    "res": "fullscreen",
+    "lang": "en-en",
+    "res": [
+        800,
+        600
+    ],
     "sfx_vol": 10,
     "bgm_vol": 10,
+    "haha": "",
     "key_config": {
-        "up_key": "w",
-        "down_key": "s",
-        "left_key": "a",
-        "right_key": "d",
+        "up_key": "up",
+        "down_key": "down",
+        "left_key": "left",
+        "right_key": "right",
         "confirm_key": "return",
         "return_key": "escape"
     }
