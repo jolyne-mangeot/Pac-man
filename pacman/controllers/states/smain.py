@@ -46,7 +46,7 @@ class MainMenu(State):
         """
         dialogs: Dialogs = self.control.dialogs
         self.main_menu = Menu(
-            self.control.screen, options=[
+            self.control.screen, loop_cursor=False, options=[
                 ActivateOption("play", dialogs.play,
                                partial(self.switch_state, "game_menu")),
                 ActivateOption(

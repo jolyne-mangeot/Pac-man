@@ -65,8 +65,8 @@ class OptionsMenu(State):
         self.settings = self.control.settings.model_dump()
         dialogs: Dialogs = self.control.dialogs
         self.options_menu = Menu(
-            self.control.screen, loop_cursor=False, from_top=50,
-            from_left=int(self.control.screen.get_width() / 4), options=[
+            self.control.screen, loop_cursor=False,
+            from_top=int(self.control.screen.get_height() / 10), options=[
                 SelectionOption(
                     "lang", f"{dialogs.lang:<20}""{value}",
                     self.settings, [lang for lang in Languages]),
@@ -165,4 +165,5 @@ class OptionsMenu(State):
         the background and the main_menu object using its dedicated method.
         """
         self.control.screen.fill((255, 255, 255))
-        self.options_menu.draw_chart_options()
+        self.options_menu.draw_chart_options(int(
+            self.control.screen.get_width() / 2))
