@@ -1,10 +1,14 @@
 ### JSON parsing with comments
 
+*file: "pacman/models/jsons/utils.py"*
+
 The parsing was done using JSON files parsed by the json module and turned into object with Pydantic's BaseModel classes
 
 JSON files had to support comments (// and # styles), so we first had to override the JSONDecoder class implemented by the json module. To do so, we declared our own decoder and wrote a new decode method:
 
 ```python
+from json import JSONDecoder
+
 class JSONCommentedDecoder(JSONDecoder):
     def decode(self, s: str, _w: Callable[..., Any] = lambda: "") -> Any:
         s = '\n'.join(line if not (
@@ -19,9 +23,14 @@ Using this class, the load function of the json module will, before parsing the 
 
 ### Building a BaseModel with fallback validations
 
+*file: "pacman/models/jsons/utils.py"*
+
 When loaded into a dict of type `dict[str, Any]`, the information can be unpacked into the constructor of a BaseModel class using `**`. This means declaring BaseModel classes, and attributing them Fields with restraints.
 
 ```python
+from typing import ClassVar, Iterable
+from pydantic import BaseModel, Field, field_validator
+
 class Settings(JSONModel):
     file_name: ClassVar[str] = "settings"
     lang: Languages = Field(default=Languages.ENGLISH)
@@ -34,6 +43,10 @@ class Settings(JSONModel):
 See our Settings Model. When the json file is dumped, any missing value would be assigned its default. However, as a design choice, we'd need invalid values to also fall back to their default. Because this isn't implemented in Pydantic, we had to work around each Field's validation, thus declaring a JSONModel parent class that would generalize this step to all our json based models.
 
 ```python
+from typing import Any, Annotated
+from pydantic import BaseModel, Field, field_validator, ValidationInfo
+from pydantic_core import PydanticUseDefault
+
 class JSONModel(BaseModel):
     @field_validator("*", mode="before")
     @classmethod
@@ -72,11 +85,15 @@ The `validate_or_fallback` method goes this way:
 
 ### Concrete examples of Field validators
 
+*file: "pacman/models/jsons/settings.py"*
+
 Because we need to use `Enum` classes to access literal values within our program, we have to account of the fact JSON files can't store any type of values. They can hold dictionaries, iterators, integers and strings, and we have to work around this fact to parse what the user writes it their JSON files to try and link it back to our own `Enum`s.
 
 See below two validators for two different Fields. Because they are declared with the same mode in the `field_validator` as our `validate_or_fallback` method seen above, these overrides it, so we need to implement a default fallback value here as well.
 
 ```python
+# continuity of the Settings(JSONModel) class
+
 	@field_validator("lang", mode="before")
 	@classmethod
 	def lang_validator(cls, value: str) -> Languages:
@@ -108,3 +125,15 @@ See below two validators for two different Fields. Because they are declared wit
 ```
 
 `Enum`s in python are declared with a KEY, and a value of any type. To enable the use of either of the two in the input of the JSON files, we determine the multiple types of the value that could help recognize what the user is trying to access in the Enum and, if no value or KEY in recognized in the corresponding `Enum`, we return a default value.
+
+### Resources
+
+JSON parsing with comment:
+- [Code snippet (StackOverflow)](https://stackoverflow.com/questions/29959191/how-to-parse-json-file-with-c-style-comments#:~:text=This%20implementation%20slightly%20improves%20the%20previous%20answer%20by%20replacing%20the%20comment%20line%20by%20an%20empty%20line%20rather%20than%20removing%20it%20completely%20because%20this%20breaks%20the%20line%20count)
+
+Pydantic's documentation:
+- [Models](https://pydantic.dev/docs/validation/dev/concepts/models/)
+- [Field](https://pydantic.dev/docs/validation/latest/concepts/fields/)
+- [Validators](https://pydantic.dev/docs/validation/latest/concepts/validators/)
+
+- [Creating dynamic Fields](https://pydantic.dev/docs/validation/dev/examples/dynamic_models/)
