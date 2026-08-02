@@ -19,8 +19,6 @@ class Option(ABC):
     formats it into the text with value=container[name] format
     - container: dict[str, Any] (parameter) => dict reference to be modified by
     the option if needed
-    - active: bool => self attributed boolean for the option to know if it's
-    currently being used
     - selectable: bool => self attributed boolean that can be overridden by
     subclasses. If False, the Menu class will skip over the option during
     navigation
@@ -33,10 +31,10 @@ class Option(ABC):
     ### Methods:
     - str => return the text attribute, formatted if the option's name is a key
     in the container
-    - activate => Set self.active to True, can be overridden for specialized
-    behavior
-    - deactivate => Set self.active to False
-    - input_event (abstract) => takes an action and a raw_input to handle
+    - activate => Called when an option is picked, declared here for any Option
+    subclass to be overridden with specialized behavior.
+    - deactivate => Called when an option is let down
+    - input_event (abstract) => takes an action and a named_key to handle
     different behavior and update the container's values if needed
     """
     def __init__(
@@ -46,7 +44,6 @@ class Option(ABC):
         self.name: str = name
         self.text: str = text
         self.container: dict[str, Any] = container
-        self.active: bool = False
         self.selectable: bool = True
         self.pickable: bool = True
         self.using_text_input: bool = False
@@ -63,21 +60,22 @@ class Option(ABC):
         return self.text
 
     def activate(self) -> None:
-        """Toggles self.active to True, declared here for any Option subclass
-        to override with specialized behavior.
+        """Called when an option is picked, declared here for any Option
+        subclass to be overridden with specialized behavior.
         """
-        self.active = True
+        pass
 
     def deactivate(self) -> None:
-        """Toggles self.active to False, declared here for any Option subclass
-        to override with specialized behavior.
+        """Called when an option is let go of, declared here for any Option
+        subclass to be overridden with specialized behavior.
         """
-        self.active = False
+        pass
 
     @abstractmethod
-    def input_event(self, action_key: str, raw_input: str) -> Any:
+    def input_event(
+            self, action_key: str, named_key: str, text_input: str) -> Any:
         """Method called to pass down input to the Option object, as an action
-        and a raw_input, depending on the option's needs.
+        and/or a named_key, and a text_input, depending on the option's needs.
         """
         pass
 
@@ -116,7 +114,7 @@ class Spacer(Option):
         """Return an empty string. Override of Option to skip conditions."""
         return ""
 
-    def input_event(self, _: str, __: str) -> Any:
+    def input_event(self, _: str, __: str, ___: str) -> Any:
         """Does nothing. Override of Option for correct implementation"""
         pass
 
@@ -148,7 +146,7 @@ class ActivateOption(Option):
         self.exec: partial[Any] = exec
         self.pickable: bool = False
 
-    def input_event(self, action_key: str, _: str) -> Any:
+    def input_event(self, action_key: str, _: str, __: str) -> Any:
         """If action_key is "activate", returns the execution of self.exec."""
         if action_key == "activate":
             return self.exec()
@@ -185,7 +183,7 @@ class ToggleOption(Option):
         else:
             self.container[self.name] = "True"
 
-    def input_event(self, action_key: str, _: str) -> Any:
+    def input_event(self, action_key: str, _: str, __: str) -> Any:
         """If action_key is "activate", calls self.toggle."""
         if action_key == "activate":
             self.toggle()
@@ -247,18 +245,20 @@ class SliderOption(Option):
             value = self.value_range[-1 if self.cycle else 0]
         self.container[self.name] = value
 
-    def input_event(self, action_key: str, _: str) -> Any:
+    def input_event(self, action_key: str, _: str, __: str) -> Any:
         """Calls update_values with the correct factor depending on the
         direction action (up_key, down_key, left and right). If the
         action argument doesn't correspond to any valid direction, returns
-        an empty string.
+        None.
         """
-        actions: dict[str, partial[None]] = {
-            "up_key": partial(self.update_value, self.up_factor),
-            "down_key": partial(self.update_value, self.down_factor),
-            "left_key": partial(self.update_value, self.left_factor),
-            "right_key": partial(self.update_value, self.right_factor)}
-        actions.get(action_key, lambda: "")()
+        factors: dict[str, int] = {
+            "up_key": self.up_factor,
+            "down_key": self.down_factor,
+            "left_key": self.left_factor,
+            "right_key": self.right_factor}
+        if factors.get(action_key, 0) == 0:
+            return
+        self.update_value(factors.get(action_key, 0))
 
 
 class SelectionOption(Option):
@@ -325,17 +325,19 @@ class SelectionOption(Option):
         except IndexError:
             self.container[self.name] = None
 
-    def input_event(self, action_key: str, _: str) -> Any:
+    def input_event(self, action_key: str, _: str, __: str) -> Any:
         """Calls self.update_selection with the factor corresponding to the
         direction action_key given as argument ("up_key", "down_key", etc.).
         If the action doesn't correspond to a direction, does nothing.
         """
-        actions: dict[str, Callable[[], None]] = {
-            "up_key": partial(self.update_selection, self.up_factor),
-            "down_key": partial(self.update_selection, self.down_factor),
-            "left_key": partial(self.update_selection, self.left_factor),
-            "right_key": partial(self.update_selection, self.right_factor)}
-        actions.get(action_key, lambda: "")()
+        factors: dict[str, int] = {
+            "up_key": self.up_factor,
+            "down_key": self.down_factor,
+            "left_key": self.left_factor,
+            "right_key": self.right_factor}
+        if factors.get(action_key, 0) == 0:
+            return
+        self.update_selection(factors.get(action_key, 0))
 
 
 class InputOption(Option):
@@ -367,7 +369,7 @@ class InputOption(Option):
     checking the input is validated, even though they would pass the
     character checker.
     - char_checker (parameter): Callable[[str], bool] => function used to
-    verify the coming raw_input, defaulted to str.isprintable in a lambda
+    verify the coming named_key, defaulted to str.isprintable in a lambda
     function
 
     ### Methods:
@@ -393,7 +395,7 @@ class InputOption(Option):
     relies on backspace to erase characters (cannot move within string with
     directions)
     - input_event (override) => check for "activate" action as it is linked to
-    the raw_input of the return key and would cause problems, returning an
+    the named_key of the return key and would cause problems, returning an
     empty string in this case, and otherwise calls and returns handle_input or
     handle_text_input depending on the flags.
     """
@@ -433,14 +435,13 @@ class InputOption(Option):
 
     def activate(self) -> None:
         """Override of Option's, called when the option is picked by a Menu.
-        Set the active attribute to True, and apply the use_text_input,
-        revert_to_default and erase_text_on_pick flags by:
+        Apply the use_text_input, revert_to_default and erase_text_on_pick
+        flags by:
         - toggling using_text_input to True if use_text_input is True,
         - saving the current value in the value_save attribute,
         - replacing the value with an empty string if erase_text_on_pick is
         True
         """
-        self.active = True
         if self.use_text_input:
             self.using_text_input = True
         self.value_save = self.container[self.name]
@@ -449,13 +450,11 @@ class InputOption(Option):
 
     def deactivate(self) -> None:
         """Override of Option's, called when the option is let down by a Menu.
-        Set the active attribute to False, and apply the use_text_input and
-        revert_to_default flags by:
+        Apply the use_text_input and revert_to_default flags by:
         - toggling using_text_input to False if use_text_input is True,
         - replacing the value with the value_save if revert_to_default is
         True and the value is left empty
         """
-        self.active = False
         self.using_text_input = False
         if self.revert_to_default and self.container[self.name] == "":
             self.container[self.name] = self.value_save
@@ -469,62 +468,63 @@ class InputOption(Option):
         return (len(self.container[self.name]) < self.value_len and
                 input not in self.excluded_input and self.char_checker(input))
 
-    def handle_input(self, action_key: str, raw_input: str) -> str:
-        """Takes an action_key and raw_input, both string. Action_key should
-        be "return_key" to have an effect, and the raw_input is thought to be
+    def handle_input(self, action_key: str, named_key: str) -> str:
+        """Takes an action_key and named_key, both string. Action_key should
+        be "return_key" to have an effect, and the named_key is thought to be
         a named key input like "space" or "escape". For full text handling,
         toggle the use_text_input flag to True and handle_text_input will be
         called by the input_event method.
 
         Checks the rawr_input with is_input_valid. If there is at least one
-        space in the value, appends the raw_input, and if the
+        space in the value, appends the named_key, and if the
         input_require_return flag is False and the value's len has reached
         the value_len, this method returns "action_done".
 
-        If the raw_input is "backspace" or the action_key is "return_key",
+        If the named_key is "backspace" or the action_key is "return_key",
         the last character of the value is removed.
 
         Returns an empty string at the end of the method.
         """
-        if self.is_input_valid(raw_input):
-            print(raw_input, flush=True)
-            self.container[self.name] += raw_input
+        if self.is_input_valid(named_key):
+            print(named_key, flush=True)
+            self.container[self.name] += named_key
             if (self.input_require_return is False
                     and len(self.container[self.name]) >= self.value_len):
                 return "action_done"
-        elif (raw_input == "backspace" or action_key == "return_key"
+        elif (named_key == "backspace" or action_key == "return_key"
                 and len(self.container[self.name]) > 0):
             self.container[self.name] = self.container[self.name][:-1]
         return ""
 
-    def handle_text_input(self, raw_input: str) -> str:
-        """Takes a raw_input string as argument.
+    def handle_text_input(self, named_key: str, text_input: str) -> str:
+        """Takes a named_key string as argument.
 
-        Checks the raw_input with is_input_valid. If there is at least one
-        space in the value, appends the raw_input, and if the
+        Checks the named_key with is_input_valid. If there is at least one
+        space in the value, appends the named_key, and if the
         input_require_return flag is False and the value's len has reached
         the value_len, this method returns "action_done".
 
-        If the raw_input is "backspace", the last character of the value is
+        If the named_key is "backspace", the last character of the value is
         removed.
 
         Returns an empty string at the end of the method.
         """
-        if raw_input == "backspace":
+        if named_key == "backspace":
             if len(self.container[self.name]) > 0:
                 self.container[self.name] = self.container[self.name][:-1]
-        elif self.is_input_valid(raw_input):
-            self.container[self.name] += raw_input
+        elif self.is_input_valid(text_input):
+            self.container[self.name] += text_input
             if (self.input_require_return is False
                     and len(self.container[self.name]) >= self.value_len):
                 return "action_done"
         return ""
 
-    def input_event(self, action_key: str, raw_input: str) -> Any:
-        """Takes an action_key and a raw_input arguments, both strings.
+    def input_event(
+            self, action_key: str, named_key: str, text_input: str) -> Any:
+        """Takes an action_key and a named_key arguments, both strings.
 
         Checks for "activate" action as it is linked to
-        the raw_input of the return key and would cause problems in the handler
+        the named_key of the return key and would cause problems in the handler
         methods, returning an empty string in this case, and otherwise calls
         and returns handle_input or handle_text_input depending on the
         use_text_input flag.
@@ -532,5 +532,5 @@ class InputOption(Option):
         if action_key == "activate":
             return ""
         if self.using_text_input is True:
-            return self.handle_text_input(raw_input)
-        return self.handle_input(action_key, raw_input)
+            return self.handle_text_input(named_key, text_input)
+        return self.handle_input(action_key, named_key)

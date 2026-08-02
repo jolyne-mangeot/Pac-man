@@ -183,7 +183,7 @@ class Menu:
         then returns a tuple of each state, as a tuple of pygame Surface and
         Rect.
         """
-        render: str = str(option) if option is not None else ""
+        render: str = str(option)
         deselect_render = self.deselect_ft.render(
             render, True, self.deselect_color)
         select_render = self.select_ft.render(
@@ -339,18 +339,15 @@ class Menu:
         Returns Any as options input_event method can also do.
         """
         curr_option: Option = self.options[self.select_index]
-        input: str = ""
-        if (event.type == pg.TEXTINPUT
-                and curr_option.using_text_input is True):
-            input = event.text
-        elif event.type == pg.KEYDOWN and (
-                curr_option.using_text_input is False
-                or pg.key.name(event.key) in (
-                    "backspace", "return", "escape")):
-            input = pg.key.name(event.key)
+        named_key: str = ""
+        text_input: str = ""
+        if event.type == pg.TEXTINPUT:
+            text_input = event.text
+        elif event.type == pg.KEYDOWN:
+            named_key = pg.key.name(event.key)
         else:
             return
-        action_key: str = key_unicode_to_action(key_config, input)
+        action_key: str = key_unicode_to_action(key_config, named_key)
         if action_key == "confirm_key":
             if self.picked_index == -1:
                 self.picked_index = self.select_index
@@ -366,7 +363,8 @@ class Menu:
             self.last_picked = self.picked_index
             self.picked_index = -1
         if self.picked_index != -1:
-            output: str = curr_option.input_event(action_key, input)
+            output: str = curr_option.input_event(
+                action_key, named_key, text_input)
             if curr_option.pickable is False:
                 self.picked_index = -1
             if output == "action_done":
@@ -387,7 +385,6 @@ class Menu:
         is used to move the selection cursor along the options, using the
         move_cursor method with a set factor.
         """
-        print(key_input)
         if key_input == "up_key":
             self.move_cursor(-1)
         elif key_input == "down_key":
