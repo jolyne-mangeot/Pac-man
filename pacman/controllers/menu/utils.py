@@ -25,7 +25,6 @@ class Option(ABC):
     - pickable: bool => same as selectable, but the option will be selectable
     during navigation. The input_event method will still be called, useful
     for Activate and Toggle subclasses
-    - using_text_input: bool => Boolean to be toggled to True the moment an
     option needs a pygame.TEXTINPUT event rather than a pygame.KEYDOWN event
 
     ### Methods:
@@ -46,7 +45,6 @@ class Option(ABC):
         self.container: dict[str, Any] = container
         self.selectable: bool = True
         self.pickable: bool = True
-        self.using_text_input: bool = False
 
     def __str__(self) -> str:
         """Returns self.text formatted with the corresponding value from
@@ -89,7 +87,7 @@ class Spacer(Option):
 
     ### Attributes:
     - All needed Option attributes to run properly: name, text, container,
-    selectable (False), pickable (False), using_text_input (False).
+    selectable (False), pickable (False).
 
     ### Methods:
     - *Option instance methods*
@@ -100,15 +98,13 @@ class Spacer(Option):
         """No arguments, instantiate all Option mandatory attributes with
         dummy values:
 
-        name="spacer", text="", container={}, selectable=False, pickable=False,
-        using_text_input=False
+        name="spacer", text="", container={}, selectable=False, pickable=False
         """
         self.name: str = "spacer"
         self.text: str = ""
         self.container: dict[str, Any] = {}
         self.selectable: bool = False
         self.pickable: bool = False
-        self.using_text_input: bool = False
 
     def __str__(self) -> str:
         """Return an empty string. Override of Option to skip conditions."""
@@ -378,11 +374,10 @@ class InputOption(Option):
     value's place when it is empty
     - activate (override) => implement the use of the revert_to_default,
     use_text_input and erase_text_on_pick flags by saving the container's value
-    in value_save, toggling using_text_input to True and assigning an empty
+    in value_save and assigning an empty
     string to the value if needed
     - deactivate (override) => checks if the value is empty at leaving, and if
-    the corresponding flag is True, reinstore the value_save if needed. Also
-    turns using_text_input to False if needed.
+    the corresponding flag is True, reinstore the value_save if needed.
     - is_input_valid => short method returning the condition of the value being
     shorter than its limit, the input not being excluded and passing the
     character checker
@@ -435,27 +430,22 @@ class InputOption(Option):
 
     def activate(self) -> None:
         """Override of Option's, called when the option is picked by a Menu.
-        Apply the use_text_input, revert_to_default and erase_text_on_pick
+        Apply the revert_to_default and erase_text_on_pick
         flags by:
-        - toggling using_text_input to True if use_text_input is True,
         - saving the current value in the value_save attribute,
         - replacing the value with an empty string if erase_text_on_pick is
         True
         """
-        if self.use_text_input:
-            self.using_text_input = True
         self.value_save = self.container[self.name]
         if self.erase_text_on_pick is True:
             self.container[self.name] = ""
 
     def deactivate(self) -> None:
         """Override of Option's, called when the option is let down by a Menu.
-        Apply the use_text_input and revert_to_default flags by:
-        - toggling using_text_input to False if use_text_input is True,
+        Apply the revert_to_default flags by:
         - replacing the value with the value_save if revert_to_default is
         True and the value is left empty
         """
-        self.using_text_input = False
         if self.revert_to_default and self.container[self.name] == "":
             self.container[self.name] = self.value_save
 
@@ -531,6 +521,6 @@ class InputOption(Option):
         """
         if action_key == "activate":
             return ""
-        if self.using_text_input is True:
+        if self.use_text_input is True:
             return self.handle_text_input(named_key, text_input)
         return self.handle_input(action_key, named_key)
