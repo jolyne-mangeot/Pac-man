@@ -1,5 +1,19 @@
 {
 	"play": "Jouer",
+	"highscores": "Scores",
 	"settings": "Options",
-	"quit": "Quitter"
+	"quit": "Quitter",
+	"lang": "Langue",
+	"res": "Résolution",
+	"sfx_vol": "Volume des effets",
+	"bgm_vol": "Volume de la musique",
+	"up_key": "haut",
+	"down_key": "bas",
+	"left_key": "gauche",
+	"right_key": "droite",
+	"confirm_key": "confirmer",
+	"return_key": "retour",
+	"reset_settings": "réinitialiser",
+	"apply": "appliquer",
+	"back": "retour"
 }

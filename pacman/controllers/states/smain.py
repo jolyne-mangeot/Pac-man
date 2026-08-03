@@ -46,7 +46,7 @@ class MainMenu(State):
         """
         dialogs: Dialogs = self.control.dialogs
         self.main_menu = Menu(
-            self.control.screen, loop_cursor=False, options=[
+            self.control.interface, loop_cursor=False, options=[
                 ActivateOption("play", dialogs.play,
                                partial(self.switch_state, "game_menu")),
                 ActivateOption(
@@ -92,5 +92,8 @@ class MainMenu(State):
         """Called by update to display all visual elements of the menu, namely
         the background and the main_menu object using its dedicated method.
         """
-        self.control.screen.fill((255, 120, 0))
+        self.control.screen.fill((0, 0, 0))
+        self.control.interface.fill((255, 120, 0))
         self.main_menu.draw_vertical_options()
+        self.control.screen.blit(
+            self.control.interface, self.control.interface_rect)

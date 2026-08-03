@@ -28,7 +28,10 @@ class Control:
     - settings: Settings => Settings object reference to be accessed by states
     - dialogs: Dialogs => Dialog object reference to be accessed by states
     - screen: pg.Surface => screen Surface reference to be blit by states
-    - screen_rect: pg.Rect => contains dimension informations about the screen
+    - interface: pg.Surface => interface onto which the program is displayed,
+    useful to keep the right resolution in fullscreen mode
+    - interface_rect: pg.Rect => contains set coordinates to display the
+    interface
     - clock: pg.time.Clock => time reference to calcultate delta_time and
     adapt all timed events to accustom to latency issues
     - delta_time: float => time passed between two run of the game loop for
@@ -70,7 +73,10 @@ class Control:
             Dialogs,
             "pacman/assets/dialogs/" + self.settings.lang.value + ".json"))
 
-        self.screen: pg.Surface = self.update_display()
+        self.screen: pg.Surface
+        self.interface: pg.Surface = pg.Surface((100, 100))
+        self.interface_rect: pg.Rect = self.interface.get_rect()
+        self.update_display()
         self.screen_rect: pg.Rect = self.screen.get_rect()
         self.clock: pg.time.Clock = pg.time.Clock()
         self.delta_time: float
@@ -81,16 +87,31 @@ class Control:
         self.state_name: str
         self.current_state: State
 
-    def update_display(self) -> pg.Surface:
-        """Returns the call of pygame.display.set_mode with the resolution
-        from the settings attribute. It this attribute contains "fullscreen"
-        as a value, insert the pygame.FULLSCREEN flag to set_mode.
+    def update_display(self) -> None:
+        """Updates the display with the newest settings.
+
+        In windowed mode, the screen is scaled to the chosen resolution as
+        well as the interface, which rect object is placed at coordinates 0,0.
+
+        In fullscreen, the screen is scaled to cover the entire display, while
+        the interface is scaled on the screen's height by a 4:3 factor. Its
+        rect is centered by its middle-top point, placed at the center of the
+        screen's width.
         """
         if self.settings.res.value == "fullscreen":
-            return pg.display.set_mode(pg.display.get_desktop_sizes()[0],
-                                       pg.FULLSCREEN)
+            self.screen = pg.display.set_mode(
+                pg.display.get_desktop_sizes()[0], pg.FULLSCREEN)
+            screen_height: int = self.screen.get_height()
+            self.interface = pg.transform.scale(self.interface, (
+                screen_height * 4 / 3, screen_height))
+            self.interface_rect = self.interface.get_rect()
+            self.interface_rect.midtop = (int(self.screen.get_width() / 2), 0)
         else:
-            return pg.display.set_mode(self.settings.res.value)
+            self.screen = pg.display.set_mode(self.settings.res.value)
+            self.interface = pg.transform.scale(
+                self.interface, self.settings.res.value)
+            self.interface_rect = self.interface.get_rect()
+            self.interface_rect.topleft = (0, 0)
 
     def update_options(self) -> None:
         """Updates Dialogs and screen attributes with updated settings.
@@ -149,8 +170,6 @@ class Control:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.done = True
-            # if event.type == pg.KEYDOWN:
-            #     print(pg.key.name(event.key), end="", flush=True)
             self.current_state.get_event(event)
 
     def game_loop(self) -> None:

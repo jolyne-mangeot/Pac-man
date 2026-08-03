@@ -121,9 +121,14 @@ class Menu:
                                else int(screen.get_width() / 2))
         self.from_top: int = (from_top if from_top != -1
                               else int(screen.get_height() / 2))
-        self.spacer: int = (
-            spacer if spacer != -1 else int(
-                (screen.get_height() - from_top) / ((len(options) + 1) * 2)))
+        print(self.screen.get_height())
+        print(self.screen.get_width())
+        print(self.from_top)
+        self.spacer: int = spacer
+        if spacer == -1:
+            self.spacer = int(
+                (screen.get_height() - self.from_top) / (len(options) + 1))
+        print(self.spacer)
         self.options: list[Option] = options
         self.loop_cursor: bool = loop_cursor
         self.deselect_color: pg.Color = deselect_color
@@ -294,15 +299,15 @@ class Menu:
             if (index == len(self.renders) - 1 and len(self.renders) % 2 != 0):
                 option[1].center = (
                     self.from_left,
-                    int(self.from_top + index * self.spacer * 2))
+                    int(self.from_top + index * self.spacer))
             elif index % 2 == 0:
                 option[1].center = (
                     self.from_left - int(h_spacer / 2),
-                    int(self.from_top + index * self.spacer * 2))
+                    int(self.from_top + index * self.spacer))
             else:
                 option[1].center = (
                     self.from_left + int(h_spacer / 2),
-                    int(self.from_top + (index - 1) * self.spacer * 2))
+                    int(self.from_top + (index - 1) * self.spacer))
             self.screen.blit(option[0], option[1])
 
     def draw_selected_option(self) -> None:
