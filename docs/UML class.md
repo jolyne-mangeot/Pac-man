@@ -3,7 +3,8 @@ A UML class diagram shows the structure of a system by displaying its classes, t
 ### Class representation
 
 In these diagram, classes are represented like this:
-![[UML class exemple.png]]
+<img src="UML class exemple.png">
+
 
 **Visibility notation:**
 Visibility notations indicate the access level of attributes and methods. Common visibility notations include:
@@ -19,7 +20,8 @@ Parameter directionality refers to the indication of the flow of information bet
 - `InOut` (Input and Outpur): A parameter that is sent to the method and also returns back to the caller.
 ### Relationships between classes
 
-![[Class diagram relationships.png]]
+<img src="Class diagram relationships.png">
+
 
 - **Association**
 	An association represents a bi-directional relationship between two classes. It indicates that instances of one class are connected to instances of another class. Associations are typically depicted as a solid line connecting the classes, with optional arrows indicating the direction of the relationship.
