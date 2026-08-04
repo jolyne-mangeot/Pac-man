@@ -4,7 +4,8 @@ from typing import Any
 import pygame as pg
 
 from pacman.models import KeyConfig
-from .utils import Option
+from .options import Option
+from .placeholder import PlaceHolder
 
 
 def key_unicode_to_action(key_config: KeyConfig, input: str) -> str:
@@ -102,13 +103,7 @@ class Menu:
     def __init__(
             self, screen: pg.Surface, from_left: int = -1, from_top: int = -1,
             spacer: int = -1, options: list[Option] = [],
-            loop_cursor: bool = True,
-            deselect_color: pg.Color = pg.Color(0, 0, 0),
-            select_color: pg.Color = pg.Color(0, 0, 0),
-            picked_color: pg.Color = pg.Color(255, 0, 0),
-            deselect_ft: pg.font.Font = pg.font.SysFont("Times New Roman", 22),
-            select_ft: pg.font.Font = pg.font.SysFont("Times New Roman", 22),
-            picked_ft: pg.font.Font = pg.font.SysFont("Times New Roman", 22)
+            loop_cursor: bool = True, place_holder: PlaceHolder = PlaceHolder()
             ) -> None:
         """Initialize a Menu object with multiple arguments and self attributed
         variables. To see details on each attribute and their use, refer to the
@@ -131,12 +126,7 @@ class Menu:
         print(self.spacer)
         self.options: list[Option] = options
         self.loop_cursor: bool = loop_cursor
-        self.deselect_color: pg.Color = deselect_color
-        self.select_color: pg.Color = select_color
-        self.picked_color: pg.Color = picked_color
-        self.deselect_ft: pg.font.Font = deselect_ft
-        self.select_ft: pg.font.Font = select_ft
-        self.picked_ft: pg.font.Font = picked_ft
+        self.place_holder: PlaceHolder = place_holder
         self.select_index: int = 0
         self.picked_index: int = -1
         self.last_picked: int = -1
@@ -158,7 +148,7 @@ class Menu:
         sel: tuple[pg.Surface, pg.Rect]
         pik: tuple[pg.Surface, pg.Rect]
         for option in self.options:
-            des, sel, pik = self.pre_render(option)
+            des, sel, pik = self.place_holder.pre_render(option.get_texts())
             self.rendered["deselect"].append(des)
             self.rendered["select"].append(sel)
             self.rendered["picked"].append(pik)
@@ -176,30 +166,11 @@ class Menu:
         des: tuple[pg.Surface, pg.Rect]
         sel: tuple[pg.Surface, pg.Rect]
         pik: tuple[pg.Surface, pg.Rect]
-        des, sel, pik = self.pre_render(self.options[index])
+        des, sel, pik = self.place_holder.pre_render(
+            self.options[index].get_texts())
         self.rendered["deselect"][index] = des
         self.rendered["select"][index] = sel
         self.rendered["picked"][index] = pik
-
-    def pre_render(self, option: Option
-                   ) -> tuple[tuple[pg.Surface, pg.Rect], ...]:
-        """Pre-renders the option given as argument in three states: picked,
-        deselected and selected, each with their associated fonts and colors,
-        then returns a tuple of each state, as a tuple of pygame Surface and
-        Rect.
-        """
-        render: str = str(option)
-        deselect_render = self.deselect_ft.render(
-            render, True, self.deselect_color)
-        select_render = self.select_ft.render(
-            "◄ " + render + " ►", True, self.select_color)
-        picked_render = self.picked_ft.render(
-            "◄ " + render + " ►", True, self.picked_color)
-
-        return (
-            (deselect_render, deselect_render.get_rect()),
-            (select_render, select_render.get_rect()),
-            (picked_render, picked_render.get_rect()))
 
     def update_rendered_list(self) -> None:
         """Updates the renders attribute by resetting it to the list of

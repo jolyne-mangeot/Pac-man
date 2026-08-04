@@ -1,12 +1,14 @@
 
 from .menu import Menu
-from .utils import (
+from .options import (
     Spacer,
     InputOption, SliderOption, ActivateOption, SelectionOption, ToggleOption)
+from .placeholder import Style, PlaceHolder
 
 
 __all__ = [
     "Menu",
     "Spacer",
     "InputOption", "SliderOption", "ActivateOption",
-    "SelectionOption", "ToggleOption"]
+    "SelectionOption", "ToggleOption",
+    "Style", "PlaceHolder"]

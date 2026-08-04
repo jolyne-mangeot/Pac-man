@@ -57,6 +57,12 @@ class Option(ABC):
                 value=str(self.container.get(self.name)).replace("_", " "))
         return self.text
 
+    def get_texts(self) -> list[str]:
+        texts: list[str] = [self.text]
+        if self.container.get(self.name, None) is not None:
+            texts.append(str(self.container.get(self.name)).replace("_", " "))
+        return texts
+
     def activate(self) -> None:
         """Called when an option is picked, declared here for any Option
         subclass to be overridden with specialized behavior.
@@ -427,6 +433,15 @@ class InputOption(Option):
                 return self.text.format(value=str("_" * self.value_len))
             return self.text.format(value=str(self.container.get(self.name)))
         return self.text
+
+    def get_texts(self) -> list[str]:
+        texts: list[str] = [self.text]
+        if self.container.get(self.name, None) is not None:
+            if str(self.container[self.name]) == "":
+                texts.append(str("_" * self.value_len))
+            else:
+                texts.append(str(self.container.get(self.name)))
+        return texts
 
     def activate(self) -> None:
         """Override of Option's, called when the option is picked by a Menu.

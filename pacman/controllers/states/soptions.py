@@ -6,7 +6,8 @@ import pygame as pg
 
 from pacman.controllers import (
     Control, State,
-    Menu, Spacer, ActivateOption, SliderOption, InputOption, SelectionOption)
+    Menu, Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
+    PlaceHolder, Style)
 from pacman.models import (
     model_to_json,
     Dialogs, Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
@@ -68,21 +69,21 @@ class OptionsMenu(State):
             self.control.interface, loop_cursor=False,
             from_top=int(self.control.screen.get_height() / 10), options=[
                 SelectionOption(
-                    "lang", f"{dialogs.lang + " :":<20}""{value:>10}",
+                    "lang", f"{dialogs.lang + " :"}",
                     self.settings, [lang for lang in Languages]),
                 SelectionOption(
-                    "res", f"{dialogs.res + " :":<20}""{value:>10}",
+                    "res", f"{dialogs.res + " :"}",
                     self.settings, [res for res in Resolutions], cycle=False),
                 SliderOption(
-                    "sfx_vol", f"{dialogs.sfx_vol + " :":<20}""{value:>10}",
+                    "sfx_vol", f"{dialogs.sfx_vol + " :"}",
                     self.settings, range(0, 11), 0, 0, cycle=False),
                 SliderOption(
-                    "bgm_vol", f"{dialogs.bgm_vol + " :":<20}""{value:>10}",
+                    "bgm_vol", f"{dialogs.bgm_vol + " :"}",
                     self.settings, range(0, 11), 0, 0, cycle=False),
                 Spacer(), Spacer(), *[
                     InputOption(
-                        key, f"{str(getattr(dialogs, key)) + " :":<16}"
-                        "{value:>10}", self.settings["key_config"], 1,
+                        key, f"{str(getattr(dialogs, key)) + " :"}",
+                        self.settings["key_config"], 1,
                         False, True, False,
                         excluded_input=["return", "escape", "backspace"]
                     ) for key in ACTION_LIST],
@@ -92,7 +93,12 @@ class OptionsMenu(State):
                 ActivateOption("apply", dialogs.apply,
                                partial(self.apply_settings)),
                 ActivateOption("back", dialogs.back,
-                               partial(self.switch_state, "main_menu"))])
+                               partial(self.switch_state, "main_menu"))],
+            place_holder=PlaceHolder([
+                Style(),
+                Style(font=pg.font.SysFont("Times New Roman", 22,
+                                           italic=True)),
+                Style(color=pg.Color(255, 0, 0))]))
 
     def reset_settings(self) -> None:
         """Updates the settings dict that's being modified by the user's inputs

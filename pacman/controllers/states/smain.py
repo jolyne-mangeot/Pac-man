@@ -3,7 +3,8 @@ from functools import partial
 
 import pygame as pg
 
-from pacman.controllers import Control, State, Menu, ActivateOption
+from pacman.controllers import (
+    Control, State, Menu, ActivateOption, PlaceHolder, Style)
 from pacman.models import Dialogs
 
 
@@ -56,7 +57,12 @@ class MainMenu(State):
                     "settings", dialogs.settings,
                     partial(self.switch_state, "options_menu")),
                 ActivateOption("quit", dialogs.quit,
-                               partial(self.switch_state, "quit"))])
+                               partial(self.switch_state, "quit"))],
+            place_holder=PlaceHolder([
+                Style(),
+                Style(font=pg.font.SysFont("Times New Roman", 22,
+                                           italic=True)),
+                Style(color=pg.Color(255, 0, 0))]))
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options
