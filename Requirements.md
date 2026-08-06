@@ -32,7 +32,7 @@ kanban-plugin: board
 - [ ] Start game
 - [ ] Instructions
 - [ ] View highscores
-- [ ] Setting (?)
+- [ ] Setting
 - [ ] Exit
 - [ ] ** **Pause Menu** **
 - [ ] Resume game
@@ -63,8 +63,8 @@ kanban-plugin: board
 	key: `level_#` (ID)
 - [ ] Configuration for each level
 - [ ] `Maze`:
-	- `width` int > 3
-	- `height` int > 3
+	- `width` int > 10
+	- `height` int > 10
 	- `seed` int (default value on level 1, random if non existent on others)
 - [ ] `Gameplay`:
 	- `timer` int > 0
