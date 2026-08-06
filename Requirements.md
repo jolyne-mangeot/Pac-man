@@ -51,11 +51,10 @@ kanban-plugin: board
 - [ ] ** **JSON** **
 - [ ] Default configuration in code: any missing or incorrect key must fall back to failsafe
 - [ ] Unknown keys must be ignored
-- [ ] MUST support comments for lines starting with a #
+- [ ] MUST support comments for lines starting with a # and //
 - [ ] [Snippet](https://stackoverflow.com/questions/29959191/how-to-parse-json-file-with-c-style-comments)
 - [ ] ** **Config** **
 	all in root dictionary
-- [ ] `highscore_file` str
 - [ ] ** **Player** **
 	key: `player`
 - [ ] `life_amount` int > 0
@@ -190,8 +189,9 @@ kanban-plugin: board
 - [ ] +A score for remaining time ?
 - [ ] +B score for level completion ?
 - [ ] ** **Highscores** **
-- [ ] Saved in json file ?
+- [ ] Saved in json file
 - [ ] Saved when winning or losing levels
+- [ ] Overload notification if player already has a highscore
 - [ ] Error message with inaccessible file
 - [ ] Saved with a name and a score
 - [ ] Saved with highest level reached ?
