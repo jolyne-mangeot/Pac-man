@@ -9,6 +9,8 @@ venv/*
 # project related files
 **/tmp
 **/dist
+*.zip
+*.whl
 
 # vscode related folders
 **/.vscode

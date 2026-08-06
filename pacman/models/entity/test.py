@@ -7,3 +7,5 @@ This test check:
  - Position of pacman
  - Position of ghosts
 """
+
+from mazegenerator import MazeGenerator
