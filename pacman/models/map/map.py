@@ -28,6 +28,7 @@ class Map:
 
     ### Methods:
     - init()
+    - repr()
     - super_gum_placement()
     - simple_gum_placement()
     """
@@ -39,18 +40,19 @@ class Map:
         self.seed: int = map_config["seed"]
         self.map: list[list[Cell]] = maze_interface(self.width, self.height, self.seed)
 
-    def display_map(self):
+    def __repr__(self):
         """Method to display debug mode of the map"""
-        for x in range(self.width):
+        lines: list[str] = []
+        for y in range(self.height):
             toplane: str = "+"
-            for y in range(self.height):
+            for x in range(self.width):
                 if self.map[x][y].walls & 1:
                     toplane += "---+"
                 else:
                     toplane += "   +"
-            print(toplane)
+            lines.append(toplane)
             midlane: str = ""
-            for y in range(self.height):
+            for x in range(self.width):
                 if self.map[x][y].walls & 8:
                     midlane += "|"
                 else:
@@ -61,14 +63,16 @@ class Map:
                     midlane += " . "
                 else:
                     midlane += "   "
-            print(midlane)
-            botlane: str = "+"
-            for y in range(self.height):
-                if self.map[x][y].walls & 4:
-                    botlane += "---+"
-                else:
-                    botlane += "   +"
-            print(botlane)
+            if self.map[self.width - 1][y].walls & 2:
+                midlane += "|"
+            else:
+                midlane += " "
+            lines.append(midlane)
+        botlane: str = "+"
+        for x in range(self.width):
+            botlane += "---+"
+        lines.append(botlane)
+        return "\n".join(lines)
 
     def super_gum_placement(self):
         """Add super gum at each corner of the map."""
@@ -77,8 +81,20 @@ class Map:
         self.map[(self.width - 1)][0].super_gum = True
         self.map[((self.width - 1))][(self.height - 1)].super_gum = True
 
-
-
+    def simple_gum_placement(self):
+        """Add simple gum in corridors of the map."""
+        available_cells: list[Cell] = []
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.map[x][y].simple_gum is True:
+                    continue
+                if self.map[x][y].walls == 15:
+                    continue
+                available_cells.append(self.map[x][y])
+        nb_simple_gum: int = ((len(available_cells) * self.gum_percent) // 100)
+        shuffle(available_cells)
+        for cell in available_cells[:nb_simple_gum]:
+            cell.simple_gum = True
 
 
 if __name__ == "__main__":
@@ -86,4 +102,6 @@ if __name__ == "__main__":
     map_config_test: dict[str, int] = {"width": 15, "height": 15, "seed": 42,
                                        "gum_percent": 80}
     map_test: Map = Map(map_config_test)
-    map_test.display_map()
+    map_test.super_gum_placement()
+    map_test.simple_gum_placement()
+    print(map_test)
