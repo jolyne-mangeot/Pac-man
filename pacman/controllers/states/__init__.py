@@ -1,9 +1,9 @@
 
-from .smain import MainMenu
-from .soptions import OptionsMenu
-from .sgame import GameMenu
+from .smain import MainMenuState
+from .soptions import OptionsMenuState
+from .sgame import GameMenuState
 
 
 __all__ = [
     "State",
-    "MainMenu", "OptionsMenu", "GameMenu"]
+    "MainMenuState", "OptionsMenuState", "GameMenuState"]

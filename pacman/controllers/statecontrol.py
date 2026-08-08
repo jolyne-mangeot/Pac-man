@@ -69,15 +69,17 @@ class Control:
         self.settings: Settings = cast(Settings, json_to_model(
             Settings, extra_args={"key_config": json_to_model(
                 KeyConfig, sub_dict="key_config")}))
-        self.dialogs: Dialogs = cast(Dialogs, json_to_model(
+        self.dialogs: dict[str, str] = cast(dict[str, str], json_to_model(
             Dialogs,
-            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"))
+            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
+            ).model_dump())
 
         self.screen: pg.Surface
         self.interface: pg.Surface = pg.Surface((100, 100))
         self.interface_rect: pg.Rect = self.interface.get_rect()
         self.update_display()
         self.screen_rect: pg.Rect = self.screen.get_rect()
+
         self.clock: pg.time.Clock = pg.time.Clock()
         self.delta_time: float
         self.fps: int = 30
@@ -119,9 +121,10 @@ class Control:
         Calls json_to_model function again on Dialogs to reload them from
         file, update_display method to accord to new resolution settings.
         """
-        self.dialogs = cast(Dialogs, json_to_model(
+        self.dialogs = cast(dict[str, str], json_to_model(
             Dialogs,
-            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"))
+            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
+            ).model_dump())
         self.update_display()
         self.screen_rect = self.screen.get_rect()
 
@@ -258,10 +261,4 @@ class State(ABC):
         """Called by control after each event from the pygame event queue has
         been handled to update the state's data based on the new information,
         or at least each frame.
-        """
-
-    @abstractmethod
-    def draw(self) -> None:
-        """Called by control after the events and updates have been handled for
-        the state to call its own display methods.
         """

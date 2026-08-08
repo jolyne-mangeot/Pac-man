@@ -3,12 +3,12 @@ from functools import partial
 
 import pygame as pg
 
-from pacman.controllers import (
-    Control, State, Menu, ActivateOption, PlaceHolder, Style)
-from pacman.models import Dialogs
+from pacman.controllers import Control, State, Menu
+from pacman.models import ActivateOption
+from pacman.views import MainMenuDisplay
 
 
-class MainMenu(State):
+class MainMenuState(State):
     """Class MainMenu, subclass of State
 
     Represents the main menu of the game, initializing a Menu object to
@@ -39,42 +39,39 @@ class MainMenu(State):
         to handle navigation and program flow.
         """
         State.__init__(self, control)
+        self.display: MainMenuDisplay = MainMenuDisplay(self.control)
+        self.display.load_main_menues()
         self.main_menu: Menu
 
     def __init_menu__(self) -> None:
         """Instantiate the main_menu attribute with set parameters, selecting
         elements from the dialogs dict of control.
         """
-        dialogs: Dialogs = self.control.dialogs
-        self.main_menu = Menu(
-            self.control.interface, loop_cursor=False, options=[
-                ActivateOption("play", dialogs.play,
-                               partial(self.switch_state, "game_menu")),
-                ActivateOption(
-                    "highscores", dialogs.highscores,
-                    partial(self.switch_state, "highscores_menu")),
-                ActivateOption(
-                    "settings", dialogs.settings,
-                    partial(self.switch_state, "options_menu")),
-                ActivateOption("quit", dialogs.quit,
-                               partial(self.switch_state, "quit"))],
-            place_holder=PlaceHolder([
-                Style(),
-                Style(font=pg.font.SysFont("Times New Roman", 22,
-                                           italic=True)),
-                Style(color=pg.Color(255, 0, 0))]))
+        self.main_menu = Menu(loop_cursor=False, options=[
+            ActivateOption(
+                "play", "{name}", partial(self.switch_state, "game_menu")),
+            ActivateOption(
+                "highscores", "{name}",
+                partial(self.switch_state, "highscores_menu")),
+            ActivateOption(
+                "settings", "{name}",
+                partial(self.switch_state, "options_menu")),
+            ActivateOption(
+                "quit", "{name}", partial(self.switch_state, "quit"))])
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options
         up with the settings.
         """
         self.__init_menu__()
+        self.display.startup(self.main_menu)
 
     def cleanup(self) -> None:
         """Called when the state is deactivated, deleting the main_menu
         attribute to save on memory usage.
         """
         del self.main_menu
+        self.display.cleanup()
 
     def get_event(self, event: pg.event.Event) -> None:
         """Takes a pygame Event object as argument.
@@ -92,14 +89,4 @@ class MainMenu(State):
 
     def update(self) -> None:
         """Called after the events have been parsed, calls the draw method."""
-        self.draw()
-
-    def draw(self) -> None:
-        """Called by update to display all visual elements of the menu, namely
-        the background and the main_menu object using its dedicated method.
-        """
-        self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 120, 0))
-        self.main_menu.draw_vertical_options()
-        self.control.screen.blit(
-            self.control.interface, self.control.interface_rect)
+        self.display.draw()

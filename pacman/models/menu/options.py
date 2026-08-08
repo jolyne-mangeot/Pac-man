@@ -45,6 +45,7 @@ class Option(ABC):
         self.container: dict[str, Any] = container
         self.selectable: bool = True
         self.pickable: bool = True
+        self.visible: bool = True
 
     def __str__(self) -> str:
         """Returns self.text formatted with the corresponding value from
@@ -57,10 +58,11 @@ class Option(ABC):
                 value=str(self.container.get(self.name)).replace("_", " "))
         return self.text
 
-    def get_texts(self) -> list[str]:
-        texts: list[str] = [self.text]
+    def get_texts(self, dialogs: dict[str, str]) -> list[str]:
+        texts: list[str] = [self.text.format(name=dialogs.get(self.name, ""))]
         if self.container.get(self.name, None) is not None:
-            texts.append(str(self.container.get(self.name)).replace("_", " "))
+            value_text: str = str(self.container.get(self.name))
+            texts.append(dialogs.get(value_text, value_text).replace("_", " "))
         return texts
 
     def activate(self) -> None:
@@ -111,6 +113,7 @@ class Spacer(Option):
         self.container: dict[str, Any] = {}
         self.selectable: bool = False
         self.pickable: bool = False
+        self.visible: bool = False
 
     def __str__(self) -> str:
         """Return an empty string. Override of Option to skip conditions."""
@@ -434,8 +437,8 @@ class InputOption(Option):
             return self.text.format(value=str(self.container.get(self.name)))
         return self.text
 
-    def get_texts(self) -> list[str]:
-        texts: list[str] = [self.text]
+    def get_texts(self, dialogs: dict[str, str]) -> list[str]:
+        texts: list[str] = [self.text.format(name=dialogs.get(self.name, ""))]
         if self.container.get(self.name, None) is not None:
             if str(self.container[self.name]) == "":
                 texts.append(str("_" * self.value_len))

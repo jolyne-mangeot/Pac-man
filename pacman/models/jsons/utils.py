@@ -87,7 +87,7 @@ class JSONCommentedDecoder(JSONDecoder):
     - decode (override) => Override of the decode method to modify the string
     read from the json file before it's parsed into a dictionary.
     """
-    def decode(self, s: str, _w: Callable[..., Any] = lambda: "") -> Any:
+    def decode(self, s: str, _: Callable[..., Any] = lambda: "") -> Any:
         """Override of the JSONDecoder method, taking in the same arguments
         given by json's module load function. Modify the s string to remove
         lines starting with "//" and "#" considered as comments.
@@ -98,7 +98,6 @@ class JSONCommentedDecoder(JSONDecoder):
             line.lstrip().startswith("//")
             or line.lstrip().startswith("#")
             ) else "" for line in s.split("\n"))
-        _w
         return super().decode(s)
 
 

@@ -1,0 +1,2 @@
+text_holder.png:
+	- Golden-UI by Buch on OpenGameArt: https://opengameart.org/users/buch

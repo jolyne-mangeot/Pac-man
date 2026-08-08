@@ -18,7 +18,8 @@ class Dialogs(JSONModel):
     quit: str = Field(default="Quit")
 
     lang: str = Field(default="Language")
-    res: str = Field(default="Resolution")
+    res: str = Field(default="Window")
+    fullscreen: str = Field(default="fullscreen")
     sfx_vol: str = Field(default="SFX volume")
     bgm_vol: str = Field(default="BGM volume")
     up_key: str = Field(default="up")

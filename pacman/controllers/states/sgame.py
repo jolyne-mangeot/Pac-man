@@ -4,7 +4,7 @@ import pygame as pg
 from pacman.controllers import Control, State
 
 
-class GameMenu(State):
+class GameMenuState(State):
     def __init__(self, control: Control) -> None:
         State.__init__(self, control)
         self.next = "main_menu"

@@ -4,16 +4,15 @@ from typing import Any
 
 import pygame as pg
 
-from pacman.controllers import (
-    Control, State,
-    Menu, Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
-    PlaceHolder, Style)
+from pacman.controllers import Control, State, Menu
 from pacman.models import (
-    model_to_json,
-    Dialogs, Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
+    model_to_json, Option,
+    Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
+    Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
+from pacman.views import OptionsMenuDisplay
 
 
-class OptionsMenu(State):
+class OptionsMenuState(State):
     """Class OptionsMenu, subclass of State
 
     Represents the settings menu of the game, initializing a Menu object to
@@ -55,6 +54,8 @@ class OptionsMenu(State):
         to hold the setting values that can be modified by the user.
         """
         State.__init__(self, control)
+        self.display: OptionsMenuDisplay = OptionsMenuDisplay(self.control)
+        self.display.load_main_menues()
         self.settings: dict[str, Any]
         self.options_menu: Menu
 
@@ -64,41 +65,33 @@ class OptionsMenu(State):
         elements from the dialogs dict of control.
         """
         self.settings = self.control.settings.model_dump()
-        dialogs: Dialogs = self.control.dialogs
-        self.options_menu = Menu(
-            self.control.interface, loop_cursor=False,
-            from_top=int(self.control.screen.get_height() / 10), options=[
-                SelectionOption(
-                    "lang", f"{dialogs.lang + " :"}",
-                    self.settings, [lang for lang in Languages]),
-                SelectionOption(
-                    "res", f"{dialogs.res + " :"}",
-                    self.settings, [res for res in Resolutions], cycle=False),
-                SliderOption(
-                    "sfx_vol", f"{dialogs.sfx_vol + " :"}",
-                    self.settings, range(0, 11), 0, 0, cycle=False),
-                SliderOption(
-                    "bgm_vol", f"{dialogs.bgm_vol + " :"}",
-                    self.settings, range(0, 11), 0, 0, cycle=False),
-                Spacer(), Spacer(), *[
-                    InputOption(
-                        key, f"{str(getattr(dialogs, key)) + " :"}",
-                        self.settings["key_config"], 1,
-                        False, True, False,
-                        excluded_input=["return", "escape", "backspace"]
-                    ) for key in ACTION_LIST],
-                Spacer(), Spacer(),
-                ActivateOption("reset_settings", dialogs.reset_settings,
-                               partial(self.reset_settings)),
-                ActivateOption("apply", dialogs.apply,
-                               partial(self.apply_settings)),
-                ActivateOption("back", dialogs.back,
-                               partial(self.switch_state, "main_menu"))],
-            place_holder=PlaceHolder([
-                Style(),
-                Style(font=pg.font.SysFont("Times New Roman", 22,
-                                           italic=True)),
-                Style(color=pg.Color(255, 0, 0))]))
+        options: list[Option] = [
+            SelectionOption(
+                "lang", "{name}:", self.settings,
+                [str(lang) for lang in Languages]),
+            SelectionOption(
+                "res", "{name}:", self.settings, cycle=False,
+                options=[res for res in Resolutions]),
+            SliderOption(
+                "sfx_vol", "{name}:",
+                self.settings, range(0, 11), 0, 0, cycle=False),
+            SliderOption(
+                "bgm_vol", "{name}:",
+                self.settings, range(0, 11), 0, 0, cycle=False),
+            Spacer(), Spacer(), *[
+                InputOption(
+                    key, "{name}:",
+                    self.settings["key_config"], 1, False, True, False,
+                    excluded_input=["return", "escape", "backspace"]
+                ) for key in ACTION_LIST],
+            Spacer(), Spacer(),
+            ActivateOption("reset_settings", "{name}",
+                           partial(self.reset_settings)),
+            ActivateOption("apply", "{name}", partial(self.apply_settings)),
+            ActivateOption("back", "{name}",
+                           partial(self.switch_state, "main_menu"))]
+
+        self.options_menu = Menu(loop_cursor=False, options=options)
 
     def reset_settings(self) -> None:
         """Updates the settings dict that's being modified by the user's inputs
@@ -108,7 +101,7 @@ class OptionsMenu(State):
         """
         self.settings["key_config"].update(KeyConfig().model_dump())
         self.settings.update(Settings().model_dump())
-        self.options_menu.pre_render_all_options()
+        self.display.menu_render.pre_render_all_options(self.control.dialogs)
 
     def apply_settings(self) -> None:
         """Updates the control's settings object with one made from the
@@ -130,11 +123,13 @@ class OptionsMenu(State):
         up with the settings.
         """
         self.__init_menu__()
+        self.display.startup(self.options_menu)
 
     def cleanup(self) -> None:
         """Called when the state is deactivated, deleting the options_menu and
         settings attributes to save on memory usage.
         """
+        self.display.cleanup()
         del self.options_menu
         del self.settings
 
@@ -158,16 +153,5 @@ class OptionsMenu(State):
         the options_menu object to keep up with the user's changes, then call
         the draw method.
         """
-        self.options_menu.pre_render_option()
-        self.draw()
-
-    def draw(self) -> None:
-        """Called by update to display all visual elements of the menu, namely
-        the background and the main_menu object using its dedicated method.
-        """
-        self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 255, 255))
-        self.options_menu.draw_chart_options(int(
-            self.control.interface.get_width() / 2))
-        self.control.screen.blit(
-            self.control.interface, self.control.interface_rect)
+        self.display.menu_render.pre_render_option(self.control.dialogs)
+        self.display.draw()

@@ -9,17 +9,7 @@ import pygame as pg
 from .utils import JSONModel
 
 
-class SettingsEnum(Enum):
-    """Enum class extended to override the str method to directly return
-    the entry's value."""
-    def __str__(self) -> str:
-        """Override of the Enum str method to return a string cast of the
-        entry's value.
-        """
-        return str(self.value)
-
-
-class Languages(SettingsEnum):
+class Languages(Enum):
     """Class Languages, subclass of SettingsEnum
 
     Contains the name of the language and its unique string indentification
@@ -33,11 +23,17 @@ class Languages(SettingsEnum):
     - ENGLISH: "en-en"
     - FRENCH: "fr-fr"
     """
+    def __str__(self) -> str:
+        """Override of the Enum str method to return a string cast of the
+        entry's value.
+        """
+        return str(self.value)
+
     ENGLISH = "en-en"
     FRENCH = "fr-fr"
 
 
-class Resolutions(SettingsEnum):
+class Resolutions(Enum):
     """Class Resolutions, subclass of SettingsEnum
 
     Contains names and numeric values for different window resolutions in the
@@ -52,6 +48,14 @@ class Resolutions(SettingsEnum):
     - TV: [1920, 1440]
     - FULLSCREEN: "fullscreen"
     """
+    def __str__(self) -> str:
+        """Override of the Enum str method to return a string cast of the
+        entry's value.
+        """
+        if isinstance(self.value, str):
+            return str(self.value)
+        return str(self.value[0]) + "x" + str(self.value[1])
+
     TINY = [640, 480]
     SMALL = [800, 600]
     MEDIUM = [1024, 768]
