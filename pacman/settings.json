@@ -1,11 +1,11 @@
 {
-    "lang": "fr-fr",
+    "lang": "en-en",
     "res": [
-        1440,
-        1080
+        1024,
+        768
     ],
-    "sfx_vol": 10,
-    "bgm_vol": 10,
+    "sfx_vol": 8,
+    "bgm_vol": 7,
     "haha": "",
     "key_config": {
         "up_key": "up",

@@ -57,6 +57,9 @@ class Display:
     methods common to multiple states to avoid repetitions.
     """
     def __init__(self, control: Control) -> None:
+        """Init method for all Display subclasses, takes a Control object to
+        add as attribute.
+        """
         self.control: Control = control
 
     def load_main_menues(self) -> None:
@@ -117,6 +120,11 @@ class Display:
             des_style, sel_style, pik_style])
 
     def init_menu(self, menu: Menu, from_top: int = -1) -> None:
+        """Method instantiating a MenuRender object and taking it as attribute.
+        Pre-enter the control's interface and dialogs, the display's place
+        holder and inserts the arguments menu and from_top, which is the only
+        changing parameter between different calls.
+        """
         self.menu_render: MenuRender = MenuRender(
             self.control.interface, menu, from_top=from_top,
             holder=self.place_holder, dialogs=self.control.dialogs)

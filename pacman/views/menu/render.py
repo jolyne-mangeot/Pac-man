@@ -41,6 +41,13 @@ class MenuRender:
             self, screen: pg.Surface, menu: Menu, dialogs: dict[str, str],
             from_left: int = -1, from_top: int = -1, spacer: int = -1,
             holder: PlaceHolder = PlaceHolder()) -> None:
+        """Initializing method for MenuRender objects. Takes a pygame Surface,
+        a dialogs dictionary and visual margins, as well as a PlaceHolder
+        object to display options.
+
+        from_left, from_top and spacer are defaulted to -1 and the holder to
+        PlaceHolder().
+        """
         self.screen: pg.Surface = screen
         self.menu: Menu = menu
         self.holder: PlaceHolder = holder
