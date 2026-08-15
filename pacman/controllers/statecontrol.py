@@ -8,6 +8,7 @@ from pacman.models import Settings, KeyConfig, Config, Dialogs, json_to_model
 
 
 pg.init()
+pg.mixer.init(channels=4)
 
 
 class Control:
@@ -32,6 +33,10 @@ class Control:
     useful to keep the right resolution in fullscreen mode
     - interface_rect: pg.Rect => contains set coordinates to display the
     interface
+    - bgm_channel: pg.mixer.Channel => sound channels used by pygame to play
+    background music
+    - sfx_channel: pg.mixer.Channel => sound channels used by pygame to play
+    sound effects
     - clock: pg.time.Clock => time reference to calcultate delta_time and
     adapt all timed events to accustom to latency issues
     - delta_time: float => time passed between two run of the game loop for
@@ -79,6 +84,10 @@ class Control:
         self.interface_rect: pg.Rect = self.interface.get_rect()
         self.update_display()
         self.screen_rect: pg.Rect = self.screen.get_rect()
+        self.bgm_channel: pg.mixer.Channel = pg.mixer.Channel(0)
+        self.bgm_channel.set_volume(self.settings.bgm_vol / 10)
+        self.sfx_channel: pg.mixer.Channel = pg.mixer.Channel(1)
+        self.sfx_channel.set_volume(self.settings.sfx_vol / 10)
 
         self.clock: pg.time.Clock = pg.time.Clock()
         self.delta_time: float
@@ -119,13 +128,16 @@ class Control:
         """Updates Dialogs and screen attributes with updated settings.
 
         Calls json_to_model function again on Dialogs to reload them from
-        file, update_display method to accord to new resolution settings.
+        file, update_display method to accord to new resolution settings and
+        set new volumes for the sfx and bgm sound channels.
         """
         self.dialogs = cast(dict[str, str], json_to_model(
             Dialogs,
             "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
             ).model_dump())
         self.update_display()
+        self.bgm_channel.set_volume(self.settings.bgm_vol / 10)
+        self.sfx_channel.set_volume(self.settings.sfx_vol / 10)
         self.screen_rect = self.screen.get_rect()
 
     def set_up_states(self, state_dict: dict[str, State]) -> None:

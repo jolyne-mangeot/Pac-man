@@ -69,12 +69,27 @@ class Display:
         Loads:
         - Sprites for the buttons from a sprite sheet as they can be rescaled
         as many times as needed, reducing file access
+        - Sounds for the buttons navigation and other actions like the program
+        ending
         """
         sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/interface/text_holder.png")
         self.deselect_hold: pg.Surface = sheet.get_sprite((60, 0), (122, 28))
         self.select_hold: pg.Surface = sheet.get_sprite((0, 0), (122, 28))
         self.picked_hold: pg.Surface = sheet.get_sprite((30, 0), (122, 28))
+        self.sounds: dict[str, pg.mixer.Sound] = {
+            "cursor_pick": pg.mixer.Sound("pacman/assets/sfx/ui/Confirm.wav"),
+            "cursor_unpick": pg.mixer.Sound("pacman/assets/sfx/ui/Close.wav"),
+            "cursor_move": pg.mixer.Sound("pacman/assets/sfx/ui/Cursor.wav"),
+            "option_update": pg.mixer.Sound("pacman/assets/sfx/ui/Open.wav"),
+            "option_activate": pg.mixer.Sound(
+                "pacman/assets/sfx/ui/Purchase.wav"),
+            "option_input_write": pg.mixer.Sound(
+                "pacman/assets/sfx/ui/Confirm.wav"),
+            "option_input_erase": pg.mixer.Sound(
+                "pacman/assets/sfx/ui/Close.wav"),
+            "program_quit": pg.mixer.Sound("pacman/assets/sfx/ui/Equip.wav")
+        }
 
     def scale_holders(
             self, holder_size_factor: tuple[float, float],
@@ -128,3 +143,10 @@ class Display:
         self.menu_render: MenuRender = MenuRender(
             self.control.interface, menu, from_top=from_top,
             holder=self.place_holder, dialogs=self.control.dialogs)
+
+    def mixer(self, action: str) -> None:
+        """Plays a sound from the sounds dict attribute if the given action
+        exists in the sfx control channel.
+        """
+        if self.sounds.get(action, None) is not None:
+            self.control.sfx_channel.play(self.sounds[action])

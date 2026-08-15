@@ -86,7 +86,7 @@ class OptionsMenuState(State):
                 ) for key in ACTION_LIST],
             Spacer(), Spacer(),
             ActivateOption("reset_settings", "{name}",
-                           partial(self.reset_settings)),
+                           partial(self.reset_settings), "option_update"),
             ActivateOption("apply", "{name}", partial(self.apply_settings)),
             ActivateOption("back", "{name}",
                            partial(self.switch_state, "main_menu"))]
@@ -117,6 +117,7 @@ class OptionsMenuState(State):
         self.cleanup()
         self.control.update_options()
         self.startup()
+        self.display.mixer("option_activate")
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options
@@ -129,6 +130,7 @@ class OptionsMenuState(State):
         """Called when the state is deactivated, deleting the options_menu and
         settings attributes to save on memory usage.
         """
+        self.display.mixer("cursor_unpick")
         self.display.cleanup()
         del self.options_menu
         del self.settings
@@ -144,14 +146,17 @@ class OptionsMenuState(State):
         return_key: str = self.control.settings.key_config.return_key
         if (self.options_menu.picked_index == -1 and event.type == pg.KEYDOWN
                 and pg.key.name(event.key) == return_key):
-            return self.switch_state("main_menu")
+            self.switch_state("main_menu")
+            return
         self.options_menu.get_event(
             self.control.settings.key_config, event, "chart")
 
     def update(self) -> None:
         """Called after the events have been parsed, rerender all options in
         the options_menu object to keep up with the user's changes, then call
-        the draw method.
+        the draw and mixer Display methods.
         """
         self.display.menu_render.pre_render_option(self.control.dialogs)
+        self.display.mixer(self.options_menu.action_done)
         self.display.draw()
+        self.options_menu.action_done = ""

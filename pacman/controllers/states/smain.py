@@ -1,5 +1,6 @@
 
 from functools import partial
+from typing import Any
 
 import pygame as pg
 
@@ -56,8 +57,7 @@ class MainMenuState(State):
             ActivateOption(
                 "settings", "{name}",
                 partial(self.switch_state, "options_menu")),
-            ActivateOption(
-                "quit", "{name}", partial(self.switch_state, "quit"))])
+            ActivateOption("quit", "{name}", partial(lambda: "program_quit"))])
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options
@@ -70,23 +70,32 @@ class MainMenuState(State):
         """Called when the state is deactivated, deleting the main_menu
         attribute to save on memory usage.
         """
+        self.display.mixer("option_activate")
         del self.main_menu
         self.display.cleanup()
 
     def get_event(self, event: pg.event.Event) -> None:
         """Takes a pygame Event object as argument.
 
-        Checks if the return_key was pressed by comparing the event with the
-        key_config from State attributes to leave the game, and otherwise
-        pass the event object down to the main_menu by calling its input_event
-        method.
+        Pass the event object down to the main_menu by calling its input_event
+        method. If it returns "program_quit" or the return key is pressed,
+        switches the current state to "quit", effectively leaving the program.
         """
         return_key: str = self.control.settings.key_config.return_key
-        if event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key:
-            return self.switch_state("quit")
-        self.main_menu.get_event(
+        output: Any = self.main_menu.get_event(
             self.control.settings.key_config, event, "vertical")
+        if (event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key
+                or output == "program_quit"):
+            self.display.mixer("program_quit")
+            pg.time.delay(240)
+            self.switch_state("quit")
+            return
 
     def update(self) -> None:
-        """Called after the events have been parsed, calls the draw method."""
+        """Called after the events have been parsed, calls the draw and mixer
+        Display methods. Updates the menu's current action to an empty string
+        to avoid sound repetitions.
+        """
+        self.display.mixer(self.main_menu.action_done)
         self.display.draw()
+        self.main_menu.action_done = ""

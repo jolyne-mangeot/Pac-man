@@ -42,12 +42,8 @@ class Menu:
     further inputs
     - last_picked: int => index of the last picked option to update its render
     after it's been interacted with
-    - rendered: dict[str, list[tuple[pg.Surface, pg.Rect]]] => options rendered
-    as pygame Surfaces, saving their font, size, style and color for later
-    display.
-    - renders: list[tuple[pg.Surface, pg.Rect]] => list made to contain the
-    render of each option to be iterated over, with the renders of the selected
-    and picked options placed in.
+    - action_done: str => string containing various key words used to check
+    which action has been done during the get_event method (ex. "cursor_move")
 
     ### Methods:
     <u>Event handling:</u>
@@ -78,10 +74,21 @@ class Menu:
         self.select_index: int = 0
         self.picked_index: int = -1
         self.last_picked: int = -1
+        self.action_done: str = ""
 
     # _________________________________________________________________________
     #                           Events-related Methods
     # _________________________________________________________________________
+    def unpick_option(self) -> None:
+        """Called to deactivate a picked option. Calls its deactivate method,
+        update the last_picked index with the picked_index that's later reset
+        to -1, and action_done is set to "cursor_unpick".
+        """
+        self.options[self.picked_index].deactivate()
+        self.last_picked = self.picked_index
+        self.picked_index = -1
+        self.action_done = "cursor_unpick"
+
     def get_event(self, key_config: KeyConfig,
                   event: pg.event.Event, arrangement: str) -> Any:
         """Takes a key_config, a pygame event and an arrangement as arguments.
@@ -93,11 +100,12 @@ class Menu:
         the option needs it, or a named key, then translated into an action
         key based on the key_config. When done, if the confirm_key or
         return_key was pressed, either activate or deactivate the option by
-        calling its dedicated methods, and reinitialize the picked_index to -1.
+        calling its dedicated methods, and the unpick_method if needed.
 
         Otherwise, pass down the event strings to the picked option by
         calling its input_event method, and recovering its output. If it's
-        "action_done", deactivate it, and otherwise return it.
+        "action_done", deactivate it, and otherwise return this output. If
+        action_done remained as an empty string, updates it with the output.
 
         Finally, if no option was picked and the input in different from
         confirm and return, the method to move the cursor based on the given
@@ -106,6 +114,7 @@ class Menu:
         Returns Any as options input_event method can also do.
         """
         curr_option: Option = self.options[self.select_index]
+        self.action_done = ""
         named_key: str = ""
         text_input: str = ""
         if event.type == pg.TEXTINPUT:
@@ -120,26 +129,24 @@ class Menu:
                 self.picked_index = self.select_index
                 self.last_picked = -1
                 self.options[self.picked_index].activate()
+                self.action_done = "cursor_pick"
                 action_key = "activate"
             else:
-                self.options[self.picked_index].deactivate()
-                self.last_picked = self.picked_index
-                self.picked_index = -1
+                self.unpick_option()
         if action_key == "return_key" and self.picked_index != -1:
-            self.options[self.picked_index].deactivate()
-            self.last_picked = self.picked_index
-            self.picked_index = -1
+            self.unpick_option()
         if self.picked_index != -1:
             output: str = curr_option.input_event(
                 action_key, named_key, text_input)
             if curr_option.pickable is False:
+                self.action_done = ""
                 self.picked_index = -1
             if output == "action_done":
-                self.options[self.picked_index].deactivate()
-                self.last_picked = self.picked_index
-                self.picked_index = -1
+                self.unpick_option()
                 return
             else:
+                if self.action_done == "":
+                    self.action_done = output
                 return output
         {
             "horizontal": self.get_event_horizontal,
@@ -188,11 +195,15 @@ class Menu:
     def move_cursor(self, operant: int) -> None:
         """Updates the selected index with the change_selected_option method
         until the currently held option can be selected, by its selectable
-        attribute.
+        attribute. Checks if the select_index attribute has effectively
+        changed, and if so, set action_done to "cursor_move"
         """
+        index: int = self.select_index
         self.change_selected_option(operant)
         while self.options[self.select_index].selectable is False:
             self.change_selected_option(operant)
+        if self.select_index != index:
+            self.action_done = "cursor_move"
 
     def change_selected_option(self, operant: int) -> None:
         """Modifies the select_index with the operant given as argument, and

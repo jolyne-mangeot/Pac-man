@@ -134,6 +134,8 @@ class ActivateOption(Option):
     - *Option instance parameters and attributes*
     - exec: partial[Any] (parameter) => function to execute when input_event
     is called with "activate" as argument
+    - custom_return: Any => If not None, returned instead of the exec function
+    after its executed
     - pickable: bool => Pickable set to False not to be picked by Menu objects
 
     ### Methods:
@@ -143,18 +145,26 @@ class ActivateOption(Option):
     """
     def __init__(
             self, name: str, text: str,
-            exec: partial[Any] = partial(lambda: "")) -> None:
+            exec: partial[Any] = partial(lambda: ""),
+            custom_return: Any = None) -> None:
         """Initializes ActivateOption attributes with the given parameters and
         Option.__init__.
         """
         Option.__init__(self, name, text)
         self.exec: partial[Any] = exec
+        self.custom_return: Any = custom_return
         self.pickable: bool = False
 
     def input_event(self, action_key: str, _: str, __: str) -> Any:
-        """If action_key is "activate", returns the execution of self.exec."""
+        """If action_key is "activate", return the execution of self.exec if
+        custom_return is None, otherwise return it.
+        """
         if action_key == "activate":
-            return self.exec()
+            if self.custom_return is None:
+                return self.exec()
+            else:
+                self.exec()
+                return self.custom_return
 
 
 class ToggleOption(Option):
@@ -189,9 +199,12 @@ class ToggleOption(Option):
             self.container[self.name] = "True"
 
     def input_event(self, action_key: str, _: str, __: str) -> Any:
-        """If action_key is "activate", calls self.toggle."""
+        """If action_key is "activate", call self.toggle and return
+        "option_activate".
+        """
         if action_key == "activate":
             self.toggle()
+            return "option_activate"
 
 
 class SliderOption(Option):
@@ -254,7 +267,7 @@ class SliderOption(Option):
         """Calls update_values with the correct factor depending on the
         direction action (up_key, down_key, left and right). If the
         action argument doesn't correspond to any valid direction, returns
-        None.
+        None. Otherwise, returns "option_update".
         """
         factors: dict[str, int] = {
             "up_key": self.up_factor,
@@ -264,6 +277,7 @@ class SliderOption(Option):
         if factors.get(action_key, 0) == 0:
             return
         self.update_value(factors.get(action_key, 0))
+        return "option_update"
 
 
 class SelectionOption(Option):
@@ -334,6 +348,7 @@ class SelectionOption(Option):
         """Calls self.update_selection with the factor corresponding to the
         direction action_key given as argument ("up_key", "down_key", etc.).
         If the action doesn't correspond to a direction, does nothing.
+        Otherwise, returns "option_update"
         """
         factors: dict[str, int] = {
             "up_key": self.up_factor,
@@ -343,6 +358,7 @@ class SelectionOption(Option):
         if factors.get(action_key, 0) == 0:
             return
         self.update_selection(factors.get(action_key, 0))
+        return "option_update"
 
 
 class InputOption(Option):
@@ -499,9 +515,11 @@ class InputOption(Option):
             if (self.input_require_return is False
                     and len(self.container[self.name]) >= self.value_len):
                 return "action_done"
+            return "option_input_write"
         elif (named_key == "backspace" or action_key == "return_key"
                 and len(self.container[self.name]) > 0):
             self.container[self.name] = self.container[self.name][:-1]
+            return "option_input_erase"
         return ""
 
     def handle_text_input(self, named_key: str, text_input: str) -> str:
@@ -520,11 +538,13 @@ class InputOption(Option):
         if named_key == "backspace":
             if len(self.container[self.name]) > 0:
                 self.container[self.name] = self.container[self.name][:-1]
+                return "option_input_erase"
         elif self.is_input_valid(text_input):
             self.container[self.name] += text_input
             if (self.input_require_return is False
                     and len(self.container[self.name]) >= self.value_len):
                 return "action_done"
+            return "option_input_write"
         return ""
 
     def input_event(
