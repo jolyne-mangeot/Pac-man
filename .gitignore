@@ -7,9 +7,10 @@
 venv/*
 
 # project related files
-**/test.py
 **/tmp
 **/dist
+*.zip
+*.whl
 
 # vscode related folders
 **/.vscode
