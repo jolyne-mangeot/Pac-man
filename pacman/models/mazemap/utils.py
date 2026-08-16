@@ -47,22 +47,11 @@ def maze_interface(width: int, height: int, seed: int) -> list[list[Cell]]:
     Returns an array of Cell instances, each containing its coordinates and
     information about its walls.
     """
-    maze = MazeGenerator(size=(width, height), seed=seed)
+    maze = MazeGenerator(size=(width, height), seed=seed, entry_cell=(0, 0), exit_cell=(0, 0))
     grid = maze.maze
-    print(grid)
     cells_list: list[list[Cell]] = []
     for x in range(width):
         cells_list.append([])
         for y in range(height):
             cells_list[x].append(Cell(coordinates=(x, y), walls=grid[y][x]))
     return cells_list
-
-
-if __name__ == "__main__":
-    """Test the maze_interface() function to formats the grid made by
-    mazegenerator."""
-    grid_test = maze_interface(15, 15, 42)
-    for x in range(len(grid_test)):
-            for y in range(len(grid_test[0])):
-                print(grid_test[x][y].coordinates)
-                print(grid_test[x][y].walls)

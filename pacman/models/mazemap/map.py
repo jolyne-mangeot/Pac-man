@@ -2,18 +2,19 @@
 
 ### Date: 2026-08-06
 
-### Description: This module contains the `map` class, which manages the
-# distribution of `gum` and `super_gum` across the grid.
+### Description: This module contains the `Map` class, which manages the
+distribution of `gum` and `super_gum` across the grid. A main is here to test
+the display of the grid in ASCII char.
 
 ### Classes:
 - Map
 """
 from random import shuffle
 
-from utils import maze_interface, Cell, CellCoordinates
+from .utils import maze_interface, Cell
 
 
-class Map:
+class Map: 
     """Class Map
 
     The Map of Pacman is instancied here. Contains the matrix of cell and
@@ -32,12 +33,12 @@ class Map:
     - super_gum_placement()
     - simple_gum_placement()
     """
-    def __init__(self, map_config: dict[str, int]) -> None:
+    def __init__(self, width: int, height: int, gum_percent: int, seed: int) -> None:
         """Initialises the attributes of the Map instance."""
-        self.width: int = map_config["width"]
-        self.height: int = map_config["height"]
-        self.gum_percent: int = map_config["gum_percent"]
-        self.seed: int = map_config["seed"]
+        self.width: int = width
+        self.height: int = height
+        self.gum_percent: int = gum_percent
+        self.seed: int = seed
         self.map: list[list[Cell]] = maze_interface(self.width, self.height, self.seed)
 
     def __repr__(self):
@@ -95,13 +96,3 @@ class Map:
         shuffle(available_cells)
         for cell in available_cells[:nb_simple_gum]:
             cell.simple_gum = True
-
-
-if __name__ == "__main__":
-    """Test the map display : maze and gum placement with ASCII char."""
-    map_config_test: dict[str, int] = {"width": 15, "height": 15, "seed": 42,
-                                       "gum_percent": 80}
-    map_test: Map = Map(map_config_test)
-    map_test.super_gum_placement()
-    map_test.simple_gum_placement()
-    print(map_test)
