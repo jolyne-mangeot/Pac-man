@@ -249,6 +249,30 @@ class State(ABC):
         self.next = new_state
         self.done = True
 
+    def read_input_events(self, event: pg.event.Event) -> tuple[str, str, str]:
+        named_key: str = ""
+        text_input: str = ""
+        if event.type == pg.TEXTINPUT:
+            text_input = event.text
+        elif event.type == pg.KEYDOWN:
+            named_key = pg.key.name(event.key)
+        action_key: str = self.key_unicode_to_action(named_key)
+        return (named_key, action_key, text_input)
+
+    def key_unicode_to_action(self, input: str) -> str:
+        """Takes a KeyConfig object and an input as string in arguments.
+
+        Checks in the KeyConfig, which contains duos of pygame keys with their
+        action, to find what action corresponds to the input key. Does so by
+        looping on items in the dict version of the KeyConfig object by the
+        model_dump BaseModel method.
+        """
+        for action, key in self.control.settings.key_config.model_dump(
+                exclude={"file_name"}).items():
+            if key == input:
+                return action
+        return ""
+
     @abstractmethod
     def startup(self) -> None:
         """Called by control when the state is waken to initialize all needed

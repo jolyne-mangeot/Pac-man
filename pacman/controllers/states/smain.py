@@ -83,7 +83,7 @@ class MainMenuState(State):
         """
         return_key: str = self.control.settings.key_config.return_key
         output: Any = self.main_menu.get_event(
-            self.control.settings.key_config, event, "vertical")
+            *self.read_input_events(event), "vertical")
         if (event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key
                 or output == "program_quit"):
             self.display.mixer("program_quit")

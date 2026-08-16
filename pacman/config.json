@@ -8,6 +8,7 @@
 			"maze": {
 				"width": 15,
 				"height": 15,
+				"gum_percent": 80,
 				"seed": 68771
 			},
 			"gameplay": {

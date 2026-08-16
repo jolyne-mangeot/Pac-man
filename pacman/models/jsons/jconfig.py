@@ -15,6 +15,7 @@ class PlayerConfig(JSONModel):
 class MazeConfig(JSONModel):
     width: int = Field(ge=15, le=100, default=10)
     height: int = Field(ge=15, le=100, default=10)
+    gum_percent: int = Field(ge=0, le=100, default=80)
     seed: int = Field(ge=0, default_factory=lambda: randint(0, 10000000))
 
 

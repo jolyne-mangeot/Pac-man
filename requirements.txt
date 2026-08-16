@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 pygame-ce
 pydantic
 mypy
 setuptools
-=======
-pygame
-pydantic
-mypy
->>>>>>> entity_map
 types-setuptools

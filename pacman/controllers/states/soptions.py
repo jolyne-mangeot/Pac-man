@@ -149,7 +149,7 @@ class OptionsMenuState(State):
             self.switch_state("main_menu")
             return
         self.options_menu.get_event(
-            self.control.settings.key_config, event, "chart")
+            *self.read_input_events(event), "chart")
 
     def update(self) -> None:
         """Called after the events have been parsed, rerender all options in

@@ -45,8 +45,11 @@ class GameState(State):
         pass
 
     def get_event(self, event: pg.event.Event) -> None:
+        action_input: str = ""
         if event.type == pg.KEYDOWN:
+            action_input = self.key_unicode_to_action(pg.key.name(event.key))
             self.done = True
+        self.current_level.get_event(event, action_input)
 
     def update(self) -> None:
         self.draw()

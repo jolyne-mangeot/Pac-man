@@ -1,23 +1,7 @@
 
 from typing import Any
 
-import pygame as pg
-
-from pacman.models import KeyConfig, Option
-
-
-def key_unicode_to_action(key_config: KeyConfig, input: str) -> str:
-    """Takes a KeyConfig object and an input as string in arguments.
-
-    Checks in the KeyConfig, which contains duos of pygame keys with their
-    action, to find what action corresponds to the input key. Does so by
-    looping on items in the dict version of the KeyConfig object by the
-    model_dump BaseModel method.
-    """
-    for action, key in key_config.model_dump(exclude={"file_name"}).items():
-        if key == input:
-            return action
-    return ""
+from pacman.models import Option
 
 
 class Menu:
@@ -89,8 +73,8 @@ class Menu:
         self.picked_index = -1
         self.action_done = "cursor_unpick"
 
-    def get_event(self, key_config: KeyConfig,
-                  event: pg.event.Event, arrangement: str) -> Any:
+    def get_event(self, named_key: str, action_key: str, text_input: str,
+                  arrangement: str) -> Any:
         """Takes a key_config, a pygame event and an arrangement as arguments.
 
         Using the currently selected option, which can also be the picked
@@ -115,15 +99,6 @@ class Menu:
         """
         curr_option: Option = self.options[self.select_index]
         self.action_done = ""
-        named_key: str = ""
-        text_input: str = ""
-        if event.type == pg.TEXTINPUT:
-            text_input = event.text
-        elif event.type == pg.KEYDOWN:
-            named_key = pg.key.name(event.key)
-        else:
-            return
-        action_key: str = key_unicode_to_action(key_config, named_key)
         if action_key == "confirm_key":
             if self.picked_index == -1:
                 self.picked_index = self.select_index

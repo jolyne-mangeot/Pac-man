@@ -8,6 +8,8 @@ from .menu import (
     Option, Spacer, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
+from .mazemap import Map
+
 from .level import Level
 
 
@@ -19,4 +21,4 @@ __all__ = [
     "Option", "Spacer", "InputOption", "SliderOption", "ActivateOption",
     "SelectionOption", "ToggleOption",
 
-    "Level"]
+    "Map", "Level"]
