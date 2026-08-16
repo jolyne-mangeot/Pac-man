@@ -1,2 +1,60 @@
 {
+	"player": {
+		"lives_count": 3,
+		"cheats_allowed": false
+	},
+	"levels": [
+		{
+			"maze": {
+				"width": 15,
+				"height": 15,
+				"seed": 68771
+			},
+			"gameplay": {
+				"timer": 90,
+				"life_regen": 0,
+				"super_duration": 8,
+				"pac_man_speed": 3,
+				"sup_pac_man_speed": 4,
+				"ghosts": {
+					"Blinky": {
+						"move_strat": "chase",
+						"sup_move_strat": "run",
+						"speed": 3,
+						"sup_speed": 3,
+						"down_time": 3
+					},
+					"Pinky": {
+						"move_strat": "chase",
+						"sup_move_strat": "run",
+						"speed": 3,
+						"sup_speed": 3,
+						"down_time": 3
+					},
+					"Inky": {
+						"move_strat": "chase",
+						"sup_move_strat": "run",
+						"speed": 3,
+						"sup_speed": 3,
+						"down_time": 3
+					},
+					"Clyde": {
+						"move_strat": "chase",
+						"sup_move_strat": "run",
+						"speed": 3,
+						"sup_speed": 3,
+						"down_time": 3
+					}
+				}
+			},
+			"scores": {
+				"gum": 5,
+				"sup_gum": 10,
+				"ghost": 50,
+				"level": 250
+			}
+		},
+		{},
+		{}
+	]
 }

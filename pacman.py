@@ -3,7 +3,7 @@ import pygame as pg
 
 from pacman import (
     Control, State,
-    MainMenuState, OptionsMenuState, GameMenuState)
+    MainMenuState, OptionsMenuState, GameState)
 
 
 def main() -> int:
@@ -22,7 +22,7 @@ def main() -> int:
     state_dict: dict[str, State] = {
         "main_menu": MainMenuState(game),
         "options_menu": OptionsMenuState(game),
-        "game_menu": GameMenuState(game)}
+        "game_menu": GameState(game)}
 
     game.set_up_states(state_dict)
 
