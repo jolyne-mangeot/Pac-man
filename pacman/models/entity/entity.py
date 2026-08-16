@@ -21,7 +21,7 @@ from enum import IntEnum
 
 class Direction(IntEnum):
     """Class Direction (IntEnum)
-    - NONE = O
+    - NONE = 0
     - UP = 1
     - RIGHT = 2
     - DOWN = 4
@@ -95,28 +95,7 @@ class Pacman(Entity):
     def move():
          """"""
 
-    def eat_pacgum():
-        """"""
-
-    def eat_super_pacgum():
-        """"""
-
-    def fight_ghost():
-        """"""
-
-    def lose_life():
-        """"""
-
-    def activate_super_mode():
-        """"""
-
-    def deactivate_super_mode():
-        """"""
-
     def get_user_input():
-        """"""
-
-    def respawn():
         """"""
 
 
