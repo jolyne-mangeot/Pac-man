@@ -27,6 +27,8 @@ class Cell:
     ### Attributes:
     - coordinates: CellCoordinates
     - walls: int
+    - super_gum: bool
+    - simple_gum: bool
 
     ### Methods:
     - init()
