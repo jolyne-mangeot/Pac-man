@@ -37,6 +37,7 @@ class GameState(State):
         self.player.regen_life(
             self.control.config.levels[self.level_index].gameplay.life_regen)
         self.current_level = Level(
+            self.player.lives,
             self.control.config.levels[self.level_index].maze,
             self.control.config.levels[self.level_index].gameplay,
             self.control.config.levels[self.level_index].scores)
