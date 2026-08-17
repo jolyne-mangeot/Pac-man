@@ -10,28 +10,39 @@ pacman game.
 - Ghost(Entity)
 
 #### Enums:
-
-#### Errors raised:
-
+- Directions(IntEnum)
 """
 
-from abc import ABC, abstractmethod
-from enum import IntEnum
+from abc import ABC
+from enum import IntEnum, Enum
 
 
-class Direction(IntEnum):
+class Directions(IntEnum):
     """Class Direction (IntEnum)
-    - NONE = 0
     - UP = 1
     - RIGHT = 2
     - DOWN = 4
     - LEFT = 8
+    - NONE = 15
     """
-    NONE = 0
     UP = 1
     RIGHT = 2
     DOWN = 4
     LEFT = 8
+    NONE = 15
+
+
+class Movements(Enum):
+    """Class Movements.
+    - NORTH = (0, -1)
+    - EAST = (+1, 0)
+    - SOUTH = (0, +1)
+    - WEST = (-1, 0)
+    """
+    UP = (0, -1)
+    RIGHT = (+1, 0)
+    DOWN = (0, +1)
+    LEFT = (-1, 0)
  
 
 class Entity(ABC):
@@ -42,9 +53,8 @@ class Entity(ABC):
     - super_speed: int
     - initial_position: tuple[int, int]
     - position: tuple[int, int]
-    - direction: Direction
+    - direction: Directions
     - is_alive: bool
-    - pacman_super: bool
 
     Methods:
     - respaw(self) -> None
@@ -58,9 +68,8 @@ class Entity(ABC):
         self.super_speed: int = super_speed
         self.initial_position: tuple[int, int] = initial_pos
         self.position: tuple[int, int] = initial_pos
-        self.direction: Direction = Direction.NONE
+        self.direction: Directions = Directions.NONE
         self.is_alive: bool = True
-        self.pacman_super: bool = False
 
     def respawn(self) -> None:
         """Put the entity back to its initial position."""
@@ -75,60 +84,75 @@ class Pacman(Entity):
     - super_speed: int
     - initial_position: tuple[int, int]
     - position: tuple[int, int]
-    - direction: Direction
+    - direction: Directions
     - is_alive: bool
+    - next_direction: Directions
     - pacman_super: bool
-    - next_direction: Direction
 
     Methods:
-    - move(self) -> None
+    - move(self, wall_in_actual_cell: int) -> None
+    - update_user_input(self, user_input: str) -> None
 
     Description:
     """
 
     def __init__(self, speed: int, super_speed: int,
                  initial_pos: tuple[int, int]):
-            """Initialises the attributes of the Entity instance."""
-            super().__init__(speed, super_speed, initial_pos)
-            self.next_direction: Direction = Direction.NONE
+        """Initialises the attributes of the Entity instance."""
+        super().__init__(speed, super_speed, initial_pos)
+        self.next_direction: Directions = Directions.UP
+        self.pacman_super: bool = False
 
-    def move():
-         """"""
+    def move(self, walls_in_actual_cell: int) -> None:
+        """Manage Pacman movement. If the wall in 'next_direction" is open,
+        pacman move in that direction and 'direction' became 'next_direction'.
+        If not, pacman move in his initial direction if possible. If not,
+        'direction' become None.
+        """
+        if self.direction != self.next_direction:
+            if not (walls_in_actual_cell & (self.next_direction.value)):
+                self.direction = self.next_direction
+        if walls_in_actual_cell & (self.direction.value):
+            self.direction = Directions.NONE
+            return
+        self.position = (
+            self.position[0] + Movements[self.direction.name].value[0],
+            self.position[1] + Movements[self.direction.name].value[1])
 
-    def get_user_input():
-        """"""
+    def update_user_input(self, user_input: str) -> None:
+        """Manage the update of next_direction depending on the user input."""
+        if user_input == "up_key":
+            self.next_direction = Directions.UP
+        elif user_input == "down_key":
+            self.next_direction = Directions.DOWN
+        elif user_input == "right_key":
+            self.next_direction = Directions.RIGHT
+        elif user_input == "left_key":
+            self.next_direction = Directions.LEFT
 
 
 class Ghost(Entity):
     """Class Ghost, heriting from Entity.
     
     Atributes:
+    - speed: int
+    - super_speed: int
+    - initial_position: tuple[int, int]
+    - position: tuple[int, int]
+    - is_alive: bool
+    - move_strat: str
+    - super_move_strat: str
+    - down_time: int
 
     Methods:
 
     Description:
     """
-    def __init__(self, position: tuple[int, int], initial_position:
-                     tuple[int, int], direction: Direction, next_direction:
-                     Direction, speed: int, alive: bool, can_moove: bool,
-                     strategy: GhostStrategy, state: GhostState, appearance:
-                     str, target: tuple[int, int], escape_speed: int):
-                """Initialises the attributes of the Entity instance."""
-                super().__init__(position, initial_position, direction,
-                                 next_direction, speed, alive, can_moove)
+    def __init__(self, speed: int, super_speed: int,
+                     initial_pos: tuple[int, int]):
+        """Initialises the attributes of the Entity instance."""
+        super().__init__(speed, super_speed, initial_pos)
+        self.move_strat: str = "chase"
+        self.super_move_strat: str = "run"
+        self.down_time: int = 3
 
-    
-    def move():
-         """"""
-
-    def respawn():
-         """"""
-
-    def set_strategy():
-         """"""
-
-    def set_state():
-         """"""
-
-    def update_target():
-         """"""

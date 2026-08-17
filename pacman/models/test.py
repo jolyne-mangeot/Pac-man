@@ -46,6 +46,3 @@ if __name__ == "__main__":
     map_test.simple_gum_placement()
     pacman_test: Pacman = Pacman(4, 6, (((map_test.width - 1) // 2), ((map_test.height - 1) // 2)))
     display_maze(map_test, pacman_test)
-    print("Pacman_speed: ", pacman_test.speed)
-    print("Pacman_super_speed: ", pacman_test.super_speed)
-    print("Pacman_initial_pos: ", pacman_test.initial_position)
