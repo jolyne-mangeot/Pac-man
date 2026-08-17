@@ -1,4 +1,4 @@
-"""### File: /pacman/models/map/map.py
+"""### File: /pacman/models/mazemap/map.py
 
 ### Date: 2026-08-06
 

@@ -15,9 +15,6 @@ class is declared here.
 from mazegenerator import MazeGenerator
 
 
-CellCoordinates = tuple[int, int]
-
-
 class Cell:
     """Class Cell
 
@@ -33,9 +30,9 @@ class Cell:
     ### Methods:
     - init()
     """
-    def __init__(self, coordinates: CellCoordinates, walls: int) -> None:
+    def __init__(self, coordinates: tuple[int, int], walls: int) -> None:
         """Initialises the attributes of the Cell instance."""
-        self.coordinates: CellCoordinates = coordinates
+        self.coordinates: tuple[int, int] = coordinates
         self.walls: int = walls
         self.super_gum: bool = False
         self.simple_gum: bool = False

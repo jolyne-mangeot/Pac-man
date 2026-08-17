@@ -11,11 +11,13 @@ pacman game.
 
 #### Enums:
 - Directions(IntEnum)
+- Movements(Enum)
 """
-
 from abc import ABC
 from enum import IntEnum, Enum
 
+from .strategies import Strategy, strat_dict, calculate_manhattan, AlternateAngleStrat
+from pacman.models import Cell
 
 class Directions(IntEnum):
     """Class Direction (IntEnum)
@@ -51,8 +53,8 @@ class Entity(ABC):
     Atributes:
     - speed: int
     - super_speed: int
-    - initial_position: tuple[int, int]
-    - position: tuple[int, int]
+    - initial_pos: tuple[int, int]
+    - pos: tuple[int, int]
     - direction: Directions
     - is_alive: bool
 
@@ -66,14 +68,14 @@ class Entity(ABC):
         """Initialises the attributes of the Entity instance."""
         self.speed: int = speed
         self.super_speed: int = super_speed
-        self.initial_position: tuple[int, int] = initial_pos
-        self.position: tuple[int, int] = initial_pos
+        self.initial_pos: tuple[int, int] = initial_pos
+        self.pos: tuple[int, int] = initial_pos
         self.direction: Directions = Directions.NONE
         self.is_alive: bool = True
 
     def respawn(self) -> None:
         """Put the entity back to its initial position."""
-        self.position = self.initial_position
+        self.pos = self.initial_pos
 
 
 class Pacman(Entity):
@@ -82,8 +84,8 @@ class Pacman(Entity):
     Atributes:
     - speed: int
     - super_speed: int
-    - initial_position: tuple[int, int]
-    - position: tuple[int, int]
+    - initial_pos: tuple[int, int]
+    - pos: tuple[int, int]
     - direction: Directions
     - is_alive: bool
     - next_direction: Directions
@@ -98,7 +100,7 @@ class Pacman(Entity):
 
     def __init__(self, speed: int, super_speed: int,
                  initial_pos: tuple[int, int]):
-        """Initialises the attributes of the Entity instance."""
+        """Initialises the attributes of the Pacman instance."""
         super().__init__(speed, super_speed, initial_pos)
         self.next_direction: Directions = Directions.UP
         self.pacman_super: bool = False
@@ -115,9 +117,9 @@ class Pacman(Entity):
         if walls_in_actual_cell & (self.direction.value):
             self.direction = Directions.NONE
             return
-        self.position = (
-            self.position[0] + Movements[self.direction.name].value[0],
-            self.position[1] + Movements[self.direction.name].value[1])
+        self.pos = (
+            self.pos[0] + Movements[self.direction.name].value[0],
+            self.pos[1] + Movements[self.direction.name].value[1])
 
     def update_user_input(self, user_input: str) -> None:
         """Manage the update of next_direction depending on the user input."""
@@ -137,22 +139,42 @@ class Ghost(Entity):
     Atributes:
     - speed: int
     - super_speed: int
-    - initial_position: tuple[int, int]
-    - position: tuple[int, int]
+    - initial_pos: tuple[int, int]
+    - pos: tuple[int, int]
     - is_alive: bool
-    - move_strat: str
-    - super_move_strat: str
     - down_time: int
+    - chase_radius: int
+    - escape_radius: int
+    - idle_strat: str
+    - chase_strat: str
+    - escape_strat: str
 
     Methods:
+    - chase(self, pacman_pos: tuple[int, int]) -> None
+    - escape(self, pacman-pos: tuple[int, int]) -> None
 
     Description:
     """
     def __init__(self, speed: int, super_speed: int,
-                     initial_pos: tuple[int, int]):
-        """Initialises the attributes of the Entity instance."""
+                 initial_pos: tuple[int, int], down_time: int,
+                 chase_radius: int, escape_radius: int, idle_strat: str,
+                 chase_strat: str, escape_strat: str,
+                 maze: list[list[Cell]]):
+        """Initialises the attributes of the Ghost instance."""
         super().__init__(speed, super_speed, initial_pos)
-        self.move_strat: str = "chase"
-        self.super_move_strat: str = "run"
-        self.down_time: int = 3
+        self.down_time: int = down_time
+        self.chase_radius: int = chase_radius
+        self.escape_radius: int = escape_radius
+        self.idle_strat: Strategy = strat_dict[idle_strat](maze)
+        self.chase_strat: Strategy = strat_dict[chase_strat](maze)
+        self.escape_strat_strat: Strategy = strat_dict[escape_strat](maze)
+
+    def chase(self, pacman_pos: tuple[int, int]) -> None:
+        if calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius:
+            self.pos = self.chase_strat.move()
+        else:
+            self.pos = self.idle_strat.move(self.pos)
+
+    def escape(self, pacman_pos: tuple[int, int]) -> None:
+        pass
 

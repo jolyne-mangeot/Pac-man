@@ -8,6 +8,8 @@ from .menu import (
     Option, Spacer, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
+from .mazemap import Map, Cell
+
 from .level import Level
 
 
