@@ -2,8 +2,20 @@
 
 ### Date: 2026-08-06
 
-### Description: This module contains the `Map` class, which manages the
-distribution of `gum` and `super_gum` across the grid.
+### Description: 
+This module defines the `Map` class, which represents the game map and
+manages the placement and consumption of gums.
+
+The map is represented as a two-dimensional grid of `Cell` objects.
+Each cell stores information about its walls and the gums it contains.
+
+The `Map` class is responsible for:
+- storing the maze layout;
+- placing regular and super gums on valid cells;
+- removing gums when Pacman collects them;
+- keeping track of the remaining gums;
+- determining whether all gums have been collected.
+
 
 ### Classes:
 - Map
@@ -17,28 +29,32 @@ class Map:
     """Class Map
 
     #### Description: 
-    This class manage the Map of Pacman. It contains the matrix of cell in the
-    map attribute which is a list[list[Cell]]. It manage gum and super gum
-    position on the grid. It manage gum deletion if Pacman position is on a
-    gum. It check nb of gums in the grid to know if the level is finished or
-    not.
+    This class represent the Pacman game map and its gums.
+
+    The map is stored as a two-dimensional grid of `Cell` objects.
+    Each cell contains information about its walls and whether it contains
+    a regular gums or a super gums.
+
+    The class also keeps counters for the remaining gums, allowing the
+    game to determine when the current level has been completed.
+
 
     ### Atributes:
-    - width: int
-    - height: int
-    - gum_percent: int
-    - seed: int
-    - map: list[list[Cell]]
-    - nb_simple_gum: int
-    - nb_super_gum: int
+    - width (int): Number of cells along the horizontal axis.
+    - height (int): Number of cells along the vertical axis.
+    - gum_percent (int): Percentage of valid cells that should contain
+      regular gums.
+    - seed (int): Seed used to generate the maze layout.
+    - map (list[list[Cell]]): Two-dimensional grid representing the maze.
+    - nb_simple_gum (int): Number of regular gums currently present.
+    - nb_super_gum (int): Number of super gums currently present.
+
 
     ### Methods:
-    - init(self) -> None
-    - repr(self) -> None
-    - super_gum_placement(self) -> None
-    - simple_gum_placement(self) -> None
-    - update_gum(self, pos_pacman: CellCoordinates) -> str
-    - check_gum(self) -> bool
+    - super_gum_placement(): Place super gums at the map corners.
+    - simple_gum_placement(): Randomly place regular gums on valid cells.
+    - update_gum(): Remove and return the type of gum at Pacman's position.
+    - check_gum(): Check whether all gums have been collected.
     """
     def __init__(self, width: int, height: int, gum_percent: int, seed: int) -> None:
         """Initialises the attributes of the Map instance."""
@@ -51,7 +67,7 @@ class Map:
         self.nb_super_gum: int = 0
 
     def __repr__(self) -> None:
-        """Method to display debug mode of the map"""
+        """Method to display debug mode of the map."""
         lines: list[str] = []
         for y in range(self.height):
             toplane: str = "+"

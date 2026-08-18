@@ -1,17 +1,43 @@
 """File: /pacman/models/entity/entity.py
 
 Date: 2026-08-04
-#### Description: This module manages entity(Pacman and ghosts) for the
-pacman game.
+#### Description:
+This module defines the entities and movement-related types used by the
+Pacman game.
 
-#### Classes:
-- Entity(ABC)
-- Pacman(Entity)
-- Ghost(Entity)
+It provides the common `Entity` base class for all movable characters,
+as well as the `Pacman` and `Ghost` classes that implement their specific
+behaviours.
 
-#### Enums:
-- Directions(IntEnum)
-- Movements(Enum)
+The module also defines the movement directions used by entities and the
+coordinate offsets associated with each direction.
+
+`Entity` contains the attributes and behaviours shared by Pacman and ghosts,
+such as their position, speed, movement direction, life state and respawn
+position.
+
+`Pacman` extends `Entity` with player-controlled movement and special-mode
+behaviour.
+
+`Ghost` extends `Entity` with strategy-based movement and behaviours such as
+chasing or escaping from Pacman. Ghost movement is delegated to strategy
+objects defined in the `strategies` module, allowing different pathfinding
+and movement behaviours to be implemented independently from the entity.
+
+
+### Classes:
+- Directions(IntEnum): Represents the possible movement directions and the
+  corresponding wall bitmasks.
+- Movements(Enum): Associates each movement direction with its coordinate
+  offset.
+- Entity(ABC): Base class for all movable game entities.
+- Pacman(Entity): Represents the player-controlled Pacman entity.
+- Ghost(Entity): Represents a ghost controlled by movement strategies.
+
+### Dependencies:
+- strategies: Provides the strategy interface and implementations used by
+  ghosts.
+- Cell: Represents the cells of the game map used by ghost strategies.
 """
 from abc import ABC
 from enum import IntEnum, Enum
@@ -20,12 +46,20 @@ from .strategies import Strategy, strat_dict, calculate_manhattan, AlternateAngl
 from pacman.models import Cell
 
 class Directions(IntEnum):
-    """Class Direction (IntEnum)
-    - UP = 1
-    - RIGHT = 2
-    - DOWN = 4
-    - LEFT = 8
-    - NONE = 15
+    """Class Directions, inheriting from IntEnum.
+    
+    #### Description:
+    Represent the four possible movement directions.
+
+    The enum values correspond to the wall bitmasks used by the maze.
+    `NONE` represents an entity that is currently not moving.
+
+    #### Attributes:
+    - UP (int): Move towards the top of the map.
+    - RIGHT (int): Move towards the right of the map.
+    - DOWN (int): Move towards the bottom of the map.
+    - LEFT (int): Move towards the left of the map.
+    - NONE (int): No movement direction.
     """
     UP = 1
     RIGHT = 2
@@ -35,11 +69,19 @@ class Directions(IntEnum):
 
 
 class Movements(Enum):
-    """Class Movements.
-    - NORTH = (0, -1)
-    - EAST = (+1, 0)
-    - SOUTH = (0, +1)
-    - WEST = (-1, 0)
+    """Class Movements, inheriting from Enum.
+
+    #### Description:
+    Map movement directions to their coordinate offsets.
+
+    Each enum value contains the `(x, y)` displacement associated with
+    a movement direction.
+
+    #### Attributes:
+    - UP (tuple[int, int]): Offset `(0, -1)`.
+    - RIGHT (tuple[int, int]): Offset `(1, 0)`.
+    - DOWN (tuple[int, int]): Offset `(0, 1)`.
+    - LEFT (tuple[int, int]): Offset `(-1, 0)`.
     """
     UP = (0, -1)
     RIGHT = (+1, 0)
@@ -48,20 +90,31 @@ class Movements(Enum):
  
 
 class Entity(ABC):
-    """Class Entity
+    """Class Entity, inheriting from ABC.
+
+    #### Description:
+    Base class for all movable game entities.
+
+    An entity represents an object that has a position in the maze and can
+    move during the game. Pacman and ghosts inherit from this class.
+
+    The base class provides common attributes and operations shared by
+    all entities, such as their position, movement speed, direction and
+    respawn position.
+
 
     Atributes:
-    - speed: int
-    - super_speed: int
-    - initial_pos: tuple[int, int]
-    - pos: tuple[int, int]
-    - direction: Directions
-    - is_alive: bool
+    - speed (int): Normal movement speed of the entity.
+    - super_speed (int): Movement speed used when the entity is in a
+      special movement mode.
+    - initial_pos (tuple[int, int]): Position where the entity is
+      initially spawned and where it will respawn.
+    - pos (tuple[int, int]): Current position of the entity in the maze.
+    - direction (Directions): Current movement direction.
+    - is_alive (bool): Whether the entity is currently alive.
 
     Methods:
-    - respaw(self) -> None
-
-    Description:
+    - respaw(): Reset the entity to its initial position.
     """
 
     def __init__(self, speed: int, super_speed: int, initial_pos: tuple[int, int]):
@@ -79,23 +132,36 @@ class Entity(ABC):
 
 
 class Pacman(Entity):
-    """Class Pacman, heriting from Entity.
+    """Class Pacman, inheriting from Entity.
+
+    #### Description:
+    Represent the player-controlled Pacman entity.
+
+    Pacman extends `Entity` with player-specific movement behaviour.
+    It stores both its current movement direction and the direction requested
+    by the player.
+
+    The requested direction is kept in `next_direction` until the maze
+    allows Pacman to move in that direction. This allows the player to
+    choose a direction before reaching an intersection.
+
+    Pacman can also enter a special mode after collecting a super gum.
     
-    Atributes:
-    - speed: int
-    - super_speed: int
-    - initial_pos: tuple[int, int]
-    - pos: tuple[int, int]
-    - direction: Directions
-    - is_alive: bool
-    - next_direction: Directions
-    - pacman_super: bool
+    #### Inherited attributes:
+    - speed (int): Normal movement speed.
+    - super_speed (int): Movement speed used in super mode.
+    - initial_pos (tuple[int, int]): Initial spawn position.
+    - pos (tuple[int, int]): Current position.
+    - direction (Directions): Current movement direction.
+    - is_alive (bool): Whether Pacman is alive.
 
-    Methods:
-    - move(self, wall_in_actual_cell: int) -> None
-    - update_user_input(self, user_input: str) -> None
+    #### Attributes:
+    - next_direction (Directions): Direction requested by the player.
+    - pacman_super (bool): Whether Pacman is currently in super mode.
 
-    Description:
+    #### Methods:
+    - move(): Move Pacman according to the current and requested directions.
+    - update_user_input(): Update the requested direction from player input.
     """
 
     def __init__(self, speed: int, super_speed: int,
@@ -136,24 +202,42 @@ class Pacman(Entity):
 class Ghost(Entity):
     """Class Ghost, heriting from Entity.
     
-    Atributes:
-    - speed: int
-    - super_speed: int
-    - initial_pos: tuple[int, int]
-    - pos: tuple[int, int]
-    - is_alive: bool
-    - down_time: int
-    - chase_radius: int
-    - escape_radius: int
-    - idle_strat: str
-    - chase_strat: str
-    - escape_strat: str
+    #### Description:
+    Represent a ghost entity controlled by a movement strategy.
 
-    Methods:
-    - chase(self, pacman_pos: tuple[int, int]) -> None
-    - escape(self, pacman-pos: tuple[int, int]) -> None
+    A ghost extends `Entity` with behaviour specific to enemy entities.
+    Its movement is determined by three strategies corresponding to its
+    different behaviours: idle, chase and escape.
 
-    Description:
+    The ghost selects the appropriate strategy according to the current
+    game conditions. Strategies are responsible for calculating the next
+    position, while the `Ghost` class manages the state and configuration
+    required to use them.
+
+    This design allows different ghost behaviours to be implemented and
+    combined without modifying the base `Ghost` class.
+
+    #### Inherited attributes:
+    - speed (int): Normal movement speed.
+    - super_speed (int): Movement speed used in a special mode.
+    - initial_pos (tuple[int, int]): Initial spawn position.
+    - pos (tuple[int, int]): Current position.
+    - direction (Directions): Current movement direction.
+    - is_alive (bool): Whether the ghost is alive.
+
+    #### Attributes:
+    - down_time (int): Time before the ghost becomes active after dying.
+    - chase_radius (int): Maximum Manhattan distance at which the ghost
+      starts chasing Pacman.
+    - escape_radius (int): Manhattan distance used to determine when the
+      ghost should escape from Pacman.
+    - idle_strat (Strategy): Strategy used when the ghost is not chasing.
+    - chase_strat (Strategy): Strategy used when the ghost is chasing.
+    - escape_strat (Strategy): Strategy used when the ghost is escaping.
+
+    #### Methods:
+    - chase(): Chase Pacman when he is within the chase radius.
+    - escape(): Move away from Pacman according to the escape behaviour.
     """
     def __init__(self, speed: int, super_speed: int,
                  initial_pos: tuple[int, int], down_time: int,
@@ -167,14 +251,18 @@ class Ghost(Entity):
         self.escape_radius: int = escape_radius
         self.idle_strat: Strategy = strat_dict[idle_strat](maze)
         self.chase_strat: Strategy = strat_dict[chase_strat](maze)
-        self.escape_strat_strat: Strategy = strat_dict[escape_strat](maze)
+        self.escape_strat: Strategy = strat_dict[escape_strat](maze)
 
     def chase(self, pacman_pos: tuple[int, int]) -> None:
+        """Function to chase Pacman when he is within the chase radius."""
         if calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius:
             self.pos = self.chase_strat.move()
         else:
             self.pos = self.idle_strat.move(self.pos)
 
     def escape(self, pacman_pos: tuple[int, int]) -> None:
+        """Function to move away from Pacman according to the escape
+        behaviour.
+        """
         pass
 
