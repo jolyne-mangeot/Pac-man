@@ -10,6 +10,8 @@ from .menu import (
 
 from .mazemap import Map, Cell
 
+from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat
+
 from .level import Level
 
 

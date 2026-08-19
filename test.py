@@ -1,5 +1,6 @@
-from entity import Entity, Pacman, Ghost
-from mazemap import Map
+from pacman.models import Entity, Pacman, Ghost, PatrollingAngleStrat, Map
+
+
 
 
 def display_maze(map_test: Map, pacman_test: Pacman) -> None:
@@ -41,8 +42,12 @@ def display_maze(map_test: Map, pacman_test: Pacman) -> None:
 
 if __name__ == "__main__":
     """Test the entities instanciation."""
-    map_test: Map = Map(27, 28, 100, 42)
+    map_test: Map = Map(20, 15, 90, 42)
+    from random import seed
+    seed()
     map_test.super_gum_placement()
     map_test.simple_gum_placement()
     pacman_test: Pacman = Pacman(4, 6, (((map_test.width - 1) // 2), ((map_test.height - 1) // 2)))
     display_maze(map_test, pacman_test)
+    strategy: PatrollingAngleStrat = PatrollingAngleStrat(map_test)
+    strategy.move((0, 0), (0, 0))
