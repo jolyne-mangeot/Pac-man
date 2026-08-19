@@ -19,7 +19,7 @@ def display_maze(map_test: Map, pacman_test: Pacman) -> None:
                 midlane += "|"
             else:
                 midlane += " "
-            if (x, y) == pacman_test.initial_position:
+            if (x, y) == pacman_test.initial_pos:
                 midlane += " P "
             elif map_test.map[x][y].super_gum is True:
                 midlane += " o "

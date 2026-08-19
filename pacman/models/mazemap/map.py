@@ -22,7 +22,7 @@ The `Map` class is responsible for:
 """
 from random import shuffle
 
-from .utils import maze_interface, Cell, CellCoordinates
+from .utils import maze_interface, Cell
 
 
 class Map: 
@@ -124,7 +124,7 @@ class Map:
             cell.simple_gum = True
             self.nb_simple_gum += 1
 
-    def update_gum(self, pos_pacman: CellCoordinates) -> str:
+    def update_gum(self, pos_pacman: tuple[int, int]) -> str:
         """Update gum on the grid depending on Pacman position."""
         if self.map[pos_pacman[0]][pos_pacman[1]].simple_gum == True:
             self.map[pos_pacman[0]][pos_pacman[1]].simple_gum = False

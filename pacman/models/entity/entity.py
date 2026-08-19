@@ -26,10 +26,6 @@ and movement behaviours to be implemented independently from the entity.
 
 
 ### Classes:
-- Directions(IntEnum): Represents the possible movement directions and the
-  corresponding wall bitmasks.
-- Movements(Enum): Associates each movement direction with its coordinate
-  offset.
 - Entity(ABC): Base class for all movable game entities.
 - Pacman(Entity): Represents the player-controlled Pacman entity.
 - Ghost(Entity): Represents a ghost controlled by movement strategies.
@@ -40,54 +36,10 @@ and movement behaviours to be implemented independently from the entity.
 - Cell: Represents the cells of the game map used by ghost strategies.
 """
 from abc import ABC
-from enum import IntEnum, Enum
 
-from .strategies import Strategy, strat_dict, calculate_manhattan, AlternateAngleStrat
+from .strategies import Strategy, strat_dict, calculate_manhattan, AlternateAngleStrat, Directions, Movements
 from pacman.models import Cell
 
-class Directions(IntEnum):
-    """Class Directions, inheriting from IntEnum.
-    
-    #### Description:
-    Represent the four possible movement directions.
-
-    The enum values correspond to the wall bitmasks used by the maze.
-    `NONE` represents an entity that is currently not moving.
-
-    #### Attributes:
-    - UP (int): Move towards the top of the map.
-    - RIGHT (int): Move towards the right of the map.
-    - DOWN (int): Move towards the bottom of the map.
-    - LEFT (int): Move towards the left of the map.
-    - NONE (int): No movement direction.
-    """
-    UP = 1
-    RIGHT = 2
-    DOWN = 4
-    LEFT = 8
-    NONE = 15
-
-
-class Movements(Enum):
-    """Class Movements, inheriting from Enum.
-
-    #### Description:
-    Map movement directions to their coordinate offsets.
-
-    Each enum value contains the `(x, y)` displacement associated with
-    a movement direction.
-
-    #### Attributes:
-    - UP (tuple[int, int]): Offset `(0, -1)`.
-    - RIGHT (tuple[int, int]): Offset `(1, 0)`.
-    - DOWN (tuple[int, int]): Offset `(0, 1)`.
-    - LEFT (tuple[int, int]): Offset `(-1, 0)`.
-    """
-    UP = (0, -1)
-    RIGHT = (+1, 0)
-    DOWN = (0, +1)
-    LEFT = (-1, 0)
- 
 
 class Entity(ABC):
     """Class Entity, inheriting from ABC.
@@ -174,8 +126,8 @@ class Pacman(Entity):
     def move(self, walls_in_actual_cell: int) -> None:
         """Manage Pacman movement. If the wall in 'next_direction" is open,
         pacman move in that direction and 'direction' became 'next_direction'.
-        If not, pacman move in his initial direction if possible. If not,
-        'direction' become None.
+        If not, pacman keep and move in his initial direction if possible. If
+        not, direction' become None and pacman stop moving.
         """
         if self.direction != self.next_direction:
             if not (walls_in_actual_cell & (self.next_direction.value)):
