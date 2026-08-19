@@ -22,6 +22,7 @@ class Level:
             self, player_lives: int, maze_config: MazeConfig,
             gameplay: GameplayConfig, scores_config: ScoresConfig) -> None:
         self.lives: int = player_lives
+        self.theme: str = gameplay.theme
         self.level_duration: int = gameplay.timer
         self.level_timer: int = gameplay.timer
         self.super_mode: bool = False
@@ -32,7 +33,7 @@ class Level:
             "gum": 0, "sup_gum": 0, "ghost": 0, "level": 0}
         self.map: Map = Map(**maze_config.model_dump())
         self.pacman: dict[str, Any] = {}
-        self.ghosts: dict[str, dict[str, Any]]
+        self.ghosts: dict[str, dict[str, Any]] = {}
         self.instantiate_ghosts(maze_config, gameplay)
         pg.time.set_timer(Timers.LEVEL.value, 1000, 1)
 
@@ -46,8 +47,9 @@ class Level:
         for name, pos in positions.items():
             if config.ghosts.get(name, None) is not None:
                 new_ghost: dict[str, Any] = {
-                    **config.ghosts[name].model_dump(), "initial_position": pos
-                }
+                    **config.ghosts[name].model_dump(),
+                    "initial_position": pos,
+                    "is_alive": True}
                 if new_ghost["speed"] > 0:
                     new_ghost["speed"] = 2000 - (new_ghost["speed"] - 1) * 100
                 if new_ghost["sup_speed"] > 0:
@@ -59,7 +61,7 @@ class Level:
     def update_timer(self, name: str, entity: dict[str, Any]) -> None:
         speed: str = "sup_speed" if self.super_mode else "speed"
         pg.time.set_timer(
-            Timers[name.upper()].value, getattr(entity, speed), 1)
+            Timers[name.upper()].value, 2000, 1)  # getattr(entity, speed), 1)
 
     def move_pacman(self) -> None:
         self.pacman  # .move()

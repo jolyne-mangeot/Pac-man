@@ -35,11 +35,11 @@ class SpriteSheet:
 
         Returns the new surface.
         """
-        x: int = pos[1]
-        y: int = pos[0]
+        x: int = pos[0]
+        y: int = pos[1]
 
         rect: pg.Rect = pg.Rect(x, y, *size)
-        image: pg.Surface = pg.Surface(size, pg.SRCALPHA).convert_alpha()
+        image: pg.Surface = pg.Surface(size, pg.SRCALPHA, 32).convert_alpha()
         image.blit(self.sheet, (0, 0), rect)
 
         if colorkey is not None:
@@ -74,9 +74,9 @@ class Display:
         """
         sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/interface/text_holder.png")
-        self.deselect_hold: pg.Surface = sheet.get_sprite((60, 0), (122, 28))
+        self.deselect_hold: pg.Surface = sheet.get_sprite((0, 60), (122, 28))
         self.select_hold: pg.Surface = sheet.get_sprite((0, 0), (122, 28))
-        self.picked_hold: pg.Surface = sheet.get_sprite((30, 0), (122, 28))
+        self.picked_hold: pg.Surface = sheet.get_sprite((0, 30), (122, 28))
         self.sounds: dict[str, pg.mixer.Sound] = {
             "cursor_pick": pg.mixer.Sound("pacman/assets/sfx/ui/Confirm.wav"),
             "cursor_unpick": pg.mixer.Sound("pacman/assets/sfx/ui/Close.wav"),
@@ -88,8 +88,7 @@ class Display:
                 "pacman/assets/sfx/ui/Confirm.wav"),
             "option_input_erase": pg.mixer.Sound(
                 "pacman/assets/sfx/ui/Close.wav"),
-            "program_quit": pg.mixer.Sound("pacman/assets/sfx/ui/Equip.wav")
-        }
+            "program_quit": pg.mixer.Sound("pacman/assets/sfx/ui/Equip.wav")}
 
     def scale_holders(
             self, holder_size_factor: tuple[float, float],
@@ -143,6 +142,10 @@ class Display:
         self.menu_render: MenuRender = MenuRender(
             self.control.interface, menu, from_top=from_top,
             holder=self.place_holder, dialogs=self.control.dialogs)
+
+    @staticmethod
+    def new_surface(size: tuple[int, int]) -> pg.Surface:
+        return pg.Surface(size, pg.SRCALPHA).convert_alpha()
 
     def mixer(self, action: str) -> None:
         """Plays a sound from the sounds dict attribute if the given action

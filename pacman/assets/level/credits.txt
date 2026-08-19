@@ -1,0 +1,6 @@
+dungeon_tiles.png:
+	- Dungeon tileset by Buch on OpenGameArt: https://opengameart.org/users/buch
+grassy_tiles.png:
+	- Outdoor tiles, again by Buch on OpenGameArt: https://opengameart.org/users/buch
+dungeon / grassy _gum_particle.png:
+	- Alot of Particles Bright Flare special effect - AlotofParticles00 by JoesAlotofthings: https://opengameart.org/content/alot-of-particles-bright-flare-special-effect-alotofparticles00

@@ -4,7 +4,7 @@ from random import randint
 
 from pydantic import Field, field_validator, ValidationInfo
 
-from .utils import JSONModel
+from .utils import JSONModel, themes
 
 
 class PlayerConfig(JSONModel):
@@ -13,8 +13,8 @@ class PlayerConfig(JSONModel):
 
 
 class MazeConfig(JSONModel):
-    width: int = Field(ge=15, le=100, default=10)
-    height: int = Field(ge=15, le=100, default=10)
+    width: int = Field(ge=11, le=100, default=11)
+    height: int = Field(ge=11, le=100, default=11)
     gum_percent: int = Field(ge=0, le=100, default=80)
     seed: int = Field(ge=0, default_factory=lambda: randint(0, 10000000))
 
@@ -29,6 +29,7 @@ class GhostConfig(JSONModel):
 
 class GameplayConfig(JSONModel):
     timer: int = Field(gt=0, default=90)
+    theme: themes = Field(default="grassy")
     life_regen: int = Field(ge=0, default=0)
     super_duration: int = Field(ge=0, default=8)
     pac_man_speed: int = Field(ge=0, default=3)
@@ -41,6 +42,8 @@ class GameplayConfig(JSONModel):
     @field_validator("ghosts", mode="before")
     @classmethod
     def ghosts_validator(cls, value: Any) -> Any:
+        if isinstance(value, GhostConfig):
+            return value
         if isinstance(value, dict) is False:
             return None
         names: tuple[str, ...] = ("Blinky", "Pinky", "Inky", "Clyde")
@@ -48,9 +51,9 @@ class GameplayConfig(JSONModel):
             value.pop(entry)
         for ghost, info in value.items():
             if isinstance(info, dict) is False:
-                value.update(ghost, GhostConfig())
+                value.update({ghost: GhostConfig()})
             else:
-                value.update(ghost, GhostConfig(**info))
+                value.update({ghost: GhostConfig(**info)})
         return value
 
 
@@ -71,6 +74,8 @@ class LevelConfig(JSONModel):
     def config_validator(cls, value: Any, info: ValidationInfo) -> Any:
         field_info: Any = (
             cls.model_fields[str(info.field_name)].asdict())
+        if isinstance(value, field_info["attributes"]["default_factory"]):
+            return value
         if isinstance(value, dict) is False:
             return None
         return field_info["attributes"]["default_factory"](**value)

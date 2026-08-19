@@ -32,6 +32,7 @@ class GameState(State):
     def startup(self) -> None:
         self.level_index = 0
         self.player = Player(self.control.config.player.lives_count)
+        self.instantiate_level()
 
     def instantiate_level(self) -> None:
         self.player.regen_life(
@@ -41,6 +42,8 @@ class GameState(State):
             self.control.config.levels[self.level_index].maze,
             self.control.config.levels[self.level_index].gameplay,
             self.control.config.levels[self.level_index].scores)
+        self.display.update_level(self.current_level)
+        print(self.current_level.map)
 
     def cleanup(self) -> None:
         pass
@@ -53,7 +56,4 @@ class GameState(State):
         self.current_level.get_event(event, action_input)
 
     def update(self) -> None:
-        self.draw()
-
-    def draw(self) -> None:
-        self.control.screen.fill((0, 0, 255))
+        self.display.draw()

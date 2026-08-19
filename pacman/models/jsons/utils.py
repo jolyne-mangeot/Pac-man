@@ -1,10 +1,13 @@
 
 from json import JSONDecoder, load
-from typing import Any, ClassVar, Annotated
+from typing import Any, ClassVar, Annotated, Literal
 from collections.abc import Callable
 
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from pydantic_core import PydanticUseDefault
+
+
+themes = Literal["grassy", "dungeon"]
 
 
 class JSONModel(BaseModel):
