@@ -12,7 +12,7 @@
 				//"seed": 68771
 			},
 			"gameplay": {
-				"theme": "grassy",
+				"theme": "dungeon",
 				"timer": 90,
 				"life_regen": 0,
 				"super_duration": 8,

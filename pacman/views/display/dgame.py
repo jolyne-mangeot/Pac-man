@@ -1,6 +1,6 @@
 
 from typing import TypedDict
-from random import randint, choice
+from random import randint as rand, choice
 
 import pygame as pg
 
@@ -30,76 +30,62 @@ class LevelDisplay:
                              / self.level.map.height * 0.98)
 
         cell_size: int = maze_width // int(self.level.map.width * 1.5)
-        cell_gap: int = cell_size // 2
+        cell_gap: int = cell_size // 2.3
 
-        def get_cell_coords(x: int, y: int, h_path: float = 0,
+        def coords(x: int, y: int, h_path: float = 0,
                             v_path: float = 0) -> tuple[int, int]:
             return ((x * cell_size) + (x * cell_gap) + int(h_path * cell_size),
                     (y * cell_size) + (y * cell_gap) + int(v_path * cell_size))
 
-        self.maze_surf = self.display.new_surface(get_cell_coords(
+        self.maze_surf = self.display.new_surface(coords(
             self.level.map.width, self.level.map.height + 1, -0.5, -1))
 
         assets: LevelTheme = self.display.assets[self.level.theme]
         p_a_w: dict[str, pg.Surface] = assets["paths_and_walls"]
-        scaled: dict[str, pg.Surface] = {
-            "small_wall": pg.transform.scale(
-                p_a_w["small_wall"], (cell_size // 2, cell_size)),
-            "small_bottom_wall": pg.transform.scale(
-                p_a_w["small_bottom_wall"], (cell_size // 2, cell_size * 2)),
+        scale: dict[str, pg.Surface] = {
+            "s_wall": pg.transform.scale(
+                p_a_w["s_wall"], (cell_size // 2.3, cell_size)),
+            "s_down_wall": pg.transform.scale(
+                p_a_w["s_down_wall"], (cell_size // 2.3, cell_size * 2)),
             "h_path": pg.transform.scale(
-                p_a_w["h_path"], (cell_size // 2, cell_size)),
+                p_a_w["h_path"], (cell_size // 2.3, cell_size)),
             "v_path": pg.transform.scale(
-                p_a_w["v_path"], (cell_size, cell_size // 2)),
-            "wall": pg.transform.scale(
-                p_a_w["wall"], (cell_size, cell_size)),
-            "bottom_wall": pg.transform.scale(
-                p_a_w["bottom_wall"], (cell_size, cell_size * 2))}
+                p_a_w["v_path"], (cell_size, cell_size // 2.3)),
+            "wall": pg.transform.scale(p_a_w["wall"], (cell_size, cell_size)),
+            "down_wall": pg.transform.scale(
+                p_a_w["down_wall"], (cell_size, cell_size * 2))}
 
         decorations: list[pg.Surface] = [pg.transform.scale(
             prop, (cell_size, cell_size)) for prop in assets["decorations"]]
 
         for y in range(self.level.map.height):
             for x in range(self.level.map.width):
-
                 walls: int = self.level.map.map[x][y].walls
 
                 cell: pg.Surface = self.display.new_surface((16, 16))
                 cell.blits([
-                    (p_a_w["ground_surface"],
-                        (randint(-48, 0), randint(-48, 0))),
+                    (p_a_w["ground_surface"], (rand(-48, 0), rand(-48, 0))),
                     (assets["binary_cell_borders"][walls], (0, 0))])
 
-                elements: list[tuple[pg.Surface, tuple[int, int]]] = [(
+                elems: list[tuple[pg.Surface, tuple[int, int]]] = [(
                     pg.transform.scale(cell, (cell_size, cell_size)),
-                    get_cell_coords(x, y))]
-
+                    coords(x, y))]
                 if not (walls & 2):
-                    elements.append(
-                        (scaled["h_path"], get_cell_coords(x, y, 1)))
-                    if y == self.level.map.height - 1:
-                        elements.append((scaled["small_bottom_wall"],
-                                         get_cell_coords(x, y, 1, 1)))
-                    else:
-                        elements.append((scaled["small_wall"],
-                                         get_cell_coords(x, y, 1, 1)))
+                    elems.append((scale["h_path"], coords(x, y, 1)))
+                    elems.append((scale[
+                        "s_down_wall" if y == self.level.map.height - 1
+                        else "s_wall"], coords(x, y, 1, 1)))
                 if not (walls & 4):
-                    elements.append((scaled["v_path"],
-                                     get_cell_coords(x, y, 0, 1)))
+                    elems.append((scale["v_path"], coords(x, y, 0, 1)))
                 else:
-                    if y == self.level.map.height - 1:
-                        elements.append((scaled["bottom_wall"],
-                                         get_cell_coords(x, y, 0, 1)))
-                    else:
-                        elements.append((scaled["wall"],
-                                         get_cell_coords(x, y, 0, 1)))
-
+                    elems.append((scale[
+                        "s_down_wall" if y == self.level.map.height - 1
+                        else "s_wall"], coords(x, y, 0, 1)))
                 if walls == 15:
-                    if randint(0, 100) < 25:
-                        elements.append(
-                            (choice(decorations), get_cell_coords(x, y)))
+                    if rand(0, 100) < 25:
+                        elems.append((choice(decorations), coords(x, y)))
 
-                self.maze_surf.blits(elements)
+                self.maze_surf.blits(elems)
 
     def draw(self) -> None:
         self.display.control.screen.fill((0, 0, 0))
@@ -183,8 +169,8 @@ class GameDisplay(Display):
             "ground_surface": sheet.get_sprite((0, 0), (64, 64)),
             "wall": sheet.get_sprite((64, 32), (16, 16)),
             "small_wall": sheet.get_sprite((64, 32), (8, 16)),
-            "bottom_wall": sheet.get_sprite((80, 32), (16, 32)),
-            "small_bottom_wall": sheet.get_sprite((80, 32), (8, 32)),
+            "down_wall": sheet.get_sprite((80, 32), (16, 32)),
+            "small_down_wall": sheet.get_sprite((80, 32), (8, 32)),
             "h_path": self.new_surface((8, 16)),
             "v_path": self.new_surface((16, 8))}
         paths_and_walls["h_path"].blits([
@@ -200,12 +186,20 @@ class GameDisplay(Display):
             sheet.get_sprite((coords), (16, 16)) for coords in (
                 (128, 0), (144, 0), (128, 16), (144, 16))]
 
+        sup_gum_sheet: SpriteSheet = SpriteSheet(
+            "pacman/assets/level/" + theme + "_sup_gum.png")
+        sup_gum: list[pg.Surface] = []
+        for y in range(5):
+            for x in range(5):
+                sup_gum.append(
+                    sup_gum_sheet.get_sprite((x * 192, y * 192), (192, 192)))
+
         self.assets.update({theme: {
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
             "decorations": decorations,
-            "gum": [],
-            "sup_gum": []}})
+            "gum": sup_gum,
+            "sup_gum": sup_gum}})
 
     def update_level(self, level: Level) -> None:
         self.level_display = LevelDisplay(self, level)

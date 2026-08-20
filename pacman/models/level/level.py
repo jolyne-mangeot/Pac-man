@@ -19,9 +19,12 @@ class Timers(IntEnum):
 
 class Level:
     def __init__(
-            self, player_lives: int, maze_config: MazeConfig,
-            gameplay: GameplayConfig, scores_config: ScoresConfig) -> None:
+            self, player_lives: int, cheats_allowed: bool,
+            maze_config: MazeConfig, gameplay: GameplayConfig,
+            scores_config: ScoresConfig) -> None:
         self.lives: int = player_lives
+        self.cheats_allowed: bool = cheats_allowed
+        self.cheats_used: bool = False
         self.theme: str = gameplay.theme
         self.level_duration: int = gameplay.timer
         self.level_timer: int = gameplay.timer

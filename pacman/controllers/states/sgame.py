@@ -7,8 +7,10 @@ from pacman.views import GameDisplay
 
 
 class Player:
-    def __init__(self, max_lives: int) -> None:
+    def __init__(self, max_lives: int, cheats_allowed: bool) -> None:
         self.max_lives: int = max_lives
+        self.cheats_allowed: bool = cheats_allowed
+        self.cheats_used: bool = False
         self.lives: int = max_lives
         self.score: int = 0
         self.scores: dict[str, int] = {
@@ -31,14 +33,15 @@ class GameState(State):
 
     def startup(self) -> None:
         self.level_index = 0
-        self.player = Player(self.control.config.player.lives_count)
+        self.player = Player(self.control.config.player.lives_count,
+                             self.control.config.player.cheats_allowed)
         self.instantiate_level()
 
     def instantiate_level(self) -> None:
         self.player.regen_life(
             self.control.config.levels[self.level_index].gameplay.life_regen)
         self.current_level = Level(
-            self.player.lives,
+            self.player.lives, self.player.cheats_allowed,
             self.control.config.levels[self.level_index].maze,
             self.control.config.levels[self.level_index].gameplay,
             self.control.config.levels[self.level_index].scores)

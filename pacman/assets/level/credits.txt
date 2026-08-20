@@ -2,5 +2,7 @@ dungeon_tiles.png:
 	- Dungeon tileset by Buch on OpenGameArt: https://opengameart.org/users/buch
 grassy_tiles.png:
 	- Outdoor tiles, again by Buch on OpenGameArt: https://opengameart.org/users/buch
-dungeon / grassy _gum_particle.png:
-	- Alot of Particles Bright Flare special effect - AlotofParticles00 by JoesAlotofthings: https://opengameart.org/content/alot-of-particles-bright-flare-special-effect-alotofparticles00
+dungeon / grassy _sup_gum.png:
+	- Alot of Particles Bright Flare special effect - AlotofParticles00 by JoesAlotofthings on OpenGameArt: https://opengameart.org/content/alot-of-particles-bright-flare-special-effect-alotofparticles00
+skellies_premade_ 1 / 2:
+	- 16x16 Chibi RPG character builder v3 by Emcee Flesher on OpenGameArt: https://opengameart.org/content/16x16-chibi-rpg-character-builder-v3
