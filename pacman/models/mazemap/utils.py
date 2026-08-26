@@ -95,7 +95,7 @@ class Cell:
     def __init__(self, coordinates: tuple[int, int], walls: int) -> None:
         """Initialises the attributes of the Cell instance."""
         self.coordinates: tuple[int, int] = coordinates
-        self.intersect_neighbours: list[Node] = []
+        self.neighbor_nodes: list[Node] = []
         self.walls: int = walls
         self.super_gum: bool = False
         self.simple_gum: bool = False
@@ -103,7 +103,7 @@ class Cell:
 
 class Node:
     """
-    Node Class, Nested in Map
+    Node Class
 
     #### Description:
     Store additional informations about each cell

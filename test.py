@@ -1,7 +1,4 @@
-from pacman.models import Entity, Pacman, Ghost, PatrollingAngleStrat, Map
-
-
-
+from pacman.models import Entity, Pacman, Ghost, PatrollingAngleStrat, Map, Movements, Strategy
 
 def display_maze(map_test: Map, pacman_test: Pacman) -> None:
     """Method to display debug mode of the map"""
@@ -40,14 +37,28 @@ def display_maze(map_test: Map, pacman_test: Pacman) -> None:
     print("\n".join(lines))
 
 
+def validate_path(maze: Map, start: tuple[int, int], path: list[Directions]) -> None:
+    pos = start
+    for i, direction in enumerate(path):
+        cell = maze.get_cell(pos)
+        if cell.walls & direction.value:
+            print(f"❌ Mur traversé à l'étape {i}: en {pos}, direction {direction.name} bloquée (walls={cell.walls})")
+            return
+        pos = maze.get_neighbor_coords(pos, Movements[direction.name])
+    print(f"✅ Chemin valide, arrivée en {pos}")
+
+
 if __name__ == "__main__":
     """Test the entities instanciation."""
-    map_test: Map = Map(20, 15, 90, 42)
+    map_test: Map = Map(5, 5, 90, 10)
+    pacman_test: Pacman = Pacman(4, 6, (((map_test.width - 1) // 2), ((map_test.height - 1) // 2)))
+    strategy_test: Strategy = Strategy(map_test)
     from random import seed
     seed()
     map_test.super_gum_placement()
     map_test.simple_gum_placement()
-    pacman_test: Pacman = Pacman(4, 6, (((map_test.width - 1) // 2), ((map_test.height - 1) // 2)))
     display_maze(map_test, pacman_test)
-    strategy: PatrollingAngleStrat = PatrollingAngleStrat(map_test)
-    strategy.move((0, 0), (0, 0))
+    strategy_test: Strategy = Strategy(map_test)
+    path = strategy_test.find_path((0, 0), (4, 4))
+    print(path)
+    validate_path(map_test, (0, 0), path)

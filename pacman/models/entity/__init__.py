@@ -1,2 +1,2 @@
 from .entity import Entity, Pacman, Ghost
-from .strategies import PatrollingAngleStrat
+from .strategies import Strategy, PatrollingAngleStrat

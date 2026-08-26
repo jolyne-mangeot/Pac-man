@@ -21,9 +21,31 @@ The `Map` class is responsible for:
 - Map: Represent the Pacman game map and its gums.
 """
 from random import shuffle
+from typing import cast
 
 from .utils import maze_interface, Cell, Node, Directions, Movements
 
+
+RIGHT_TURN: dict[Directions : Directions] = {
+    Directions.UP: Directions.RIGHT,
+    Directions.RIGHT: Directions.DOWN,
+    Directions.DOWN: Directions.LEFT,
+    Directions.LEFT: Directions.UP
+}
+
+LEFT_TURN: dict[Directions : Directions] = {
+    Directions.UP: Directions.LEFT,
+    Directions.LEFT: Directions.DOWN,
+    Directions.DOWN: Directions.RIGHT,
+    Directions.RIGHT: Directions.UP
+}
+
+OPPOSITE_DIRECTION: dict[Directions, Directions] = {
+    Directions.UP: Directions.DOWN,
+    Directions.DOWN: Directions.UP,
+    Directions.LEFT: Directions.RIGHT,
+    Directions.RIGHT: Directions.LEFT,
+}
 
 class Map: 
     """Class Map
@@ -154,49 +176,86 @@ class Map:
             return False
 
     # _________________________________________________________________________
-    #                         A* ALGORITHM UTILS
+    #                         A* ALGORITHM & UTILS
     # _________________________________________________________________________
 
     def get_cell(self, cell: tuple[int, int]) -> Cell:
         """Returns the Cell object present at the given coordinates."""
-        return self.cells[cell[0]][cell[1]]
+        return self.map[cell[0]][cell[1]]
+
+    def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements) -> tuple[int, int]:
+        """"""
+        neighbor: tuple[int, int] = (coords[0] + mov.value[0],
+                                     coords[1] + mov.value[1])
+        return neighbor
+
+    def get_neighbor_nodes(self, cell: tuple[int, int]) -> list[Node]:
+        """"""
+        return cast(list[Node], getattr(self.get_cell(cell), "neighbor_nodes"))
 
     def record_maze_intersections(self) -> None:
         """Loops through every cell of the Maze to append them to the
         intersection_cells set when they are surrounded by 0 or 1 wall,
         meaning they connect more than 3 cells.
         """
-        for x in range(self.maze.width):
-            for y in range(self.maze.height):
-                if self.maze.cells[x][y].walls in (0, 1, 2, 4, 8):
-                    self.intersection_cells.add(self.get_cell((x, y)))
+        self.intersection_cells.clear()
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.map[x][y].walls in (0, 1, 2, 4, 8):
+                    self.intersection_cells.add((x, y))
 
     def find_next_intersect(
             self, cell: tuple[int, int], dir: Directions) -> Node:
-        """Given a cell and a direction, connects to the first found
-        intersection_cell and returns a Node object from the information found
-        during navigation. Raise FoundDeadEnd error when hitting a wall.
+        """Given an intersection cell and a direction, connects to the first
+        found intersection_cell and returns a Node object from the information
+        found during navigation. Raise ValueError error when hitting a wall.
         Automatically turns when the path winds.
         """
-        distance_bet_cells: int = 1
-        next_cell = self.maze.get_neighbor_coords(
-            cell, Movements[dir.name].value)
-        route_taken: list[tuple[int, int]] = [next_cell]
-        while next_cell not in self.intersection_cells:
-            if self.maze.get_cell(next_cell).walls[dir] is False:
-                pass
-            elif self.maze.get_cell(next_cell).walls[(dir + 1) % 4] is False:
-                dir = Directions((dir + 1) % 4)
-            elif self.maze.get_cell(next_cell).walls[(dir + 3) % 4] is False:
-                dir = Directions((dir + 3) % 4)
-            else:
+        distance_bet_cells: int = 0
+        route_taken: list[Directions] = []
+        while True:
+            next_cell = self.get_neighbor_coords(
+                        cell, Movements[dir.name])
+            
+            if not (0 <= next_cell[0] < self.width
+                    and 0 <= next_cell[1] < self.height):
                 raise ValueError
-            next_cell = self.maze.get_neighbor_coords(
-                next_cell, Movements[dir.name].value)
+            cell = next_cell
             distance_bet_cells += 1
-            route_taken.append(next_cell)
-        return Node(
-            next_cell, distance_bet_cells, tuple(route_taken))
+            route_taken.append(dir)
+            if cell in self.intersection_cells:
+                return Node(cell, distance_bet_cells, route_taken)
+            current_cell: Cell = self.get_cell(cell)
+            if not (current_cell.walls & dir.value):
+                continue
+
+            right = RIGHT_TURN[dir]
+            left = LEFT_TURN[dir]
+            if not (current_cell.walls & right.value):
+                dir = right
+                continue
+            if not (current_cell.walls & left.value):
+                dir = left
+                continue
+            raise ValueError
+
+    def get_connections_to_intersections(self, position: tuple[int, int]) -> list[Node]:
+        """Return all nodes directly reachable from position."""
+        if position in self.intersection_cells:
+            return [Node(position, 0, [])]
+        connections: list[Node] = []
+        cell: Cell = self.get_cell(position)
+        for direction in Directions:
+            if direction == Directions.NONE:
+                continue
+            if cell.walls & direction.value:
+                continue
+            try:
+                node = self.find_next_intersect(position, direction)
+            except ValueError:
+                continue
+            connections.append(node)
+        return connections
 
     def generate_cell_graph(self) -> None:
         """Calls record_maze_intersections to instantiate the
@@ -207,21 +266,24 @@ class Map:
         """
         self.record_maze_intersections()
         found_node: Node
-        for inter in self.intersection_cells:
-            for direction in filter(
-                    lambda dir: not self.maze.get_cell(inter).walls & dir.value,
-                    Directions):
+        for coords in self.intersection_cells:
+            cell: Cell = self.get_cell(coords)
+            for direction in Directions:
+                if direction == Directions.NONE:
+                    continue
+                if cell.walls & direction.value:
+                    continue
                 try:
-                    found_node = (self.find_next_intersect(inter, direction))
+                    found_node = self.find_next_intersect(coords, direction)
                 except ValueError:
                     continue
-                if found_node.coords == inter:
+                if found_node.coords == coords:
                     continue
-                for neighbour in self.get_neighbour_nodes(inter):
+                for neighbour in cell.neighbor_nodes:
                     if neighbour.coords == found_node.coords:
                         if found_node.distance < neighbour.distance:
                             neighbour.distance = found_node.distance
                             neighbour.path = found_node.path
                         break
                 else:
-                    inter.neighbour_nodes.append(found_node)
+                    cell.neighbor_nodes.append(found_node)

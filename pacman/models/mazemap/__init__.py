@@ -1,4 +1,4 @@
-from .map import Map, Directions, Movements
-from .utils import Cell
+from .map import Map, Directions
+from .utils import Cell, Movements, Node
 
 __all__ = ["Map"]

@@ -8,9 +8,9 @@ from .menu import (
     Option, Spacer, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
-from .mazemap import Map, Cell
+from .mazemap import Map, Cell, Movements
 
-from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat
+from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat, Strategy
 
 from .level import Level
 
