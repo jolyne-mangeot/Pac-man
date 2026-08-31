@@ -79,6 +79,19 @@ class Map:
     - simple_gum_placement(): Randomly place regular gums on valid cells.
     - update_gum(): Remove and return the type of gum at Pacman's position.
     - check_gum(): Check whether all gums have been collected.
+    - get_cell(): Return the Cell object at the given coordinates.
+    - get_neighbor_coords(): Return the coordinates adjacent to a cell in
+      a given direction.
+    - get_neighbor_nodes(): Return the recorded neighbour nodes of an
+      intersection cell.
+    - record_maze_intersections(): Identify and store every intersection
+      cell of the maze.
+    - find_next_intersect(): Follow a corridor from a cell to the next
+      intersection in a given direction.
+    - get_connections_to_intersections(): Return all intersection nodes
+      directly reachable from a position.
+    - generate_cell_graph(): Build the graph of intersections and their
+      neighbour nodes, used by the A* pathfinding algorithm.
     """
     def __init__(self, width: int, height: int, gum_percent: int, seed: int) -> None:
         """Initialises the attributes of the Map instance."""
@@ -184,13 +197,29 @@ class Map:
         return self.map[cell[0]][cell[1]]
 
     def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements) -> tuple[int, int]:
-        """"""
+        """Return the coordinates of the cell adjacent to `coords` in the
+        direction given by `mov`.
+
+        Simply adds the `(dx, dy)` offset carried by `mov` to `coords`. The
+        result is not bounds-checked against the grid, so callers must
+        ensure the returned coordinates stay within `width`/`height` before
+        using them to index `self.map`.
+        """
         neighbor: tuple[int, int] = (coords[0] + mov.value[0],
                                      coords[1] + mov.value[1])
         return neighbor
 
     def get_neighbor_nodes(self, cell: tuple[int, int]) -> list[Node]:
-        """"""
+        """Return the list of `Node` objects already recorded as neighbours
+        of the intersection at `cell`.
+
+        Reads the `neighbor_nodes` attribute of the corresponding `Cell`,
+        which is populated by `generate_cell_graph`. This attribute is only
+        meaningful for cells that are intersections; calling this on a
+        non-intersection cell returns whatever `neighbor_nodes` currently
+        holds for it (typically an empty list, depending on `Cell`'s
+        initial state).
+        """
         return cast(list[Node], getattr(self.get_cell(cell), "neighbor_nodes"))
 
     def record_maze_intersections(self) -> None:
@@ -210,6 +239,14 @@ class Map:
         found intersection_cell and returns a Node object from the information
         found during navigation. Raise ValueError error when hitting a wall.
         Automatically turns when the path winds.
+
+        Starting from `cell` and moving in `dir`, walks the maze corridor
+        cell by cell, accumulating the distance travelled and the sequence
+        of directions taken. If the path leaves the grid, or reaches a dead
+        end where none of the current, right-turn or left-turn directions
+        are open, a `ValueError` is raised. As soon as an intersection cell
+        is reached, a `Node` is returned, carrying its coordinates, the
+        total distance from `cell`, and the full route taken to get there.
         """
         distance_bet_cells: int = 0
         route_taken: list[Directions] = []
@@ -240,7 +277,15 @@ class Map:
             raise ValueError
 
     def get_connections_to_intersections(self, position: tuple[int, int]) -> list[Node]:
-        """Return all nodes directly reachable from position."""
+        """Return all nodes directly reachable from position.
+
+        If `position` is itself an intersection, a single `Node` at
+        distance 0 with an empty path is returned (it is its own
+        connection). Otherwise, the method tries every open direction from
+        `position` and, for each one, follows the corridor via
+        `find_next_intersect` until it either reaches an intersection
+        (appended to the result) or hits a dead end (silently skipped).
+        """
         if position in self.intersection_cells:
             return [Node(position, 0, [])]
         connections: list[Node] = []
@@ -263,6 +308,16 @@ class Map:
         instanciate a Node object for each neighbour of an intersection.
         These Node are inserted into a list added as attribute to Cell
         objects for future reference.
+
+        For every intersection and every one of its open directions, the
+        corridor is followed until the next intersection is reached. The
+        resulting `Node` is added to that intersection's `neighbor_nodes`
+        list, unless a neighbour with the same coordinates already exists,
+        in which case only the shorter of the two distances (and its
+        corresponding path) is kept. Self-loops (a direction that leads
+        back to the same intersection) are ignored. This method must be
+        called before any A* search, since `Strategy.find_path` relies on
+        `neighbor_nodes` being up to date.
         """
         self.record_maze_intersections()
         found_node: Node
