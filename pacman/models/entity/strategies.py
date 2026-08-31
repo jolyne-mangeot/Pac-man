@@ -36,8 +36,7 @@ from heapq import heappop, heappush
 from random import choice, randint
 from dataclasses import dataclass, field
 
-from pacman.models import Cell
-from pacman.models import Map
+from pacman.models import Map, Cell
 
 from ..mazemap.map import Directions, Movements, Node, OPPOSITE_DIRECTION
 
@@ -161,24 +160,21 @@ class Strategy(ABC):
             self.update_node(state, node.coords, node.distance,
                         node.path, predecessor, target)
 
-    def get_best_target_connections(self,
-                                    connections: list[Node]) -> dict[
-                                        tuple[int, int],
-                                        tuple[int, list[Directions]]]:
+    def get_best_target_connections(self, connections: list[Node]) -> dict[
+                                        tuple[int, int], Node]:
         """Keep the shortest connection from each intersection to target.
 
         Several distinct paths may connect the same intersection to the
         target; only the shortest one is relevant to A*. This method
         collapses the list of `Node` connections into a dictionary mapping
-        each intersection's coordinates to the shortest known distance and
-        corresponding path towards the target, discarding any longer
-        alternative found for the same intersection.
+        each intersection's coordinates to the less far Node, discarding any
+        longer alternative found for the same intersection.
         """
-        best_connections: dict[tuple[int, int], tuple[int, list[Directions]]] = {}
+        best_connections: dict[tuple[int, int], Node] = {}
         for node in connections:
             previous = best_connections.get(node.coords)
             if previous is None or node.distance < previous[0]:
-                best_connections[node.coords] = (node.distance, node.path)
+                best_connections[node.coords] = node
         return best_connections
 
     def reconstruct_path(self, current: tuple[int, int],
@@ -230,8 +226,7 @@ class Strategy(ABC):
             state.closed_nodes.add(current)
             target_connection = target_connections.get(current)
             if target_connection is not None:
-                _, target_path = target_connection
-                return self.reconstruct_path(current, state.came_from, target_path)
+                return self.reconstruct_path(current, state.came_from, target_connection.path)
             current_cell = self.maze.get_cell(current)
             for neighbour in current_cell.neighbor_nodes:
                 if neighbour.coords in state.closed_nodes:
@@ -249,21 +244,18 @@ class Strategy(ABC):
         connections linking the ghost's and the target's positions to
         their nearest intersections. If the ghost already stands on the
         target, or if either position cannot reach any intersection, the
-        search is skipped (returning `[]` in the latter case). Otherwise,
-        the target's connections are reduced to their shortest form, the
-        A* open set is seeded from the ghost's position, and the search is
-        delegated to `a_star`, which returns the resulting sequence of
-        directions.
+        search is skipped (returning `[]`). Otherwise, the target's
+        connections are reduced to their shortest form, the A* open set is
+        seeded from the ghost's position, and the search is delegated to
+        `a_star`, which returns the resulting sequence of directions.
         """
         if ghost == target:
             return []
         self.maze.generate_cell_graph()
         start_connections = self.maze.get_connections_to_intersections(ghost)
         target_connections = self.maze.get_connections_to_intersections(target)
-
         if not start_connections or not target_connections:
             return []
-
         target_connections = self.get_best_target_connections(target_connections)
         state = AStarState()
         self.initialize_start_nodes(state, ghost, start_connections, target)
@@ -427,10 +419,14 @@ class PatrollingAngleStrat(Strategy):
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             area = self.ghost_area(ghost_pos)
             target: tuple[int, int] = self.choose_target(area, ghost_pos)
-            print("area", area)
-            print("target", target)
-
-
+            print("target: ", target)
+            self.path = self.find_path(ghost_pos, target)
+        self.ghost_saved_pos = (
+        ghost_pos[0] + Movements[self.path[0].name].value[0],
+        ghost_pos[1] + Movements[self.path[0].name].value[1])
+        del self.path[0]
+        return self.ghost_saved_pos
+        
 def calculate_manhattan(ghost: tuple[int, int], target: tuple[int, int]) -> int:
     """Calculate the Manhattan distance between two positions and returns
     it.

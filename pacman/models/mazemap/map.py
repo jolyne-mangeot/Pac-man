@@ -189,7 +189,7 @@ class Map:
             return False
 
     # _________________________________________________________________________
-    #                         A* ALGORITHM & UTILS
+    #                      INTERSECTION GRAPH UTILS
     # _________________________________________________________________________
 
     def get_cell(self, cell: tuple[int, int]) -> Cell:
@@ -199,11 +199,6 @@ class Map:
     def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements) -> tuple[int, int]:
         """Return the coordinates of the cell adjacent to `coords` in the
         direction given by `mov`.
-
-        Simply adds the `(dx, dy)` offset carried by `mov` to `coords`. The
-        result is not bounds-checked against the grid, so callers must
-        ensure the returned coordinates stay within `width`/`height` before
-        using them to index `self.map`.
         """
         neighbor: tuple[int, int] = (coords[0] + mov.value[0],
                                      coords[1] + mov.value[1])
@@ -212,13 +207,6 @@ class Map:
     def get_neighbor_nodes(self, cell: tuple[int, int]) -> list[Node]:
         """Return the list of `Node` objects already recorded as neighbours
         of the intersection at `cell`.
-
-        Reads the `neighbor_nodes` attribute of the corresponding `Cell`,
-        which is populated by `generate_cell_graph`. This attribute is only
-        meaningful for cells that are intersections; calling this on a
-        non-intersection cell returns whatever `neighbor_nodes` currently
-        holds for it (typically an empty list, depending on `Cell`'s
-        initial state).
         """
         return cast(list[Node], getattr(self.get_cell(cell), "neighbor_nodes"))
 
@@ -235,12 +223,7 @@ class Map:
 
     def find_next_intersect(
             self, cell: tuple[int, int], dir: Directions) -> Node:
-        """Given an intersection cell and a direction, connects to the first
-        found intersection_cell and returns a Node object from the information
-        found during navigation. Raise ValueError error when hitting a wall.
-        Automatically turns when the path winds.
-
-        Starting from `cell` and moving in `dir`, walks the maze corridor
+        """Starting from `cell` and moving in `dir`, walks the maze corridor
         cell by cell, accumulating the distance travelled and the sequence
         of directions taken. If the path leaves the grid, or reaches a dead
         end where none of the current, right-turn or left-turn directions
@@ -284,7 +267,7 @@ class Map:
         connection). Otherwise, the method tries every open direction from
         `position` and, for each one, follows the corridor via
         `find_next_intersect` until it either reaches an intersection
-        (appended to the result) or hits a dead end (silently skipped).
+        (appended to the result) or hits a dead end (skipped).
         """
         if position in self.intersection_cells:
             return [Node(position, 0, [])]
@@ -315,9 +298,7 @@ class Map:
         list, unless a neighbour with the same coordinates already exists,
         in which case only the shorter of the two distances (and its
         corresponding path) is kept. Self-loops (a direction that leads
-        back to the same intersection) are ignored. This method must be
-        called before any A* search, since `Strategy.find_path` relies on
-        `neighbor_nodes` being up to date.
+        back to the same intersection) are ignored.
         """
         self.record_maze_intersections()
         found_node: Node
