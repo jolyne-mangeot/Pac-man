@@ -11,15 +11,19 @@ Strategies are separated from the `Ghost` class so that different ghost
 behaviours can be implemented, combined and replaced without modifying
 the entity itself.
 
-This module can contain strategies for behaviours such as:
-- chasing Pacman;
-- escaping from Pacman;
-- moving randomly;
-- patrolling a specific area;
-- following a predefined path;
-- implementing special level-specific behaviours.
+The module also provides the A* pathfinding utilities shared by every
+strategy. Rather than running A* on every single cell of the maze, the
+algorithm operates on a graph of intersections (nodes with more than
+two accessible neighbours): each strategy first connects the ghost's
+and the target's positions to their nearest intersections, then A*
+searches the shortest path between those intersections, and the
+individual cell-by-cell directions are finally reconstructed into a
+full path. The temporary state needed during the search (open/closed
+sets, scores, predecessors) is kept in an `AStarState` instance so
+that the `Strategy` methods themselves stay stateless between calls.
 
 #### Classes:
+- AStarState: Stores the temporary state used by the A* algorithm.
 - Strategy(ABC): Base class for ghost movement strategies.
 - AlternateAngleStrat(Strategy): Move the ghost between randomly selected
   points of the maze.
@@ -38,18 +42,44 @@ from pacman.models import Map
 from ..mazemap.map import Directions, Movements, Node, OPPOSITE_DIRECTION
 
 
-@dataclass
 class AStarState:
-    """Stores the temporary state used by the A* algorithm."""
-    open_nodes: list[tuple[int, tuple[int, int]]] = field(
-        default_factory=list)
-    closed_nodes: set[tuple[int, int]] = field(
-        default_factory=set)
-    g_score: dict[tuple[int, int], int] = field(
-        default_factory=dict)
-    came_from: dict[tuple[int, int],
-              tuple[tuple[int, int],
-              list[Directions]]] = field(default_factory=dict)
+    """Class AStarState.
+
+    #### Description:
+    Stores the temporary state used by the A* algorithm.
+
+    An instance of this class is created for each call to `find_path` and
+    passed along to the various A* helper methods of `Strategy`, so that
+    the search state stays local to a single pathfinding request instead
+    of being stored on the `Strategy` instance itself.
+    
+    #### Attributes:
+    - open_nodes (list[tuple[int, tuple[int, int]]]): Min-heap (priority
+      queue) of nodes still to be explored, as `(priority, coords)` pairs,
+      where `priority` is the estimated total cost (distance so far plus
+      the Manhattan-distance heuristic to the target). Nodes are popped
+      in increasing priority order via `heapq`.
+    - closed_nodes (set[tuple[int, int]]): Coordinates of the nodes that
+      have already been fully processed by the search, so they are not
+      expanded again.
+    - g_score (dict[tuple[int, int], int]): Maps each visited node's
+      coordinates to the shortest known distance from the ghost's
+      starting position to that node.
+    - came_from (dict[tuple[int, int], tuple[tuple[int, int],
+                      list[Directions]]]):
+      Maps each node's coordinates to the predecessor node it was reached
+      from, along with the list of directions travelled to get there.
+      Used by `reconstruct_path` to rebuild the full path once the
+      target has been reached.
+    """
+    def __init__(self) -> None:
+        """Initialises the temporary state used by the A* algorithm."""
+        self.open_nodes: list[tuple[int, tuple[int, int]]] = []
+        self.closed_nodes: set[tuple[int, int]] = set()
+        self.g_score: dict[tuple[int, int], int] = {}
+        self.came_from: dict[tuple[int, int],
+                             tuple[tuple[int, int],
+                             list[Directions]]] = {}
 
 
 class Strategy(ABC):
@@ -73,7 +103,7 @@ class Strategy(ABC):
 
     #### Methods:
     @abstractmethod
-    - ove(): Calculate the next position for the ghost.
+    - move(): Calculate the next position for the ghost.
 
     Description:
     """
@@ -96,8 +126,14 @@ class Strategy(ABC):
                     predecessor: tuple[int, int] | None,
                     target: tuple[int, int]) -> None:
         """Update a node's score if a shorter path to it was found.
-        predecessor=None marks a starting node (no came_from entry,
-        avoids self-loops in reconstruct_path).
+
+        Compares the newly computed `distance` to the best known distance
+        for `coords`. If it is not strictly shorter, the node is left
+        unchanged. Otherwise, `coords` becomes the new best known distance,
+        its predecessor and the directions leading to it are recorded (so
+        the path can later be rebuilt via `reconstruct_path`), and the node
+        is pushed onto the A* open set with a priority equal to the
+        distance plus the Manhattan-distance heuristic to `target`.
         """
         if distance >= state.g_score.get(coords, float("inf")):
             return
@@ -111,7 +147,15 @@ class Strategy(ABC):
                                 ghost: tuple[int, int],
                                 connections: list[Node],
                                 target: tuple[int, int]) -> None:
-        """Initialize the nodes directly reachable from the ghost."""
+        """Initialize the nodes directly reachable from the ghost.
+
+        Seeds the A* open set with every intersection listed in
+        `connections`, i.e. the intersections the ghost can reach without
+        crossing another intersection first. Each of these nodes is
+        registered via `update_node`, using the ghost's own position as
+        predecessor (or `None` when the node's coordinates are the ghost's
+        position itself), so the search can start expanding from there.
+        """
         for node in connections:
             predecessor = None if node.coords == ghost else ghost
             self.update_node(state, node.coords, node.distance,
@@ -121,7 +165,15 @@ class Strategy(ABC):
                                     connections: list[Node]) -> dict[
                                         tuple[int, int],
                                         tuple[int, list[Directions]]]:
-        """Keep the shortest connection from each intersection to target."""
+        """Keep the shortest connection from each intersection to target.
+
+        Several distinct paths may connect the same intersection to the
+        target; only the shortest one is relevant to A*. This method
+        collapses the list of `Node` connections into a dictionary mapping
+        each intersection's coordinates to the shortest known distance and
+        corresponding path towards the target, discarding any longer
+        alternative found for the same intersection.
+        """
         best_connections: dict[tuple[int, int], tuple[int, list[Directions]]] = {}
         for node in connections:
             previous = best_connections.get(node.coords)
@@ -130,24 +182,47 @@ class Strategy(ABC):
         return best_connections
 
     def reconstruct_path(self, current: tuple[int, int],
-                     came_from: dict[tuple[int, int],
+                         came_from: dict[tuple[int, int],
                                      tuple[tuple[int, int],
                                      list[Directions]]],
-                     target_path: list[Directions]) -> list[Directions]:
-        """Reconstruct the path from ghost to target."""
+                         target_path: list[Directions]) -> list[Directions]:
+        """Reconstruct the path from ghost to target.
+
+        Walks backwards from `current` (the intersection at which the A*
+        search reached the target's connections) through the `came_from`
+        predecessor chain built during the search, prepending the stored
+        directions at each step until the ghost's starting position is
+        reached. The `target_path` (the path from `current` to the actual
+        target cell) is then appended in reverse, using the opposite
+        direction of each step, since it was originally computed from the
+        target towards the intersection. The result is the full,
+        ordered sequence of directions leading the ghost from its current
+        position to the target.
+        """
         path: list[Directions] = []
         while current in came_from:
             previous, directions = came_from[current]
             path[0:0] = directions
             current = previous
-        path.extend(OPPOSITE_DIRECTION[d] for d in reversed(target_path))
+        path.extend(OPPOSITE_DIRECTION[dir] for dir in reversed(target_path))
         return path
 
     def a_star(self, state: AStarState,
                target_connections: dict[tuple[int, int],
                                         tuple[int, list[Directions]]],
                target: tuple[int, int]) -> list[Directions]:
-        """Run A* on the intersection graph."""
+        """Run A* on the intersection graph.
+
+        Repeatedly pops the intersection with the lowest priority
+        (distance so far + Manhattan-distance heuristic) from the open
+        set. Nodes already processed are skipped. As soon as a popped
+        intersection is one of the `target_connections`, the search stops
+        and the full path is rebuilt via `reconstruct_path`. Otherwise,
+        every neighbouring intersection of the current node is relaxed
+        through `update_node`, extending the search. If the open set is
+        exhausted without reaching a target connection, an empty list is
+        returned, meaning no path exists between the ghost and the target.
+        """
         while state.open_nodes:
             _, current = heappop(state.open_nodes)
             if current in state.closed_nodes:
@@ -168,7 +243,18 @@ class Strategy(ABC):
 
     def find_path(self, ghost: tuple[int, int],
                  target: tuple[int, int]) -> list[Directions]:
-        """Find the shortest path from ghost to target using A* Algorithm."""
+        """Find the shortest path from ghost to target using A* Algorithm.
+
+        Regenerates the maze's intersection graph, then computes the
+        connections linking the ghost's and the target's positions to
+        their nearest intersections. If the ghost already stands on the
+        target, or if either position cannot reach any intersection, the
+        search is skipped (returning `[]` in the latter case). Otherwise,
+        the target's connections are reduced to their shortest form, the
+        A* open set is seeded from the ghost's position, and the search is
+        delegated to `a_star`, which returns the resulting sequence of
+        directions.
+        """
         if ghost == target:
             return []
         self.maze.generate_cell_graph()
@@ -180,7 +266,7 @@ class Strategy(ABC):
 
         target_connections = self.get_best_target_connections(target_connections)
         state = AStarState()
-        self.initialize_start_nodes(state, ghost, start_connections, target)  # fix du _
+        self.initialize_start_nodes(state, ghost, start_connections, target)
         return self.a_star(state, target_connections, target)
 
 
@@ -218,14 +304,20 @@ class AlternateAngleStrat(Strategy):
     - move(): Calculate the next position towards the current target.
     """
     def __init__(self, maze: Map):
-        """Initialises the attributes of the PatrollingAngleStrat instance."""
+        """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
         self.target: tuple[int, int] = ()
         self.path: list[Directions] = []
         self.ghost_saved_pos: tuple[int, int] = ()
 
     def choose_target(self, ghost_pos: tuple[int, int]) -> tuple[int, int]:
-        """"""
+        """Select a new destination for the ghost.
+
+        Chooses a target among the predefined set of important positions
+        (the four corners of the maze and the central cell), excluding the
+        ghost's current position from the choices if it happens to match
+        one of them.
+        """
         targets: list[tuple[int, int]] = [(0, 0),
                                           (0, self.ymax),
                                           (self.xmax, 0),
@@ -237,7 +329,12 @@ class AlternateAngleStrat(Strategy):
 
 
     def move(self, ghost_pos: tuple[int, int], _: tuple[int, int]) -> tuple[int, int]:
-        """"""
+        """Calculate the next position towards the current target.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, a new target is chosen
+        and a new path towards it should be computed.
+        """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             target: tuple[int, int] = self.choose_target(ghost_pos)
 
@@ -306,7 +403,13 @@ class PatrollingAngleStrat(Strategy):
 
     def choose_target(self, area: list[tuple[int, int]],
                       ghost_pos: tuple[int, int]) -> tuple[int, int]:
-        """"""
+        """Select a new destination for the ghost within a given area.
+
+        Randomly picks a cell inside the bounds of `area`. If the chosen
+        cell is a wall (no accessible neighbours) or corresponds to the
+        ghost's current position, the selection is retried recursively
+        until a valid cell is found.
+        """
         target: tuple[int, int] = (randint(area[0][0], area[1][0]),
                                    randint(area[0][1], area[1][1]))
         if (self.grid[target[0]][target[1]].walls == 15 or
@@ -315,7 +418,12 @@ class PatrollingAngleStrat(Strategy):
         return target
 
     def move(self, ghost_pos: tuple[int, int], _: tuple[int, int]) -> tuple[int, int]:
-        """"""
+        """Calculate the next position towards the current target.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, the ghost's patrol area
+        is recomputed and a new target is chosen within it.
+        """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             area = self.ghost_area(ghost_pos)
             target: tuple[int, int] = self.choose_target(area, ghost_pos)

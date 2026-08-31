@@ -37,17 +37,6 @@ def display_maze(map_test: Map, pacman_test: Pacman) -> None:
     print("\n".join(lines))
 
 
-def validate_path(maze: Map, start: tuple[int, int], path: list[Directions]) -> None:
-    pos = start
-    for i, direction in enumerate(path):
-        cell = maze.get_cell(pos)
-        if cell.walls & direction.value:
-            print(f"❌ Mur traversé à l'étape {i}: en {pos}, direction {direction.name} bloquée (walls={cell.walls})")
-            return
-        pos = maze.get_neighbor_coords(pos, Movements[direction.name])
-    print(f"✅ Chemin valide, arrivée en {pos}")
-
-
 if __name__ == "__main__":
     """Test the entities instanciation."""
     map_test: Map = Map(5, 5, 90, 10)
@@ -61,4 +50,3 @@ if __name__ == "__main__":
     strategy_test: Strategy = Strategy(map_test)
     path = strategy_test.find_path((0, 0), (4, 4))
     print(path)
-    validate_path(map_test, (0, 0), path)
