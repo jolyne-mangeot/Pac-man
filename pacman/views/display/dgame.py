@@ -56,8 +56,9 @@ class LevelDisplay:
         assets: LevelTheme = self.display.themed_assets[self.level.theme]
         self.gum = [pg.transform.scale(
             gum, (cell_size, cell_size)) for gum in assets["gum"]]
+        sup_size: int = int(cell_size * 1)
         self.sup_gum = [pg.transform.scale(
-            sup_gum, (cell_size, cell_size)) for sup_gum in assets["sup_gum"]]
+            sup_gum, (sup_size, sup_size)) for sup_gum in assets["sup_gum"]]
 
         p_a_w: dict[str, pg.Surface] = assets["paths_and_walls"]
         scale: dict[str, pg.Surface] = {
@@ -124,14 +125,6 @@ class LevelDisplay:
 
         maze_surf: pg.Surface = self.maze_surf.copy()
         visual_elements: list[tuple[pg.Surface, pg.Rect]] = []
-        mode: str = "super" if self.level.super_mode else "normal"
-        dir: dict[int, str] = {1: "north", 2: "east", 4: "south", 8: "west",
-                               15: "north"}
-        visual_elements.extend([(
-            self.characters[name][cast(Literal["normal", "super"], mode)][
-                dir[char.direction.value]][self.level.anim_tick],
-            pg.Rect(*self.coords(*char.pos), self.cell_size, self.cell_size))
-            for name, char in self.level.ghosts.items() if char.is_alive])
         visual_elements.extend([(
             self.gum[self.level.anim_tick],
             pg.Rect(*self.coords(*gum), self.cell_size, self.cell_size))
@@ -140,6 +133,14 @@ class LevelDisplay:
             self.sup_gum[self.level.anim_tick],
             pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
             for sup_gum in self.level.map.super_gums])
+        mode: str = "super" if self.level.super_mode else "normal"
+        dir: dict[int, str] = {1: "north", 2: "east", 4: "south", 8: "west",
+                               15: "north"}
+        visual_elements.extend([(
+            self.characters[name][cast(Literal["normal", "super"], mode)][
+                dir[char.direction.value]][self.level.anim_tick],
+            pg.Rect(*self.coords(*char.pos), self.cell_size, self.cell_size))
+            for name, char in self.level.ghosts.items() if char.is_alive])
         maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
         game_surf.blit(maze_surf, maze_surf.get_rect(
@@ -194,7 +195,7 @@ class GameDisplay(Display):
                        ) -> list[pg.Surface]:
             return [
                 sheet.get_sprite(
-                    (coords[0], coords[1] + 16 * index), (16, 16), -1)
+                    (coords[0] + 16 * index, coords[1]), (16, 16), -1)
                 for index in range(3)]
 
         def load_sprites(coords: tuple[int, int]) -> CharacterSprites:

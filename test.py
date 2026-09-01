@@ -1,5 +1,6 @@
-from pacman.models import (
-    Entity, Pacman, Ghost, Map, Movements, Strategy, strat_dict)
+
+from pacman.models import Pacman, Map, Strategy, strat_dict
+
 
 def display_maze(map_test: Map, pacman_test: Pacman) -> None:
     """Method to display debug mode of the map"""
@@ -41,7 +42,8 @@ def display_maze(map_test: Map, pacman_test: Pacman) -> None:
 if __name__ == "__main__":
     """Test the entities instanciation."""
     map_test: Map = Map(10, 10, 90, 10)
-    pacman_test: Pacman = Pacman(4, 6, (((map_test.width - 1) // 2), ((map_test.height - 1) // 2)))
+    pacman_test: Pacman = Pacman(
+        4, 6, ((map_test.width - 1) // 2, (map_test.height - 1) // 2))
     strategy_test: Strategy = Strategy(map_test)
     from random import seed
     seed()

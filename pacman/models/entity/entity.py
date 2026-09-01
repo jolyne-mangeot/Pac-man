@@ -69,7 +69,8 @@ class Entity(ABC):
     - respaw(): Reset the entity to its initial position.
     """
 
-    def __init__(self, speed: int, super_speed: int, initial_pos: tuple[int, int]):
+    def __init__(self, speed: int, super_speed: int,
+                 initial_pos: tuple[int, int]) -> None:
         """Initialises the attributes of the Entity instance."""
         self.speed: int = speed
         self.super_speed: int = super_speed
@@ -98,7 +99,7 @@ class Pacman(Entity):
     choose a direction before reaching an intersection.
 
     Pacman can also enter a special mode after collecting a super gum.
-    
+
     #### Inherited attributes:
     - speed (int): Normal movement speed.
     - super_speed (int): Movement speed used in super mode.
@@ -153,7 +154,7 @@ class Pacman(Entity):
 
 class Ghost(Entity):
     """Class Ghost, heriting from Entity.
-    
+
     #### Description:
     Represent a ghost entity controlled by a movement strategy.
 
@@ -222,7 +223,7 @@ class Ghost(Entity):
         augment the ghost current_stamina if it is inferior to max_stamina.
         """
         if (calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius and
-            (self.max_stamina == 0 or self.current_stamina > 0)):
+                (self.max_stamina == 0 or self.current_stamina > 0)):
             self.pos = self.chase_strat.move(self.pos, pacman_pos)
             self.current_stamina -= 1
         else:
@@ -235,4 +236,3 @@ class Ghost(Entity):
         behaviour.
         """
         pass
-

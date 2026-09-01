@@ -30,7 +30,7 @@ from mazegenerator import MazeGenerator
 
 class Directions(IntEnum):
     """Class Directions, inheriting from IntEnum.
-    
+
     #### Description:
     Represent the four possible movement directions.
 
@@ -132,7 +132,8 @@ def maze_interface(width: int, height: int, seed: int) -> list[list[Cell]]:
     Returns a two-dimensional list of `Cell` objects indexed by `[x][y]`.
     Each cell contains its coordinates and wall information.
     """
-    maze = MazeGenerator(size=(width, height), seed=seed, entry_cell=(0, 0), exit_cell=(0, 0))
+    maze = MazeGenerator(size=(width, height),
+                         seed=seed, entry_cell=(0, 0), exit_cell=(0, 0))
     grid = maze.maze
     cells_list: list[list[Cell]] = []
     for x in range(width):

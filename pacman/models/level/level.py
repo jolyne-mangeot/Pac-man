@@ -4,8 +4,7 @@ from enum import IntEnum
 import pygame as pg
 
 from pacman.models import (
-    strat_dict, Entity, Pacman, Ghost,
-    MazeConfig, GameplayConfig, ScoresConfig, Map)
+    Entity, Pacman, Ghost, MazeConfig, GameplayConfig, ScoresConfig, Map)
 
 
 class Timers(IntEnum):

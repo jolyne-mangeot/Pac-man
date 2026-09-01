@@ -10,7 +10,7 @@ from .menu import (
 
 from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
 
-from .entity import  Entity, Pacman, Ghost, Strategy, strat_dict
+from .entity import Entity, Pacman, Ghost, Strategy, strat_dict
 
 from .level import Level
 
