@@ -131,7 +131,7 @@ class LevelDisplay:
         # visual_elements.extend([(
         #     self.characters[name][mode][dir[char.direction]][self.level.anim_tick],
         #     pg.Rect(*self.coords(char.pos), self.cell_size, self.cell_size))
-        #     for name, char in self.level.ghosts.items()
+        #     for name, char in self.level.ghosts.items() if char.is_alive
         # ])
         # visual_elements.extend([(
         #     self.gum[self.level.anim_tick],

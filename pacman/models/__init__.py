@@ -8,7 +8,9 @@ from .menu import (
     Option, Spacer, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
-from .mazemap import Map
+from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
+
+from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat, Strategy
 
 from .level import Level
 
@@ -21,4 +23,8 @@ __all__ = [
     "Option", "Spacer", "InputOption", "SliderOption", "ActivateOption",
     "SelectionOption", "ToggleOption",
 
-    "Map", "Level"]
+    "Map", "Cell", "Movements", "Node", "Directions", "OPPOSITE_DIRECTION",
+
+    "Entity", "Pacman", "Ghost", "PatrollingAngleStrat", "Strategy",
+
+    "Level"]
