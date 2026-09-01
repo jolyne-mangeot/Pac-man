@@ -2,7 +2,7 @@
 
 ### Date: 2026-08-06
 
-### Description: 
+### Description:
 This module defines the `Map` class, which represents the game map and
 manages the placement and consumption of gums.
 
@@ -26,14 +26,14 @@ from typing import cast
 from .utils import maze_interface, Cell, Node, Directions, Movements
 
 
-RIGHT_TURN: dict[Directions : Directions] = {
+RIGHT_TURN: dict[Directions: Directions] = {
     Directions.UP: Directions.RIGHT,
     Directions.RIGHT: Directions.DOWN,
     Directions.DOWN: Directions.LEFT,
     Directions.LEFT: Directions.UP
 }
 
-LEFT_TURN: dict[Directions : Directions] = {
+LEFT_TURN: dict[Directions: Directions] = {
     Directions.UP: Directions.LEFT,
     Directions.LEFT: Directions.DOWN,
     Directions.DOWN: Directions.RIGHT,
@@ -48,10 +48,10 @@ OPPOSITE_DIRECTION: dict[Directions, Directions] = {
 }
 
 
-class Map: 
+class Map:
     """Class Map
 
-    #### Description: 
+    #### Description:
     This class represent the Pacman game map and its gums.
 
     The map is stored as a two-dimensional grid of `Cell` objects.
@@ -93,13 +93,15 @@ class Map:
     - generate_cell_graph(): Build the graph of cells and their
       neighbour nodes, used by the A* pathfinding algorithm.
     """
-    def __init__(self, width: int, height: int, gum_percent: int, seed: int) -> None:
+    def __init__(self, width: int, height: int,
+                 gum_percent: int, seed: int) -> None:
         """Initialises the attributes of the Map instance."""
         self.width: int = width
         self.height: int = height
         self.gum_percent: int = gum_percent
         self.seed: int = seed
-        self.map: list[list[Cell]] = maze_interface(self.width, self.height, self.seed)
+        self.map: list[list[Cell]] = maze_interface(self.width,
+                                                    self.height, self.seed)
         self.nb_simple_gum: int = 0
         self.nb_super_gum: int = 0
         self.intersection_cells: set[tuple[int, int]] = set()
@@ -151,8 +153,8 @@ class Map:
         self.map[(self.width - 1)][0].super_gum = True
         self.map[((self.width - 1))][(self.height - 1)].super_gum = True
         self.super_gums.update((0, 0), (0, self.height - 1),
-                            (self.width - 1, 0),
-                            (self.width - 1, self.height - 1))
+                               (self.width - 1, 0),
+                               (self.width - 1, self.height - 1))
         self.nb_super_gum += 4
 
     def simple_gum_placement(self) -> None:
@@ -174,13 +176,13 @@ class Map:
 
     def update_gum(self, pos_pacman: tuple[int, int]) -> str:
         """Update gum on the grid depending on Pacman position."""
-        if self.map[pos_pacman[0]][pos_pacman[1]].simple_gum == True:
-            self.map[pos_pacman[0]][pos_pacman[1]].simple_gum = False
+        if self.map[pos_pacman[0]][pos_pacman[1]].simple_gum is True:
+            self.map[pos_pacman[0]][pos_pacman[1]].simple_gum is False
             self.simple_gums.remove(pos_pacman)
             self.nb_simple_gum -= 1
             return "simple_gum"
-        elif self.map[pos_pacman[0]][pos_pacman[1]].super_gum == True:
-            self.map[pos_pacman[0]][pos_pacman[1]].super_gum = False
+        elif self.map[pos_pacman[0]][pos_pacman[1]].super_gum is True:
+            self.map[pos_pacman[0]][pos_pacman[1]].super_gum is False
             self.super_gums.remove(pos_pacman)
             self.nb_super_gum -= 1
             return "super_gum"
@@ -204,7 +206,8 @@ class Map:
         """Returns the Cell object present at the given coordinates."""
         return self.map[cell[0]][cell[1]]
 
-    def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements) -> tuple[int, int]:
+    def get_neighbor_coords(self, coords: tuple[int, int],
+                            mov: Movements) -> tuple[int, int]:
         """Return the coordinates of the cell adjacent to `coords` in the
         direction given by `mov`.
         """
@@ -244,7 +247,7 @@ class Map:
         while True:
             next_cell = self.get_neighbor_coords(
                         cell, Movements[dir.name])
-            
+
             if not (0 <= next_cell[0] < self.width
                     and 0 <= next_cell[1] < self.height):
                 raise ValueError

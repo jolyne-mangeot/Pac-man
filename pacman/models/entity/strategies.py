@@ -42,7 +42,7 @@ from pacman.models import (Map, Cell, Node, Directions, Movements,
 
 class Strategy(ABC):
     """Class Strategy, heriting from ABC.
-    
+
     #### Description:
     Base class for ghost movement strategies.
 
@@ -62,8 +62,6 @@ class Strategy(ABC):
     #### Methods:
     @abstractmethod
     - move(): Calculate the next position for the ghost.
-
-    Description:
     """
     def __init__(self, maze: Map):
         """Initialises the attributes of the Strategy instance."""
@@ -111,15 +109,15 @@ class Strategy(ABC):
             #### Description:
             Store additional informations about node in a external
             dictionnary.
-            
+
             #### Attributes:
             - distance_from_start (int): Distance from start to node.
             - path (list[Directions]): Path from start to node.
             - previous_node (tuple[int, int]): coords of previous node.
             """
             def __init__(self, distance_from_start: int = -1,
-                        path: list[Directions] = [],
-                        previous_node: tuple[int, int] = (-1, -1)) -> None:
+                         path: list[Directions] = [],
+                         previous_node: tuple[int, int] = (-1, -1)) -> None:
                 self.distance_from_start: int = distance_from_start
                 self.path: list[Directions] = path
                 self.previous_node: tuple[int, int] = previous_node
@@ -167,7 +165,7 @@ class Strategy(ABC):
 
 class ChaseOnSpot(Strategy):
     """Class ChaseOnSpot, inheriting from Strategy.
-    
+
     #### Description:
     Move the ghost on the Pacman spotted position.
 
@@ -203,10 +201,9 @@ class ChaseOnSpot(Strategy):
         self.ghost_saved_pos: tuple[int, int] = ()
 
 
-
 class AlternateAngleStrat(Strategy):
     """Class AlternateAngleStrat, inheriting from Strategy.
-    
+
     #### Description:
     Move the ghost between randomly selected points of the maze.
 
@@ -261,7 +258,6 @@ class AlternateAngleStrat(Strategy):
             targets.remove(ghost_pos)
         return choice(targets)
 
-
     def move(self, ghost_pos: tuple[int, int],
              _: tuple[int, int]) -> tuple[int, int]:
         """Calculate the next position towards the current target.
@@ -279,6 +275,7 @@ class AlternateAngleStrat(Strategy):
         del self.path[0]
         return self.ghost_saved_pos
 
+
 class PatrollingAngleStrat(Strategy):
     """Class PatrollingAngleStrat, inheriting from Strategy.
 
@@ -289,7 +286,7 @@ class PatrollingAngleStrat(Strategy):
     entire grid in which the ghost is located.
 
     Once the area has been identified, the strategy randomly selects a cell
-    within that area and calculates the shortest path to that cell. 
+    within that area and calculates the shortest path to that cell.
 
     The ghost cannot leave its zone (unless it changes strategy). If it does,
     the patrol zone is reset to the one in which it currently finds itself, or
@@ -310,7 +307,7 @@ class PatrollingAngleStrat(Strategy):
       continue to move toward target when this strategy is called again.
 
     #### Methods:
-    - ghost_area(): Identify the area in which the ghost is located. 
+    - ghost_area(): Identify the area in which the ghost is located.
     - chose_target(): Select a new destination for the ghost.
     - move(): Calculate the next position towards the current target.
     """
@@ -321,7 +318,7 @@ class PatrollingAngleStrat(Strategy):
         self.path: list[Directions] = []
         self.ghost_saved_pos: tuple[int, int] = ()
 
-    def ghost_area(self, ghost_pos:tuple[int, int]) -> list[tuple[int, int]]:
+    def ghost_area(self, ghost_pos: tuple[int, int]) -> list[tuple[int, int]]:
         """Identifies the area in which the ghost is located. Returns the
         coordinates of the cells at the bottom-left and top-right corners of
         this area.
@@ -353,7 +350,7 @@ class PatrollingAngleStrat(Strategy):
         target: tuple[int, int] = (randint(area[0][0], area[1][0]),
                                    randint(area[0][1], area[1][1]))
         if (self.grid[target[0]][target[1]].walls == 15 or
-            self.grid[target[0]][target[1]].coordinates == ghost_pos):
+                self.grid[target[0]][target[1]].coordinates == ghost_pos):
             return self.choose_target(area, ghost_pos)
         return target
 
@@ -376,7 +373,8 @@ class PatrollingAngleStrat(Strategy):
             ghost_pos[1] + Movements[self.path[0].name].value[1])
         del self.path[0]
         return self.ghost_saved_pos
-        
+
+
 def calculate_manhattan(ghost: tuple[int, int],
                         target: tuple[int, int]) -> int:
     """Calculate the Manhattan distance between two positions and returns
