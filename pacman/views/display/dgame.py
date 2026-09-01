@@ -1,5 +1,5 @@
 
-from typing import TypedDict
+from typing import TypedDict, cast, Literal
 from random import randint as rand, choice
 
 import pygame as pg
@@ -13,8 +13,24 @@ class LevelDisplay:
     def __init__(self, display: GameDisplay, level: Level) -> None:
         self.display: GameDisplay = display
         self.level: Level = level
+
         self.maze_surf: pg.Surface
+        self.characters: dict[str, CharacterSprites]
+
+        self.cell_size: int
+        self.cell_gap: int
+        self.gum: list[pg.Surface]
+        self.sup_gum: list[pg.Surface]
+
         self.render_maze()
+        self.scale_characters()
+
+    def coords(self, x: int, y: int, h_path: float = 0,
+               v_path: float = 0) -> tuple[int, int]:
+        return ((x * self.cell_size) + (x * self.cell_gap)
+                + int(h_path * self.cell_size),
+                (y * self.cell_size) + (y * self.cell_gap)
+                + int(v_path * self.cell_size))
 
     def render_maze(self) -> None:
         maze_width: int
@@ -29,28 +45,30 @@ class LevelDisplay:
             maze_width = int(maze_height * self.level.map.width
                              / self.level.map.height * 0.98)
 
-        cell_size: int = maze_width // int(self.level.map.width * 1.5)
-        cell_gap: int = cell_size // 2.3
+        self.cell_size = maze_width // int(self.level.map.width * 1.5)
+        cell_size = self.cell_size
+        self.cell_gap = int(cell_size // 2.3)
+        cell_gap = self.cell_gap
 
-        def coords(x: int, y: int, h_path: float = 0,
-                            v_path: float = 0) -> tuple[int, int]:
-            return ((x * cell_size) + (x * cell_gap) + int(h_path * cell_size),
-                    (y * cell_size) + (y * cell_gap) + int(v_path * cell_size))
-
-        self.maze_surf = self.display.new_surface(coords(
+        self.maze_surf = self.display.new_surface(self.coords(
             self.level.map.width, self.level.map.height + 1, -0.5, -1))
 
-        assets: LevelTheme = self.display.assets[self.level.theme]
+        assets: LevelTheme = self.display.themed_assets[self.level.theme]
+        self.gum = [pg.transform.scale(
+            gum, (cell_size, cell_size)) for gum in assets["gum"]]
+        self.sup_gum = [pg.transform.scale(
+            sup_gum, (cell_size, cell_size)) for sup_gum in assets["sup_gum"]]
+
         p_a_w: dict[str, pg.Surface] = assets["paths_and_walls"]
         scale: dict[str, pg.Surface] = {
             "s_wall": pg.transform.scale(
-                p_a_w["s_wall"], (cell_size // 2.3, cell_size)),
+                p_a_w["small_wall"], (cell_gap, cell_size)),
             "s_down_wall": pg.transform.scale(
-                p_a_w["s_down_wall"], (cell_size // 2.3, cell_size * 2)),
+                p_a_w["small_down_wall"], (cell_gap, cell_size * 2)),
             "h_path": pg.transform.scale(
-                p_a_w["h_path"], (cell_size // 2.3, cell_size)),
+                p_a_w["h_path"], (cell_gap, cell_size)),
             "v_path": pg.transform.scale(
-                p_a_w["v_path"], (cell_size, cell_size // 2.3)),
+                p_a_w["v_path"], (cell_size, cell_gap)),
             "wall": pg.transform.scale(p_a_w["wall"], (cell_size, cell_size)),
             "down_wall": pg.transform.scale(
                 p_a_w["down_wall"], (cell_size, cell_size * 2))}
@@ -69,34 +87,67 @@ class LevelDisplay:
 
                 elems: list[tuple[pg.Surface, tuple[int, int]]] = [(
                     pg.transform.scale(cell, (cell_size, cell_size)),
-                    coords(x, y))]
+                    self.coords(x, y))]
                 if not (walls & 2):
-                    elems.append((scale["h_path"], coords(x, y, 1)))
+                    elems.append((scale["h_path"], self.coords(x, y, 1)))
                     elems.append((scale[
                         "s_down_wall" if y == self.level.map.height - 1
-                        else "s_wall"], coords(x, y, 1, 1)))
+                        else "s_wall"], self.coords(x, y, 1, 1)))
                 if not (walls & 4):
-                    elems.append((scale["v_path"], coords(x, y, 0, 1)))
+                    elems.append((scale["v_path"], self.coords(x, y, 0, 1)))
                 else:
                     elems.append((scale[
-                        "s_down_wall" if y == self.level.map.height - 1
-                        else "s_wall"], coords(x, y, 0, 1)))
+                        "down_wall" if y == self.level.map.height - 1
+                        else "wall"], self.coords(x, y, 0, 1)))
                 if walls == 15:
                     if rand(0, 100) < 25:
-                        elems.append((choice(decorations), coords(x, y)))
+                        elems.append((choice(decorations), self.coords(x, y)))
 
                 self.maze_surf.blits(elems)
+
+    def scale_characters(self) -> None:
+        self.characters = {}
+        for char, sprites in self.display.characters.items():
+            self.characters.update({char: {"normal": {}, "super": {}}})
+            for mode in ("normal", "super"):
+                for dir, frames in sprites[mode].items():
+                    self.characters[char][mode].update({
+                        dir: [pg.transform.scale(
+                            frame, (self.cell_size, self.cell_size))
+                            for frame in frames]})
 
     def draw(self) -> None:
         self.display.control.screen.fill((0, 0, 0))
         game_surf: pg.Surface = self.display.new_surface((
             self.display.control.interface.get_width(),
             int(self.display.control.interface.get_height() * 0.85)))
+
+        maze_surf: pg.Surface = self.maze_surf.copy()
+        visual_elements: list[tuple[pg.Surface, pg.Rect]] = []
+        # mode: str = "super" if self.level.super_mode else "normal"
+        # dir: dict[int, str] = {
+        #     1: "north", 2: "east",
+        #     3: "south", 4: "west"}
+        # visual_elements.extend([(
+        #     self.characters[name][mode][dir[char.direction]][self.level.anim_tick],
+        #     pg.Rect(*self.coords(char.pos), self.cell_size, self.cell_size))
+        #     for name, char in self.level.ghosts.items()
+        # ])
+        # visual_elements.extend([(
+        #     self.gum[self.level.anim_tick],
+        #     pg.Rect(*self.coords(gum), self.cell_size, self.cell_size))
+        #     for gum in self.level.map.simple_gums])
+        # visual_elements.extend([(
+        #     self.sup_gum[self.level.anim_tick],
+        #     pg.Rect(*self.coords(sup_gum), self.cell_size, self.cell_size))
+        #     for sup_gum in self.level.map.super_gums])
+        maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
-        game_surf.blit(self.maze_surf, self.maze_surf.get_rect(
+        game_surf.blit(maze_surf, maze_surf.get_rect(
             center=game_surf.get_rect().center))
         self.display.control.interface.blit(game_surf, (
             0, int(self.display.control.interface.get_height() * 0.15)))
+
         self.display.control.screen.blit(
             self.display.control.interface,
             self.display.control.interface_rect)
@@ -111,11 +162,17 @@ class LevelTheme(TypedDict):
     sup_gum: list[pg.Surface]
 
 
+class CharacterSprites(TypedDict):
+    normal: dict[str, list[pg.Surface]]
+    super: dict[str, list[pg.Surface]]
+
+
 class GameDisplay(Display):
     def __init__(self, control: Control) -> None:
         super().__init__(control)
         self.level_display: LevelDisplay
         self.load_level_assets()
+        self.load_characters_sprites()
 
     def startup(self) -> None:
         pass
@@ -124,9 +181,43 @@ class GameDisplay(Display):
         del self.level_display
 
     def load_level_assets(self) -> None:
-        self.assets: dict[str, LevelTheme] = {}
+        self.themed_assets: dict[str, LevelTheme] = {}
         for theme in ("grassy", "dungeon"):
             self.load_theme_sprites(theme)
+
+    def load_characters_sprites(self) -> None:
+        normal_sht: SpriteSheet = SpriteSheet(
+            "pacman/assets/level/skellies_premade_1.png")
+        super_sht: SpriteSheet = SpriteSheet(
+            "pacman/assets/level/skellies_premade_2.png")
+
+        def get_frames(coords: tuple[int, int], sheet: SpriteSheet
+                       ) -> list[pg.Surface]:
+            return [
+                sheet.get_sprite(
+                    (coords[0], coords[1] + 16 * index), (16, 16), -1)
+                for index in range(3)]
+
+        def load_sprites(coords: tuple[int, int]) -> CharacterSprites:
+            sprites: CharacterSprites = {"normal": {}, "super": {}}
+            for mode, sheet in zip(
+                    ("normal", "super"), (normal_sht, super_sht)):
+                sprites[cast(Literal["normal", "super"], mode)].update({
+                    "north": get_frames((coords[0], coords[1]), sheet),
+                    "east": get_frames((coords[0] + 32, coords[1]), sheet),
+                    "west": get_frames((coords[0] + 16, coords[1]), sheet),
+                    "south": get_frames((coords[0] + 48, coords[1]), sheet)})
+            return sprites
+
+        sheet_coords: dict[str, tuple[int, int]] = {
+            "Pacman": (0, 0),
+            "Blinky": (10 * 16 * 3, 2 * 16 * 4),
+            "Pinky": (8 * 16 * 3, 14 * 16 * 4),
+            "Inky": (0, 0),
+            "Clyde": (0, 0)}
+        self.characters: dict[str, CharacterSprites] = {}
+        for name, coords in sheet_coords.items():
+            self.characters.update({name: load_sprites(coords)})
 
     def load_theme_sprites(self, theme: str) -> None:
         sheet: SpriteSheet = SpriteSheet(
@@ -189,12 +280,12 @@ class GameDisplay(Display):
         sup_gum_sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/level/" + theme + "_sup_gum.png")
         sup_gum: list[pg.Surface] = []
-        for y in range(5):
-            for x in range(5):
+        for y in range(3):
+            for x in range(3):
                 sup_gum.append(
                     sup_gum_sheet.get_sprite((x * 192, y * 192), (192, 192)))
 
-        self.assets.update({theme: {
+        self.themed_assets.update({theme: {
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
             "decorations": decorations,

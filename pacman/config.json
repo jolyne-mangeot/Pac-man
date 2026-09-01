@@ -24,6 +24,9 @@
 						"sup_move_strat": "run",
 						"speed": 3,
 						"sup_speed": 3,
+						"escape_radius": 5,
+						"chase_radius": 5,
+						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Pinky": {
@@ -31,6 +34,9 @@
 						"sup_move_strat": "run",
 						"speed": 3,
 						"sup_speed": 3,
+						"escape_radius": 5,
+						"chase_radius": 5,
+						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Inky": {
@@ -38,6 +44,9 @@
 						"sup_move_strat": "run",
 						"speed": 3,
 						"sup_speed": 3,
+						"escape_radius": 5,
+						"chase_radius": 5,
+						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Clyde": {
@@ -45,6 +54,9 @@
 						"sup_move_strat": "run",
 						"speed": 3,
 						"sup_speed": 3,
+						"escape_radius": 5,
+						"chase_radius": 5,
+						"chasing_stamina": 10,
 						"down_time": 3
 					}
 				}

@@ -15,6 +15,7 @@ class Timers(IntEnum):
     PINKY = pg.USEREVENT + 4
     INKY = pg.USEREVENT + 5
     CLYDE = pg.USEREVENT + 6
+    ANIMATIONS = pg.USEREVENT + 7
 
 
 class Level:
@@ -35,10 +36,14 @@ class Level:
         self.scores: dict[str, int] = {
             "gum": 0, "sup_gum": 0, "ghost": 0, "level": 0}
         self.map: Map = Map(**maze_config.model_dump())
+        self.map.super_gum_placement()
+        self.map.simple_gum_placement()
         self.pacman: dict[str, Any] = {}
         self.ghosts: dict[str, dict[str, Any]] = {}
+        self.anim_tick: int = 0
         self.instantiate_ghosts(maze_config, gameplay)
         pg.time.set_timer(Timers.LEVEL.value, 1000, 1)
+        pg.time.set_timer(Timers.ANIMATIONS.value, 333)
 
     def instantiate_ghosts(self, maze: MazeConfig,
                            config: GameplayConfig) -> None:
@@ -95,6 +100,8 @@ class Level:
                 self.pacman  # .respawn()
                 for ghost in self.ghosts:
                     ghost  # .respawn()
+        elif event.type == Timers.ANIMATIONS.value:
+            self.anim_tick = (self.anim_tick + 1) % 3
         for name in self.ghosts.keys():
             if event.type == Timers[name.upper()].value:
                 if self.ghosts[name]["is_alive"] is True:

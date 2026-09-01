@@ -24,6 +24,9 @@ class GhostConfig(JSONModel):
     sup_move_strat: str = Field(default="run")  # LIST FROM ALGORITHMS FILE
     speed: int = Field(ge=0, le=20, default=3)
     sup_speed: int = Field(ge=0, le=20, default=3)
+    escape_radius: int = Field(ge=0, default=5)
+    chase_radius: int = Field(ge=0, default=5)
+    chasing_stamina: int = Field(ge=0, default=10)
     down_time: int = Field(ge=0, le=20, default=3)
 
 
