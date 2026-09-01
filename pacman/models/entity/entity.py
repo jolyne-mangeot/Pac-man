@@ -186,6 +186,9 @@ class Ghost(Entity):
     - idle_strat (Strategy): Strategy used when the ghost is not chasing.
     - chase_strat (Strategy): Strategy used when the ghost is chasing.
     - escape_strat (Strategy): Strategy used when the ghost is escaping.
+    - max_stamina (int): number of chasing movements before the ghost
+      become 'exhausted' and stop his chasing behavior.
+    - current_stamina (int): actual stamina of the ghost.
 
     #### Methods:
     - chase(): Chase Pacman when he is within the chase radius.
@@ -194,7 +197,7 @@ class Ghost(Entity):
     def __init__(self, speed: int, super_speed: int,
                  initial_pos: tuple[int, int], down_time: int,
                  chase_radius: int, escape_radius: int, idle_strat: str,
-                 chase_strat: str, escape_strat: str,
+                 chase_strat: str, escape_strat: str, chasing_stamina: int,
                  maze: list[list[Cell]]):
         """Initialises the attributes of the Ghost instance."""
         super().__init__(speed, super_speed, initial_pos)
@@ -204,13 +207,28 @@ class Ghost(Entity):
         self.idle_strat: Strategy = strat_dict[idle_strat](maze)
         self.chase_strat: Strategy = strat_dict[chase_strat](maze)
         self.escape_strat: Strategy = strat_dict[escape_strat](maze)
+        self.max_stamina: int = chasing_stamina
+        self.current_stamina: int = chasing_stamina
 
     def chase(self, pacman_pos: tuple[int, int]) -> None:
-        """Function to chase Pacman when he is within the chase radius."""
-        if calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius:
+        """Function to move ghost when Pacman is not in Super mode.
+
+        If Pacman is is the chasing radius and ghost max_stamina is equal to 0
+        or ghost current_stamina is superior to 0, the movement of ghost use a
+        chasing strategy. Each move with chasing strategy reduce the ghost
+        current_stamina.
+
+        If not, it use a idling strategy to move.Each move in idling strategy
+        augment the ghost current_stamina if it is inferior to max_stamina.
+        """
+        if (calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius and
+            (self.max_stamina == 0 or self.current_stamina > 0)):
             self.pos = self.chase_strat.move()
+            self.current_stamina -= 1
         else:
             self.pos = self.idle_strat.move(self.pos)
+            if self.current_stamina < self.max_stamina:
+                self.current_stamina += 1
 
     def escape(self, pacman_pos: tuple[int, int]) -> None:
         """Function to move away from Pacman according to the escape

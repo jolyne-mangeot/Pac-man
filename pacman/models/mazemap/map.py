@@ -103,6 +103,8 @@ class Map:
         self.nb_simple_gum: int = 0
         self.nb_super_gum: int = 0
         self.intersection_cells: set[tuple[int, int]] = set()
+        self.simple_gums: set[tuple[int, int]] = set()
+        self.super_gums: set[tuple[int, int]] = set()
 
     def __repr__(self) -> None:
         """Method to display debug mode of the map."""
@@ -148,6 +150,9 @@ class Map:
         self.map[0][(self.height - 1)].super_gum = True
         self.map[(self.width - 1)][0].super_gum = True
         self.map[((self.width - 1))][(self.height - 1)].super_gum = True
+        self.super_gums.update((0, 0), (0, self.height - 1),
+                            (self.self.width - 1, 0),
+                            (self.width - 1, self.height - 1))
         self.nb_super_gum += 4
 
     def simple_gum_placement(self) -> None:
@@ -164,16 +169,19 @@ class Map:
         shuffle(available_cells)
         for cell in available_cells[:nb_simple_gum]:
             cell.simple_gum = True
+            self.simple_gums.add(self.self.get_cell(cell))
             self.nb_simple_gum += 1
 
     def update_gum(self, pos_pacman: tuple[int, int]) -> str:
         """Update gum on the grid depending on Pacman position."""
         if self.map[pos_pacman[0]][pos_pacman[1]].simple_gum == True:
             self.map[pos_pacman[0]][pos_pacman[1]].simple_gum = False
+            self.simple_gums.remove(pos_pacman)
             self.nb_simple_gum -= 1
             return "simple_gum"
         elif self.map[pos_pacman[0]][pos_pacman[1]].super_gum == True:
             self.map[pos_pacman[0]][pos_pacman[1]].super_gum = False
+            self.super_gums.remove(pos_pacman)
             self.nb_super_gum -= 1
             return "super_gum"
         else:
