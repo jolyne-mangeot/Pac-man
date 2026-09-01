@@ -47,6 +47,7 @@ OPPOSITE_DIRECTION: dict[Directions, Directions] = {
     Directions.RIGHT: Directions.LEFT,
 }
 
+
 class Map: 
     """Class Map
 
@@ -86,11 +87,10 @@ class Map:
       intersection cell.
     - record_maze_intersections(): Identify and store every intersection
       cell of the maze.
-    - find_next_intersect(): Follow a corridor from a cell to the next
+    - find_intersect(): Follow a corridor from a cell to the next
       intersection in a given direction.
-    - get_connections_to_intersections(): Return all intersection nodes
       directly reachable from a position.
-    - generate_cell_graph(): Build the graph of intersections and their
+    - generate_cell_graph(): Build the graph of cells and their
       neighbour nodes, used by the A* pathfinding algorithm.
     """
     def __init__(self, width: int, height: int, gum_percent: int, seed: int) -> None:
@@ -221,7 +221,7 @@ class Map:
                 if self.map[x][y].walls in (0, 1, 2, 4, 8):
                     self.intersection_cells.add((x, y))
 
-    def find_next_intersect(
+    def find_intersect(
             self, cell: tuple[int, int], dir: Directions) -> Node:
         """Starting from `cell` and moving in `dir`, walks the maze corridor
         cell by cell, accumulating the distance travelled and the sequence
@@ -259,35 +259,9 @@ class Map:
                 continue
             raise ValueError
 
-    def get_connections_to_intersections(self, position: tuple[int, int]) -> list[Node]:
-        """Return all nodes directly reachable from position.
-
-        If `position` is itself an intersection, a single `Node` at
-        distance 0 with an empty path is returned (it is its own
-        connection). Otherwise, the method tries every open direction from
-        `position` and, for each one, follows the corridor via
-        `find_next_intersect` until it either reaches an intersection
-        (appended to the result) or hits a dead end (skipped).
-        """
-        if position in self.intersection_cells:
-            return [Node(position, 0, [])]
-        connections: list[Node] = []
-        cell: Cell = self.get_cell(position)
-        for direction in Directions:
-            if direction == Directions.NONE:
-                continue
-            if cell.walls & direction.value:
-                continue
-            try:
-                node = self.find_next_intersect(position, direction)
-            except ValueError:
-                continue
-            connections.append(node)
-        return connections
-
     def generate_cell_graph(self) -> None:
         """Calls record_maze_intersections to instantiate the
-        intersection_cells set. Then calls find_next_intersect methods to
+        intersection_cells set. Then calls find_intersect methods to
         instanciate a Node object for each neighbour of an intersection.
         These Node are inserted into a list added as attribute to Cell
         objects for future reference.
@@ -301,25 +275,26 @@ class Map:
         back to the same intersection) are ignored.
         """
         self.record_maze_intersections()
-        found_node: Node
-        for coords in self.intersection_cells:
-            cell: Cell = self.get_cell(coords)
-            for direction in Directions:
-                if direction == Directions.NONE:
-                    continue
-                if cell.walls & direction.value:
-                    continue
-                try:
-                    found_node = self.find_next_intersect(coords, direction)
-                except ValueError:
-                    continue
-                if found_node.coords == coords:
-                    continue
-                for neighbour in cell.neighbor_nodes:
-                    if neighbour.coords == found_node.coords:
-                        if found_node.distance < neighbour.distance:
-                            neighbour.distance = found_node.distance
-                            neighbour.path = found_node.path
-                        break
-                else:
-                    cell.neighbor_nodes.append(found_node)
+        for x in range(self.width):
+            for y in range(self.height):
+                cell: Cell = self.get_cell((x, y))
+                for direction in Directions:
+                    if direction == Directions.NONE:
+                        continue
+                    if cell.walls & direction.value:
+                        continue
+                    try:
+                        found_node: Node = self.find_intersect(
+                            (x, y), direction)
+                    except ValueError:
+                        continue
+                    if found_node.coords == (x, y):
+                        continue
+                    for neighbour in cell.neighbor_nodes:
+                        if neighbour.coords == found_node.coords:
+                            if found_node.distance < neighbour.distance:
+                                neighbour.distance = found_node.distance
+                                neighbour.path = found_node.path
+                            break
+                    else:
+                        cell.neighbor_nodes.append(found_node)

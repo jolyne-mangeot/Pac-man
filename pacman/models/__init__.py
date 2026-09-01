@@ -8,7 +8,7 @@ from .menu import (
     Option, Spacer, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
-from .mazemap import Map, Cell, Movements
+from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
 
 from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat, Strategy
 

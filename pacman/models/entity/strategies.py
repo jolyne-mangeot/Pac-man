@@ -30,55 +30,13 @@ that the `Strategy` methods themselves stay stateless between calls.
 - PatrollingAngleStrat(Strategy): Move the ghost in a patrolling behavior
   inside a specific area.
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Literal
-from heapq import heappop, heappush
 from random import choice, randint
-from dataclasses import dataclass, field
+from heapq import heappush, heappop
+from collections import deque
 
-from pacman.models import Map, Cell
-
-from ..mazemap.map import Directions, Movements, Node, OPPOSITE_DIRECTION
-
-
-class AStarState:
-    """Class AStarState.
-
-    #### Description:
-    Stores the temporary state used by the A* algorithm.
-
-    An instance of this class is created for each call to `find_path` and
-    passed along to the various A* helper methods of `Strategy`, so that
-    the search state stays local to a single pathfinding request instead
-    of being stored on the `Strategy` instance itself.
-    
-    #### Attributes:
-    - open_nodes (list[tuple[int, tuple[int, int]]]): Min-heap (priority
-      queue) of nodes still to be explored, as `(priority, coords)` pairs,
-      where `priority` is the estimated total cost (distance so far plus
-      the Manhattan-distance heuristic to the target). Nodes are popped
-      in increasing priority order via `heapq`.
-    - closed_nodes (set[tuple[int, int]]): Coordinates of the nodes that
-      have already been fully processed by the search, so they are not
-      expanded again.
-    - g_score (dict[tuple[int, int], int]): Maps each visited node's
-      coordinates to the shortest known distance from the ghost's
-      starting position to that node.
-    - came_from (dict[tuple[int, int], tuple[tuple[int, int],
-                      list[Directions]]]):
-      Maps each node's coordinates to the predecessor node it was reached
-      from, along with the list of directions travelled to get there.
-      Used by `reconstruct_path` to rebuild the full path once the
-      target has been reached.
-    """
-    def __init__(self) -> None:
-        """Initialises the temporary state used by the A* algorithm."""
-        self.open_nodes: list[tuple[int, tuple[int, int]]] = []
-        self.closed_nodes: set[tuple[int, int]] = set()
-        self.g_score: dict[tuple[int, int], int] = {}
-        self.came_from: dict[tuple[int, int],
-                             tuple[tuple[int, int],
-                             list[Directions]]] = {}
+from pacman.models import Map, Cell, Node, Directions, Movements, OPPOSITE_DIRECTION
 
 
 class Strategy(ABC):
@@ -113,131 +71,8 @@ class Strategy(ABC):
         self.xmax: int = len(self.grid) - 1
         self.ymax: int = len(self.grid[0]) - 1
 
-    #@abstractmethod
-    #def move(self, ghost_pos: tuple[int, int], target: tuple[int, int]) -> tuple[int, int]:
-    #    """Calculate the ghost's next position. Returns the next position
-    #    chosen by the strategy.
-    #    """
-    #    pass
-
-    def update_node(self, state: AStarState, coords: tuple[int, int],
-                    distance: int, path: list[Directions],
-                    predecessor: tuple[int, int] | None,
-                    target: tuple[int, int]) -> None:
-        """Update a node's score if a shorter path to it was found.
-
-        Compares the newly computed `distance` to the best known distance
-        for `coords`. If it is not strictly shorter, the node is left
-        unchanged. Otherwise, `coords` becomes the new best known distance,
-        its predecessor and the directions leading to it are recorded (so
-        the path can later be rebuilt via `reconstruct_path`), and the node
-        is pushed onto the A* open set with a priority equal to the
-        distance plus the Manhattan-distance heuristic to `target`.
-        """
-        if distance >= state.g_score.get(coords, float("inf")):
-            return
-        state.g_score[coords] = distance
-        if predecessor is not None:
-            state.came_from[coords] = (predecessor, path)
-        priority = distance + calculate_manhattan(coords, target)
-        heappush(state.open_nodes, (priority, coords))
-
-    def initialize_start_nodes(self, state: AStarState,
-                                ghost: tuple[int, int],
-                                connections: list[Node],
-                                target: tuple[int, int]) -> None:
-        """Initialize the nodes directly reachable from the ghost.
-
-        Seeds the A* open set with every intersection listed in
-        `connections`, i.e. the intersections the ghost can reach without
-        crossing another intersection first. Each of these nodes is
-        registered via `update_node`, using the ghost's own position as
-        predecessor (or `None` when the node's coordinates are the ghost's
-        position itself), so the search can start expanding from there.
-        """
-        for node in connections:
-            predecessor = None if node.coords == ghost else ghost
-            self.update_node(state, node.coords, node.distance,
-                        node.path, predecessor, target)
-
-    def get_best_target_connections(self, connections: list[Node]) -> dict[
-                                        tuple[int, int], Node]:
-        """Keep the shortest connection from each intersection to target.
-
-        Several distinct paths may connect the same intersection to the
-        target; only the shortest one is relevant to A*. This method
-        collapses the list of `Node` connections into a dictionary mapping
-        each intersection's coordinates to the less far Node, discarding any
-        longer alternative found for the same intersection.
-        """
-        best_connections: dict[tuple[int, int], Node] = {}
-        for node in connections:
-            previous = best_connections.get(node.coords)
-            if previous is None or node.distance < previous[0]:
-                best_connections[node.coords] = node
-        return best_connections
-
-    def reconstruct_path(self, current: tuple[int, int],
-                         came_from: dict[tuple[int, int],
-                                     tuple[tuple[int, int],
-                                     list[Directions]]],
-                         target_path: list[Directions]) -> list[Directions]:
-        """Reconstruct the path from ghost to target.
-
-        Walks backwards from `current` (the intersection at which the A*
-        search reached the target's connections) through the `came_from`
-        predecessor chain built during the search, prepending the stored
-        directions at each step until the ghost's starting position is
-        reached. The `target_path` (the path from `current` to the actual
-        target cell) is then appended in reverse, using the opposite
-        direction of each step, since it was originally computed from the
-        target towards the intersection. The result is the full,
-        ordered sequence of directions leading the ghost from its current
-        position to the target.
-        """
-        path: list[Directions] = []
-        while current in came_from:
-            previous, directions = came_from[current]
-            path[0:0] = directions
-            current = previous
-        path.extend(OPPOSITE_DIRECTION[dir] for dir in reversed(target_path))
-        return path
-
-    def a_star(self, state: AStarState,
-               target_connections: dict[tuple[int, int],
-                                        tuple[int, list[Directions]]],
-               target: tuple[int, int]) -> list[Directions]:
-        """Run A* on the intersection graph.
-
-        Repeatedly pops the intersection with the lowest priority
-        (distance so far + Manhattan-distance heuristic) from the open
-        set. Nodes already processed are skipped. As soon as a popped
-        intersection is one of the `target_connections`, the search stops
-        and the full path is rebuilt via `reconstruct_path`. Otherwise,
-        every neighbouring intersection of the current node is relaxed
-        through `update_node`, extending the search. If the open set is
-        exhausted without reaching a target connection, an empty list is
-        returned, meaning no path exists between the ghost and the target.
-        """
-        while state.open_nodes:
-            _, current = heappop(state.open_nodes)
-            if current in state.closed_nodes:
-                continue
-            state.closed_nodes.add(current)
-            target_connection = target_connections.get(current)
-            if target_connection is not None:
-                return self.reconstruct_path(current, state.came_from, target_connection.path)
-            current_cell = self.maze.get_cell(current)
-            for neighbour in current_cell.neighbor_nodes:
-                if neighbour.coords in state.closed_nodes:
-                    continue
-                self.update_node(state, neighbour.coords,
-                            state.g_score[current] + neighbour.distance,
-                            list(neighbour.path), current, target)
-        return []
-
     def find_path(self, ghost: tuple[int, int],
-                 target: tuple[int, int]) -> list[Directions]:
+                  target: tuple[int, int]) -> list[Directions]:
         """Find the shortest path from ghost to target using A* Algorithm.
 
         Regenerates the maze's intersection graph, then computes the
@@ -251,15 +86,74 @@ class Strategy(ABC):
         """
         if ghost == target:
             return []
-        self.maze.generate_cell_graph()
-        start_connections = self.maze.get_connections_to_intersections(ghost)
-        target_connections = self.maze.get_connections_to_intersections(target)
-        if not start_connections or not target_connections:
-            return []
-        target_connections = self.get_best_target_connections(target_connections)
-        state = AStarState()
-        self.initialize_start_nodes(state, ghost, start_connections, target)
-        return self.a_star(state, target_connections, target)
+
+        def node_in_target_neighbors(coords: tuple[int, int]) -> Node | None:
+            for node in self.maze.get_cell(target).neighbor_nodes:
+                if coords == node.coords:
+                    return node
+            return None
+
+        def calc_node_priority(
+                node: tuple[int, int], dest: tuple[int, int]) -> int:
+            """Returns an int corresponding to the Manhattan distance as an
+            absolute, to be used in priorizing the closest node from the
+            destination.
+            """
+            return abs(node[0] - dest[0]) + abs(node[1] - dest[1])
+
+        def reverse_path(path: tuple[Directions]) -> list[Directions]:
+            reverse: list[Directions] = []
+            for dir in path[::-1]:
+                reverse.append(OPPOSITE_DIRECTION[dir])
+            return reverse
+
+        class Origin:
+            def __init__(self, distance_from_start: int = -1,
+                        path: list[Directions] = [],
+                        previous_node: tuple[int, int] = (-1, -1)) -> None:
+                self.distance_from_start: int = distance_from_start
+                self.path: list[Directions] = path
+                self.previous_node: tuple[int, int] = previous_node
+
+        known_nodes: list[tuple[int, tuple[int, int]]] = []
+        distances_from_start: dict[tuple[int, int], Origin] = {
+            ghost: Origin(0, [])}
+        heappush(known_nodes, (0, ghost))
+
+        while len(known_nodes) > 0:
+            current_node: tuple[int, int] = heappop(known_nodes)[1]
+
+            target_neighbor = node_in_target_neighbors(current_node)
+            if target_neighbor is not None:
+                distances_from_start.update({
+                    target: Origin(-1, reverse_path(target_neighbor.path),
+                                   current_node)})
+                break
+
+            for next_node in self.maze.get_cell(current_node).neighbor_nodes:
+                start_to_next: int = distances_from_start.get(
+                    next_node.coords, Origin()).distance_from_start
+
+                sum_of_distances: int = (
+                    distances_from_start.get(
+                        current_node, Origin()).distance_from_start
+                    + next_node.distance)
+
+                if (start_to_next == -1 or start_to_next > sum_of_distances):
+                    distances_from_start.update({next_node.coords: Origin(
+                        sum_of_distances, next_node.path[::-1], current_node)})
+
+                    heappush(known_nodes, (
+                        calc_node_priority(next_node.coords, target),
+                        next_node.coords))
+
+        path_queue: deque[Directions] = deque([])
+        previous = target
+        while ghost != previous:
+            origin: Origin = distances_from_start.get(previous, Origin())
+            path_queue.extendleft(origin.path)
+            previous = origin.previous_node
+        return list(path_queue)
 
 
 class AlternateAngleStrat(Strategy):
@@ -421,9 +315,10 @@ class PatrollingAngleStrat(Strategy):
             target: tuple[int, int] = self.choose_target(area, ghost_pos)
             print("target: ", target)
             self.path = self.find_path(ghost_pos, target)
+            print("path: ", self.path)
         self.ghost_saved_pos = (
-        ghost_pos[0] + Movements[self.path[0].name].value[0],
-        ghost_pos[1] + Movements[self.path[0].name].value[1])
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
         del self.path[0]
         return self.ghost_saved_pos
         
