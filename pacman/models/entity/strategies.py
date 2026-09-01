@@ -31,7 +31,7 @@ that the `Strategy` methods themselves stay stateless between calls.
   inside a specific area.
 """
 from abc import ABC
-from typing import Literal
+from typing import Type
 from random import choice, randint
 from heapq import heappush, heappop
 from collections import deque
@@ -71,6 +71,12 @@ class Strategy(ABC):
         self.grid: list[list[Cell]] = maze.map
         self.xmax: int = len(self.grid) - 1
         self.ymax: int = len(self.grid[0]) - 1
+        self.path: list[Directions] = []
+        self.ghost_saved_pos: tuple[int, int] = (-1, -1)
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[int, int]:
+        return (0, 0)
 
     def find_path(self, ghost: tuple[int, int],
                   target: tuple[int, int]) -> list[Directions]:
@@ -96,7 +102,7 @@ class Strategy(ABC):
             """
             return abs(node[0] - dest[0]) + abs(node[1] - dest[1])
 
-        def reverse_path(path: tuple[Directions]) -> list[Directions]:
+        def reverse_path(path: list[Directions]) -> list[Directions]:
             """Reverse the given path and change directions in path into
             opposite directions.
             """
@@ -126,7 +132,7 @@ class Strategy(ABC):
 
         known_nodes: list[tuple[int, tuple[int, int]]] = []
         distances_from_start: dict[tuple[int, int], Origin] = {
-            ghost: Origin(0, [])}
+            ghost: Origin(0)}
         heappush(known_nodes, (0, ghost))
 
         while len(known_nodes) > 0:
@@ -135,8 +141,9 @@ class Strategy(ABC):
             target_neighbor = node_in_target_neighbors(current_node)
             if target_neighbor is not None:
                 distances_from_start.update({
-                    target: Origin(-1, reverse_path(target_neighbor.path),
-                                   current_node)})
+                    target: Origin(
+                        -1, reverse_path(list(target_neighbor.path)),
+                        current_node)})
                 break
 
             for next_node in self.maze.get_cell(current_node).neighbor_nodes:
@@ -150,7 +157,8 @@ class Strategy(ABC):
 
                 if (start_to_next == -1 or start_to_next > sum_of_distances):
                     distances_from_start.update({next_node.coords: Origin(
-                        sum_of_distances, next_node.path[::-1], current_node)})
+                        sum_of_distances, list(next_node.path[::-1]),
+                        current_node)})
 
                     heappush(known_nodes, (
                         calc_node_priority(next_node.coords, target),
@@ -198,9 +206,6 @@ class ChaseOnSpot(Strategy):
     def __init__(self, maze: Map):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
-        self.target: tuple[int, int] = ()
-        self.path: list[Directions] = []
-        self.ghost_saved_pos: tuple[int, int] = ()
 
 
 
@@ -240,9 +245,6 @@ class AlternateAngleStrat(Strategy):
     def __init__(self, maze: Map):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
-        self.target: tuple[int, int] = ()
-        self.path: list[Directions] = []
-        self.ghost_saved_pos: tuple[int, int] = ()
 
     def choose_target(self, ghost_pos: tuple[int, int]) -> tuple[int, int]:
         """Select a new destination for the ghost.
@@ -317,9 +319,6 @@ class PatrollingAngleStrat(Strategy):
     def __init__(self, maze: Map):
         """Initialises the attributes of the PatrollingAngleStrat instance."""
         super().__init__(maze)
-        self.target: tuple[int, int] = ()
-        self.path: list[Directions] = []
-        self.ghost_saved_pos: tuple[int, int] = ()
 
     def ghost_area(self, ghost_pos:tuple[int, int]) -> list[tuple[int, int]]:
         """Identifies the area in which the ghost is located. Returns the
@@ -389,5 +388,7 @@ def calculate_manhattan(ghost: tuple[int, int],
     return abs(ghost[0] - target[0]) + abs(ghost[1] - target[1])
 
 
-strat_dict: dict[str, Strategy] = {"AlternateAngleStrat": AlternateAngleStrat}
-strategies = Literal["AlternateAngleStrat"]
+strat_dict: dict[str, Type[Strategy]] = {
+    "AlternateAngleStrat": AlternateAngleStrat,
+    "ChaseOnSpot": ChaseOnSpot,
+    "PatrollingAngleStrat": PatrollingAngleStrat}

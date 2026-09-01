@@ -37,8 +37,8 @@ and movement behaviours to be implemented independently from the entity.
 """
 from abc import ABC
 
-from .strategies import Strategy, strat_dict, calculate_manhattan, AlternateAngleStrat, Directions, Movements
-from pacman.models import Cell
+from .strategies import Strategy, strat_dict, calculate_manhattan
+from pacman.models import Map, Directions, Movements
 
 
 class Entity(ABC):
@@ -198,7 +198,7 @@ class Ghost(Entity):
                  initial_pos: tuple[int, int], down_time: int,
                  chase_radius: int, escape_radius: int, idle_strat: str,
                  chase_strat: str, escape_strat: str, chasing_stamina: int,
-                 maze: list[list[Cell]]):
+                 maze: Map):
         """Initialises the attributes of the Ghost instance."""
         super().__init__(speed, super_speed, initial_pos)
         self.down_time: int = down_time
@@ -223,10 +223,10 @@ class Ghost(Entity):
         """
         if (calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius and
             (self.max_stamina == 0 or self.current_stamina > 0)):
-            self.pos = self.chase_strat.move()
+            self.pos = self.chase_strat.move(self.pos, pacman_pos)
             self.current_stamina -= 1
         else:
-            self.pos = self.idle_strat.move(self.pos)
+            self.pos = self.idle_strat.move(self.pos, (-1, -1))
             if self.current_stamina < self.max_stamina:
                 self.current_stamina += 1
 

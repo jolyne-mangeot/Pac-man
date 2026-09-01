@@ -115,10 +115,10 @@ class Node:
     """
     def __init__(
             self, coords: tuple[int, int], distance: int,
-            path: list[Directions]) -> None:
+            path: tuple[Directions, ...]) -> None:
         self.coords: tuple[int, int] = coords
         self.distance: int = distance
-        self.path: tuple[Directions] = path
+        self.path: tuple[Directions, ...] = path
 
 
 def maze_interface(width: int, height: int, seed: int) -> list[list[Cell]]:

@@ -1,4 +1,5 @@
-from pacman.models import Entity, Pacman, Ghost, PatrollingAngleStrat, Map, Movements, Strategy
+from pacman.models import (
+    Entity, Pacman, Ghost, Map, Movements, Strategy, strat_dict)
 
 def display_maze(map_test: Map, pacman_test: Pacman) -> None:
     """Method to display debug mode of the map"""
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     map_test.simple_gum_placement()
     map_test.generate_cell_graph()
     display_maze(map_test, pacman_test)
-    strategy_test: Strategy = PatrollingAngleStrat(map_test)
+    strategy_test = strat_dict["PatrollingAngleStrat"](map_test)
     print("ghost: (0, 0)")
     new_pos_ghots = strategy_test.move((0, 0), (0, 0))
     print("ghost: ", new_pos_ghots)

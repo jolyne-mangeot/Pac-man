@@ -1,7 +1,7 @@
 
-from .map import Map, Directions, OPPOSITE_DIRECTION
-from .utils import Cell, Movements, Node
+from .map import Map, OPPOSITE_DIRECTION
+from .utils import Cell, Movements, Node, Directions
 
 __all__ = [
-    "Map", "Directions", "OPPOSITE_DIRECTION",
-    "Cell", "Movements", "Node"]
+    "Map", "OPPOSITE_DIRECTION",
+    "Cell", "Directions", "Movements", "Node"]

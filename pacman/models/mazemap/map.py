@@ -26,14 +26,14 @@ from typing import cast
 from .utils import maze_interface, Cell, Node, Directions, Movements
 
 
-RIGHT_TURN: dict[Directions : Directions] = {
+RIGHT_TURN: dict[Directions, Directions] = {
     Directions.UP: Directions.RIGHT,
     Directions.RIGHT: Directions.DOWN,
     Directions.DOWN: Directions.LEFT,
     Directions.LEFT: Directions.UP
 }
 
-LEFT_TURN: dict[Directions : Directions] = {
+LEFT_TURN: dict[Directions, Directions] = {
     Directions.UP: Directions.LEFT,
     Directions.LEFT: Directions.DOWN,
     Directions.DOWN: Directions.RIGHT,
@@ -83,8 +83,6 @@ class Map:
     - get_cell(): Return the Cell object at the given coordinates.
     - get_neighbor_coords(): Return the coordinates adjacent to a cell in
       a given direction.
-    - get_neighbor_nodes(): Return the recorded neighbour nodes of an
-      intersection cell.
     - record_maze_intersections(): Identify and store every intersection
       cell of the maze.
     - find_intersect(): Follow a corridor from a cell to the next
@@ -106,7 +104,7 @@ class Map:
         self.simple_gums: set[tuple[int, int]] = set()
         self.super_gums: set[tuple[int, int]] = set()
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         """Method to display debug mode of the map."""
         lines: list[str] = []
         for y in range(self.height):
@@ -150,9 +148,9 @@ class Map:
         self.map[0][(self.height - 1)].super_gum = True
         self.map[(self.width - 1)][0].super_gum = True
         self.map[((self.width - 1))][(self.height - 1)].super_gum = True
-        self.super_gums.update((0, 0), (0, self.height - 1),
+        self.super_gums.update({(0, 0), (0, self.height - 1),
                             (self.width - 1, 0),
-                            (self.width - 1, self.height - 1))
+                            (self.width - 1, self.height - 1)})
         self.nb_super_gum += 4
 
     def simple_gum_placement(self) -> None:
@@ -204,19 +202,14 @@ class Map:
         """Returns the Cell object present at the given coordinates."""
         return self.map[cell[0]][cell[1]]
 
-    def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements) -> tuple[int, int]:
+    def get_neighbor_coords(self, coords: tuple[int, int], mov: Movements
+                            ) -> tuple[int, int]:
         """Return the coordinates of the cell adjacent to `coords` in the
         direction given by `mov`.
         """
         neighbor: tuple[int, int] = (coords[0] + mov.value[0],
                                      coords[1] + mov.value[1])
         return neighbor
-
-    def get_neighbor_nodes(self, cell: tuple[int, int]) -> list[Node]:
-        """Return the list of `Node` objects already recorded as neighbours
-        of the intersection at `cell`.
-        """
-        return cast(list[Node], getattr(self.get_cell(cell), "neighbor_nodes"))
 
     def record_maze_intersections(self) -> None:
         """Loops through every cell of the Maze to append them to the
@@ -252,7 +245,7 @@ class Map:
             distance_bet_cells += 1
             route_taken.append(dir)
             if cell in self.intersection_cells:
-                return Node(cell, distance_bet_cells, route_taken)
+                return Node(cell, distance_bet_cells, tuple(route_taken))
             current_cell: Cell = self.get_cell(cell)
             if not (current_cell.walls & dir.value):
                 continue

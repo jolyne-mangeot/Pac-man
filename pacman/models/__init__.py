@@ -10,7 +10,7 @@ from .menu import (
 
 from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
 
-from .entity import  Entity, Pacman, Ghost, PatrollingAngleStrat, Strategy
+from .entity import  Entity, Pacman, Ghost, Strategy, strat_dict
 
 from .level import Level
 
@@ -25,6 +25,6 @@ __all__ = [
 
     "Map", "Cell", "Movements", "Node", "Directions", "OPPOSITE_DIRECTION",
 
-    "Entity", "Pacman", "Ghost", "PatrollingAngleStrat", "Strategy",
+    "Entity", "Pacman", "Ghost", "Strategy", "strat_dict",
 
     "Level"]

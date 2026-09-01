@@ -1,10 +1,14 @@
 
-from typing import ClassVar, Any
+from typing import ClassVar, Any, Iterable
 from random import randint
 
 from pydantic import Field, field_validator, ValidationInfo
 
 from .utils import JSONModel, themes
+
+
+STRATS: tuple[str, ...] = (
+    "ChaseOnSpot", "AlternateAngleStrat", "PatrollingAngleStrat")
 
 
 class PlayerConfig(JSONModel):
@@ -20,14 +24,26 @@ class MazeConfig(JSONModel):
 
 
 class GhostConfig(JSONModel):
-    move_strat: str = Field(default="chase")  # REPLACE TYPE HINT BY LITERAL
-    sup_move_strat: str = Field(default="run")  # LIST FROM ALGORITHMS FILE
+    idle_strat: str = Field(default="AlternateAngleStrat")
+    chase_strat: str = Field(default="ChaseOnSpot")
+    escape_strat: str = Field(default="PatrollingAngleStrat")
     speed: int = Field(ge=0, le=20, default=3)
-    sup_speed: int = Field(ge=0, le=20, default=3)
+    super_speed: int = Field(ge=0, le=20, default=3)
     escape_radius: int = Field(ge=0, default=5)
     chase_radius: int = Field(ge=0, default=5)
     chasing_stamina: int = Field(ge=0, default=10)
     down_time: int = Field(ge=0, le=20, default=3)
+
+    @field_validator("idle_strat", "chase_strat", "escape_strat",
+                     mode="before")
+    @classmethod
+    def strats_validator(cls, value: Any, info: ValidationInfo) -> Any:
+        field_info: Any = (
+            cls.model_fields[str(info.field_name)].asdict())
+        if value not in STRATS:
+            return field_info["attributes"]["default"]
+        else:
+            return value
 
 
 class GameplayConfig(JSONModel):
@@ -36,24 +52,23 @@ class GameplayConfig(JSONModel):
     life_regen: int = Field(ge=0, default=0)
     super_duration: int = Field(ge=0, default=8)
     pac_man_speed: int = Field(ge=0, default=3)
-    sup_pac_man_speed: int = Field(ge=0, default=4)
+    super_pac_man_speed: int = Field(ge=0, default=4)
     ghosts: dict[str, GhostConfig] = Field(
         min_length=0, max_length=4,
         default={"Blinky": GhostConfig(), "Pinky": GhostConfig(),
                  "Inky": GhostConfig(), "Clyde": GhostConfig()})
 
     @field_validator("ghosts", mode="before")
-    @classmethod
-    def ghosts_validator(cls, value: Any) -> Any:
-        if isinstance(value, GhostConfig):
-            return value
+    def ghosts_validator(value: Any) -> Any:
+        names: tuple[str, ...] = ("Blinky", "Pinky", "Inky", "Clyde")
         if isinstance(value, dict) is False:
             return None
-        names: tuple[str, ...] = ("Blinky", "Pinky", "Inky", "Clyde")
         for entry in [key for key in value.keys() if key not in names]:
             value.pop(entry)
         for ghost, info in value.items():
-            if isinstance(info, dict) is False:
+            if isinstance(info, GhostConfig):
+                value.update({ghost: info})
+            elif isinstance(info, dict) is False:
                 value.update({ghost: GhostConfig()})
             else:
                 value.update({ghost: GhostConfig(**info)})
@@ -92,8 +107,28 @@ class Config(JSONModel):
     """
     file_name: ClassVar[str] = "config"
 
-    player: PlayerConfig = Field(default=PlayerConfig())
+    player: PlayerConfig = Field(default_factory=PlayerConfig)
     levels: list[LevelConfig] = Field(
         min_length=1,
         default=list([LevelConfig(maze=MazeConfig(seed=68771))]
                      + [LevelConfig() for _ in range(9)]))
+
+    @field_validator("player", mode="before")
+    def player_validator(value: Any) -> Any:
+        if isinstance(value, PlayerConfig):
+            return value
+        if isinstance(value, dict) and len(value) > 0:
+            return PlayerConfig(**value)
+        return None
+
+    @field_validator("levels", mode="before")
+    def levels_validator(value: Any) -> Any:
+        if isinstance(value, Iterable):
+            level_list: list[LevelConfig] = []
+            for config in value:
+                if isinstance(config, LevelConfig):
+                    level_list.append(config)
+                elif isinstance(config, dict) and len(config) > 0:
+                    level_list.append(LevelConfig(**config))
+            return level_list
+        return None

@@ -124,23 +124,22 @@ class LevelDisplay:
 
         maze_surf: pg.Surface = self.maze_surf.copy()
         visual_elements: list[tuple[pg.Surface, pg.Rect]] = []
-        # mode: str = "super" if self.level.super_mode else "normal"
-        # dir: dict[int, str] = {
-        #     1: "north", 2: "east",
-        #     3: "south", 4: "west"}
-        # visual_elements.extend([(
-        #     self.characters[name][mode][dir[char.direction]][self.level.anim_tick],
-        #     pg.Rect(*self.coords(char.pos), self.cell_size, self.cell_size))
-        #     for name, char in self.level.ghosts.items() if char.is_alive
-        # ])
-        # visual_elements.extend([(
-        #     self.gum[self.level.anim_tick],
-        #     pg.Rect(*self.coords(gum), self.cell_size, self.cell_size))
-        #     for gum in self.level.map.simple_gums])
-        # visual_elements.extend([(
-        #     self.sup_gum[self.level.anim_tick],
-        #     pg.Rect(*self.coords(sup_gum), self.cell_size, self.cell_size))
-        #     for sup_gum in self.level.map.super_gums])
+        mode: str = "super" if self.level.super_mode else "normal"
+        dir: dict[int, str] = {1: "north", 2: "east", 4: "south", 8: "west",
+                               15: "north"}
+        visual_elements.extend([(
+            self.characters[name][cast(Literal["normal", "super"], mode)][
+                dir[char.direction.value]][self.level.anim_tick],
+            pg.Rect(*self.coords(*char.pos), self.cell_size, self.cell_size))
+            for name, char in self.level.ghosts.items() if char.is_alive])
+        visual_elements.extend([(
+            self.gum[self.level.anim_tick],
+            pg.Rect(*self.coords(*gum), self.cell_size, self.cell_size))
+            for gum in self.level.map.simple_gums])
+        visual_elements.extend([(
+            self.sup_gum[self.level.anim_tick],
+            pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
+            for sup_gum in self.level.map.super_gums])
         maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
         game_surf.blit(maze_surf, maze_surf.get_rect(
