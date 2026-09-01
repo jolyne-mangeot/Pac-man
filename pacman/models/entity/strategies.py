@@ -191,7 +191,7 @@ class ChaseOnSpot(Strategy):
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
 
-    Methods:
+    #### Methods:
     - choose_target(): Select a new destination for the ghost.
     - move(): Calculate the next position towards the current target.
     """
@@ -233,7 +233,7 @@ class AlternateAngleStrat(Strategy):
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
 
-    Methods:
+    #### Methods:
     - choose_target(): Select a new destination for the ghost.
     - move(): Calculate the next position towards the current target.
     """
