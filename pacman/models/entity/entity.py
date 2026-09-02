@@ -57,6 +57,7 @@ class Entity(ABC):
 
     Atributes:
     - speed (int): Normal movement speed of the entity.
+    - current_speed (int): Actual speed of the entity.
     - super_speed (int): Movement speed used when the entity is in a
       special movement mode.
     - initial_pos (tuple[int, int]): Position where the entity is
@@ -73,6 +74,7 @@ class Entity(ABC):
                  initial_pos: tuple[int, int]) -> None:
         """Initialises the attributes of the Entity instance."""
         self.speed: int = speed
+        self.current_speed: int = speed
         self.super_speed: int = super_speed
         self.initial_pos: tuple[int, int] = initial_pos
         self.pos: tuple[int, int] = initial_pos
@@ -102,6 +104,7 @@ class Pacman(Entity):
 
     #### Inherited attributes:
     - speed (int): Normal movement speed.
+    - current_speed (int): Actual speed of the entity.
     - super_speed (int): Movement speed used in super mode.
     - initial_pos (tuple[int, int]): Initial spawn position.
     - pos (tuple[int, int]): Current position.
@@ -172,6 +175,7 @@ class Ghost(Entity):
 
     #### Inherited attributes:
     - speed (int): Normal movement speed.
+
     - super_speed (int): Movement speed used in a special mode.
     - initial_pos (tuple[int, int]): Initial spawn position.
     - pos (tuple[int, int]): Current position.
@@ -229,7 +233,7 @@ class Ghost(Entity):
             self.current_stamina -= 1
         else:
             self.pos, self.direction = self.idle_strat.move(
-                self.pos, (-1, -1))
+                self.pos, pacman_pos)
             if self.current_stamina < self.max_stamina:
                 self.current_stamina += 1
 

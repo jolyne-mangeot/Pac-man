@@ -30,7 +30,7 @@ that the `Strategy` methods themselves stay stateless between calls.
 - PatrollingAngleStrat(Strategy): Move the ghost in a patrolling behavior
   inside a specific area.
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Type
 from random import choice, randint
 from heapq import heappush, heappop
@@ -58,6 +58,9 @@ class Strategy(ABC):
       to determine valid movements and paths.
     - xmax (int): number of cells in horizontal axis.
     - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Sequence of directions leading to the target.
+    - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
+      continue to move toward target when this strategy is called again.
 
     #### Methods:
     @abstractmethod
@@ -72,12 +75,14 @@ class Strategy(ABC):
         self.path: list[Directions] = []
         self.ghost_saved_pos: tuple[int, int] = (-1, -1)
 
+    @abstractmethod
     def move(self, ghost_pos: tuple[int, int], pacman_pos: tuple[int, int]
              ) -> tuple[tuple[int, int], Directions]:
-        return ((0, 0), Directions.DOWN)
+        pass
 
-    def find_path(self, ghost: tuple[int, int],
-                  target: tuple[int, int]) -> list[Directions]:
+    def find_path(
+            self, ghost: tuple[int, int], target: tuple[int, int],
+            priority_calc) -> list[Directions]:
         """Find the shortest path from ghost to target using a A* Algorithm.
         """
         if ghost == target:
@@ -92,20 +97,12 @@ class Strategy(ABC):
                     return node
             return None
 
-        def calc_node_priority(
-                node: tuple[int, int], dest: tuple[int, int]) -> int:
-            """Returns an int corresponding to the Manhattan distance as an
-            absolute, to be used in priorizing the closest node from the
-            destination.
-            """
-            return abs(node[0] - dest[0]) + abs(node[1] - dest[1])
-
         def reverse_path(path: list[Directions]) -> list[Directions]:
             """Reverse the given path and change directions in path into
             opposite directions.
             """
             reverse: list[Directions] = []
-            for dir in path[::-1]:
+            for dir in path:
                 reverse.append(OPPOSITE_DIRECTION[dir])
             return reverse
 
@@ -128,13 +125,19 @@ class Strategy(ABC):
                 self.path: list[Directions] = path
                 self.previous_node: tuple[int, int] = previous_node
 
-        known_nodes: list[tuple[int, tuple[int, int]]] = []
+        known_nodes: list[tuple[int, tuple[int, int]]] = [(0, ghost)]
         distances_from_start: dict[tuple[int, int], Origin] = {
-            ghost: Origin(0)}
-        heappush(known_nodes, (0, ghost))
+            ghost: Origin(0, [], ghost)}
 
-        while len(known_nodes) > 0:
+        while target not in distances_from_start.keys():
             current_node: tuple[int, int] = heappop(known_nodes)[1]
+
+            target_neighbor = found_target_neighbor(current_node)
+            if target_neighbor is not None:
+                distances_from_start.update({
+                    target: Origin(-1, reverse_path(
+                        list(target_neighbor.path[::-1])), current_node)})
+                break
 
             for next_node in self.maze.get_cell(current_node).neighbor_nodes:
                 start_to_next: int = distances_from_start.get(
@@ -147,29 +150,137 @@ class Strategy(ABC):
 
                 if start_to_next == -1 or start_to_next > sum_of_distances:
                     distances_from_start.update({next_node.coords: Origin(
-                        sum_of_distances, list(next_node.path[::-1]),
+                        sum_of_distances, list(next_node.path),
                         current_node)})
 
-                    target_neighbor = found_target_neighbor(next_node.coords)
-                    if target_neighbor is not None:
-                        distances_from_start.update({
-                            target: Origin(
-                                -1, reverse_path(list(target_neighbor.path)),
-                                current_node)})
-                        known_nodes.clear()
-                        break
 
                     heappush(known_nodes, (
-                        calc_node_priority(next_node.coords, target),
+                        priority_calc(next_node.coords, target),
                         next_node.coords))
 
         path_queue: deque[Directions] = deque([])
         previous = target
         while ghost != previous:
             origin: Origin = distances_from_start.get(previous, Origin())
-            path_queue.extendleft(origin.path)
+            path_queue.extendleft(origin.path[::-1])
             previous = origin.previous_node
+
         return list(path_queue)
+
+
+class ChaseStumbling(Strategy):
+    """Class ChaseStalking, inheriting from Strategy.
+
+    #### Description:
+    Move the ghost to the node closest to Pacman. If Pac-Man enters the ghost’s
+    chase_radius/3, the ghost will then target Pac-Man directly.
+
+    This strategy selects the node closest to Pacman as target and calculates
+    the path from the ghost's current position towards that target.
+
+    The target and path are updated with the newest node closest to Pacman
+    position when the ghost reach target, if Pacman is still in chasing range
+    but not to close to ghost. The target and path are updated with the Pacman
+    position if enter chase_radius/3 range. If the ghost quit chasing mode or
+    die, the target and path are updated.
+
+    #### Inherited attributes:
+    - maze(Map): The Map instancied.
+    - grid (list[list[Cell]]): Reference to the gris of Cells used by the
+        strategy to determine valid movements and paths.
+    - xmax (int): number of cells in horizontal axis.
+    - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Sequence of directions leading to the target.
+    - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
+      continue to move toward target when this strategy is called again.
+
+    #### Methods:
+    - move(): Calculate the next position towards the current target.
+    """
+    def __init__(self, maze: Map):
+        """Initialises the attributes of the AlternateAngleStrat instance."""
+        super().__init__(maze)
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[
+                 tuple[int, int], Directions]:
+        """Calculate the next position towards pacman position.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, a new path towards pacman is
+        computed.
+        """
+        if self.path != [] and randint(0, 100) > 85:
+            ghost_walls: int = self.maze.get_cell(ghost_pos).walls
+            passages: list[Directions] = []
+            for direction in Directions:
+                if ghost_walls & direction.value or direction == self.path[0]:
+                    continue
+                passages.append(direction)
+            if passages != []:
+                random_dir: Directions = choice(passages)
+                random_pos = (
+                    ghost_pos[0] + Movements[random_dir.name].value[0],
+                    ghost_pos[1] + Movements[random_dir.name].value[1])
+                return (random_pos, random_dir)
+        if self.path == [] or ghost_pos != self.ghost_saved_pos:
+            self.path = self.find_path(ghost_pos, pacman_pos,
+                                       calculate_manhattan)
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
+
+
+class ChaseDynamic(Strategy):
+    """Class ChaseDynamic, inheriting from Strategy.
+
+    #### Description:
+    Move the ghost on the Pacman position.
+
+    This strategy selects the Pacman position as target and calculates the
+    path from the ghost's current position towards it. The path is
+    updated each time the ghost enter a Node, making this strategy more
+    aggressive than the ChaseOnSpot one.
+
+    The target and path are updated with the new pacman position when the ghost
+    reach a Node, if Pacman is still in chasing range. If the ghost quit
+    chasing mode or die, the target and path are updated.
+
+    #### Inherited attributes:
+    - maze(Map): The Map instancied.
+    - grid (list[list[Cell]]): Reference to the gris of Cells used by the
+        strategy to determine valid movements and paths.
+    - xmax (int): number of cells in horizontal axis.
+    - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Sequence of directions leading to the target.
+    - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
+      continue to move toward target when this strategy is called again.
+
+    #### Methods:
+    - move(): Calculate the next position towards the current target.
+    """
+    def __init__(self, maze: Map):
+        """Initialises the attributes of the AlternateAngleStrat instance."""
+        super().__init__(maze)
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[
+                 tuple[int, int], Directions]:
+        """Calculate the next position towards pacman position.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, a new path towards pacman is
+        computed.
+        """
+        if (self.path == [] or ghost_pos != self.ghost_saved_pos or
+            ghost_pos in self.maze.intersection_cells):
+            self.path = self.find_path(ghost_pos, pacman_pos,
+                                       calculate_manhattan)
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
 
 
 class ChaseOnSpot(Strategy):
@@ -191,20 +302,33 @@ class ChaseOnSpot(Strategy):
         strategy to determine valid movements and paths.
     - xmax (int): number of cells in horizontal axis.
     - ymax (int): number of cells in vertical axis.
-
-    #### Atributes:
-    - target (tuple[int, int]): Current destination selected by the strategy.
     - path (list[Directions]): Sequence of directions leading to the target.
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
 
     #### Methods:
-    - choose_target(): Select a new destination for the ghost.
     - move(): Calculate the next position towards the current target.
     """
     def __init__(self, maze: Map):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[
+                 tuple[int, int], Directions]:
+        """Calculate the next position towards pacman position.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, a new path towards pacman is
+        computed.
+        """
+        if self.path == [] or ghost_pos != self.ghost_saved_pos:
+            self.path = self.find_path(ghost_pos, pacman_pos,
+                                       calculate_manhattan)
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
 
 
 class AlternateAngleStrat(Strategy):
@@ -229,12 +353,12 @@ class AlternateAngleStrat(Strategy):
         strategy to determine valid movements and paths.
     - xmax (int): number of cells in horizontal axis.
     - ymax (int): number of cells in vertical axis.
-
-    #### Atributes:
-    - target (tuple[int, int]): Current destination selected by the strategy.
     - path (list[Directions]): Sequence of directions leading to the target.
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
+
+    #### Atributes:
+    - target (tuple[int, int]): Current destination selected by the strategy.
 
     #### Methods:
     - choose_target(): Select a new destination for the ghost.
@@ -271,7 +395,8 @@ class AlternateAngleStrat(Strategy):
         """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             target: tuple[int, int] = self.choose_target(ghost_pos)
-            self.path = self.find_path(ghost_pos, target)
+            self.path = self.find_path(ghost_pos, target,
+                                       calculate_manhattan)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -301,12 +426,12 @@ class PatrollingAngleStrat(Strategy):
       strategy to determine valid movements and paths.
     - xmax (int): number of cells in horizontal axis.
     - ymax (int): number of cells in vertical axis.
-
-    #### Attributes:
-    - target (tuple[int, int]): Current destination selected by the strategy.
     - path (list[Directions]): Sequence of directions leading to the target.
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
+
+    #### Attributes:
+    - target (tuple[int, int]): Current destination selected by the strategy.
 
     #### Methods:
     - ghost_area(): Identify the area in which the ghost is located.
@@ -322,8 +447,8 @@ class PatrollingAngleStrat(Strategy):
         coordinates of the cells at the bottom-left and top-right corners of
         this area.
         """
-        middle_x: int = self.xmax // 2
-        middle_y: int = self.ymax // 2
+        middle_x: int = self.xmax // 2 - 1
+        middle_y: int = self.ymax // 2 - 1
 
         if ghost_pos[0] >= middle_x and ghost_pos[1] >= middle_y:
             return [(middle_x, middle_y), (self.xmax, self.ymax)]
@@ -365,7 +490,8 @@ class PatrollingAngleStrat(Strategy):
             area = self.ghost_area(ghost_pos)
             target: tuple[int, int] = self.choose_target(area, ghost_pos)
             print("target: ", target)
-            self.path = self.find_path(ghost_pos, target)
+            self.path = self.find_path(ghost_pos, target,
+                                       calculate_manhattan)
             print("path: ", self.path)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
@@ -388,4 +514,5 @@ def calculate_manhattan(ghost: tuple[int, int],
 strat_dict: dict[str, Type[Strategy]] = {
     "AlternateAngleStrat": AlternateAngleStrat,
     "ChaseOnSpot": ChaseOnSpot,
-    "PatrollingAngleStrat": PatrollingAngleStrat}
+    "PatrollingAngleStrat": PatrollingAngleStrat,
+    "ChaseStumbling": ChaseStumbling}

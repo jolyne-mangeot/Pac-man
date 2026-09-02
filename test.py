@@ -44,7 +44,6 @@ if __name__ == "__main__":
     map_test: Map = Map(10, 10, 90, 10)
     pacman_test: Pacman = Pacman(
         4, 6, ((map_test.width - 1) // 2, (map_test.height - 1) // 2))
-    strategy_test: Strategy = Strategy(map_test)
     from random import seed
     seed()
     map_test.super_gum_placement()
