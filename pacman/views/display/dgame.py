@@ -203,10 +203,10 @@ class GameDisplay(Display):
             for mode, sheet in zip(
                     ("normal", "super"), (normal_sht, super_sht)):
                 sprites[cast(Literal["normal", "super"], mode)].update({
-                    "north": get_frames((coords[0], coords[1]), sheet),
-                    "east": get_frames((coords[0] + 32, coords[1]), sheet),
-                    "west": get_frames((coords[0] + 16, coords[1]), sheet),
-                    "south": get_frames((coords[0] + 48, coords[1]), sheet)})
+                    "north": get_frames((coords[0], coords[1] + 48), sheet),
+                    "east": get_frames((coords[0], coords[1] + 32), sheet),
+                    "west": get_frames((coords[0], coords[1] + 16), sheet),
+                    "south": get_frames((coords[0], coords[1]), sheet)})
             return sprites
 
         sheet_coords: dict[str, tuple[int, int]] = {

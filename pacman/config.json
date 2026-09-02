@@ -20,46 +20,46 @@
 				"super_pac_man_speed": 4,
 				"ghosts": {
 					"Blinky": {
-						"idle_strat": "chase",
+						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "chase",
 						"escape_strat": "escape",
 						"speed": 3,
 						"super_speed": 3,
 						"escape_radius": 5,
-						"chase_radius": 5,
+						"chase_radius": 2,
 						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Pinky": {
-						"idle_strat": "idle",
+						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "chase",
 						"escape_strat": "escape",
 						"speed": 3,
 						"super_speed": 3,
 						"escape_radius": 5,
-						"chase_radius": 5,
+						"chase_radius": 2,
 						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Inky": {
-						"idle_strat": "idle",
+						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "chase",
 						"escape_strat": "escape",
 						"speed": 3,
 						"super_speed": 3,
 						"escape_radius": 5,
-						"chase_radius": 5,
+						"chase_radius": 2,
 						"chasing_stamina": 10,
 						"down_time": 3
 					},
 					"Clyde": {
-						"idle_strat": "idle",
+						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "chase",
 						"escape_strat": "escape",
 						"speed": 3,
 						"super_speed": 3,
 						"escape_radius": 5,
-						"chase_radius": 5,
+						"chase_radius": 2,
 						"chasing_stamina": 10,
 						"down_time": 3
 					}

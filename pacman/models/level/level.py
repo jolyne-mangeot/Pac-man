@@ -38,6 +38,7 @@ class Level:
         self.map: Map = Map(**maze_config.model_dump())
         self.map.super_gum_placement()
         self.map.simple_gum_placement()
+        self.map.generate_cell_graph()
         self.pacman: Pacman = Pacman(
             gameplay.pac_man_speed, gameplay.super_pac_man_speed,
             ((maze_config.width - 1) // 2, (maze_config.height - 1) // 2))
@@ -82,9 +83,9 @@ class Level:
     def move_ghost(self, name: str) -> None:
         ghost: Ghost = self.ghosts[name]
         if self.super_mode is True:
-            ghost.chase(self.pacman.pos)
-        else:
             ghost.escape(self.pacman.pos)
+        else:
+            ghost.chase(self.pacman.pos)
         self.update_timer(name, ghost)
 
     def get_event(self, event: pg.event.Event, action_key: str) -> None:

@@ -224,10 +224,12 @@ class Ghost(Entity):
         """
         if (calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius and
                 (self.max_stamina == 0 or self.current_stamina > 0)):
-            self.pos = self.chase_strat.move(self.pos, pacman_pos)
+            self.pos, self.direction = self.chase_strat.move(
+                self.pos, pacman_pos)
             self.current_stamina -= 1
         else:
-            self.pos = self.idle_strat.move(self.pos, (-1, -1))
+            self.pos, self.direction = self.idle_strat.move(
+                self.pos, (-1, -1))
             if self.current_stamina < self.max_stamina:
                 self.current_stamina += 1
 

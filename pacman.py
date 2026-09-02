@@ -1,6 +1,8 @@
 
 import pygame as pg
 
+from pydantic import ValidationError
+
 from pacman import (
     Control, State,
     MainMenuState, OptionsMenuState, GameState)
@@ -37,6 +39,12 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         output = 1
         print("\r  ")
+    except ValidationError:
+        output = 2
+        print("Unexpected error during Parsing of configuration files.")
+    # except Exception:
+    #     output = 3
     exits: tuple[str, ...] = (
-        "Success", "Keyboard interrupt")
+        "Success", "Keyboard interrupt",
+        "Configuration error", "Unknown error")
     print(f"\nLeaving program\n\nExit {output} ({exits[output]})\n")

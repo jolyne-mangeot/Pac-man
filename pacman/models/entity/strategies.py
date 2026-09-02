@@ -72,9 +72,9 @@ class Strategy(ABC):
         self.path: list[Directions] = []
         self.ghost_saved_pos: tuple[int, int] = (-1, -1)
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[int, int]:
-        return (0, 0)
+    def move(self, ghost_pos: tuple[int, int], pacman_pos: tuple[int, int]
+             ) -> tuple[tuple[int, int], Directions]:
+        return ((0, 0), Directions.DOWN)
 
     def find_path(self, ghost: tuple[int, int],
                   target: tuple[int, int]) -> list[Directions]:
@@ -83,7 +83,7 @@ class Strategy(ABC):
         if ghost == target:
             return []
 
-        def node_in_target_neighbors(coords: tuple[int, int]) -> Node | None:
+        def found_target_neighbor(coords: tuple[int, int]) -> Node | None:
             """Returns the node at the given coords if it's in target
             neighbor-nodes. Return None if it's not.
             """
@@ -136,14 +136,6 @@ class Strategy(ABC):
         while len(known_nodes) > 0:
             current_node: tuple[int, int] = heappop(known_nodes)[1]
 
-            target_neighbor = node_in_target_neighbors(current_node)
-            if target_neighbor is not None:
-                distances_from_start.update({
-                    target: Origin(
-                        -1, reverse_path(list(target_neighbor.path)),
-                        current_node)})
-                break
-
             for next_node in self.maze.get_cell(current_node).neighbor_nodes:
                 start_to_next: int = distances_from_start.get(
                     next_node.coords, Origin()).distance_from_start
@@ -153,10 +145,19 @@ class Strategy(ABC):
                         current_node, Origin()).distance_from_start
                     + next_node.distance)
 
-                if (start_to_next == -1 or start_to_next > sum_of_distances):
+                if start_to_next == -1 or start_to_next > sum_of_distances:
                     distances_from_start.update({next_node.coords: Origin(
                         sum_of_distances, list(next_node.path[::-1]),
                         current_node)})
+
+                    target_neighbor = found_target_neighbor(next_node.coords)
+                    if target_neighbor is not None:
+                        distances_from_start.update({
+                            target: Origin(
+                                -1, reverse_path(list(target_neighbor.path)),
+                                current_node)})
+                        known_nodes.clear()
+                        break
 
                     heappush(known_nodes, (
                         calc_node_priority(next_node.coords, target),
@@ -261,7 +262,7 @@ class AlternateAngleStrat(Strategy):
         return choice(targets)
 
     def move(self, ghost_pos: tuple[int, int],
-             _: tuple[int, int]) -> tuple[int, int]:
+             _: tuple[int, int]) -> tuple[tuple[int, int], Directions]:
         """Calculate the next position towards the current target.
 
         If no path is currently stored, or if the ghost's position no
@@ -274,8 +275,7 @@ class AlternateAngleStrat(Strategy):
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
-        del self.path[0]
-        return self.ghost_saved_pos
+        return (self.ghost_saved_pos, self.path.pop(0))
 
 
 class PatrollingAngleStrat(Strategy):
@@ -354,7 +354,7 @@ class PatrollingAngleStrat(Strategy):
         return target
 
     def move(self, ghost_pos: tuple[int, int],
-             _: tuple[int, int]) -> tuple[int, int]:
+             _: tuple[int, int]) -> tuple[tuple[int, int], Directions]:
         """Calculate the next position towards the current target.
 
         If no path is currently stored, or if the ghost's position no
@@ -370,8 +370,7 @@ class PatrollingAngleStrat(Strategy):
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
-        del self.path[0]
-        return self.ghost_saved_pos
+        return (self.ghost_saved_pos, self.path.pop(0))
 
 
 def calculate_manhattan(ghost: tuple[int, int],

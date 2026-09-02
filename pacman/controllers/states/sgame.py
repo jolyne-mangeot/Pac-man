@@ -46,7 +46,6 @@ class GameState(State):
             self.control.config.levels[self.level_index].gameplay,
             self.control.config.levels[self.level_index].scores)
         self.display.update_level(self.current_level)
-        print(self.current_level.map)
 
     def cleanup(self) -> None:
         pass
