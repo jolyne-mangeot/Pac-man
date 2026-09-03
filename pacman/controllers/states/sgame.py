@@ -35,12 +35,14 @@ class GameState(State):
         self.level_index = 0
         self.player = Player(self.control.config.player.lives_count,
                              self.control.config.player.cheats_allowed)
+        self.display.startup()
         self.instantiate_level()
 
     def instantiate_level(self) -> None:
         self.player.regen_life(
             self.control.config.levels[self.level_index].gameplay.life_regen)
         self.current_level = Level(
+            self.level_index + 1,
             self.player.lives, self.player.cheats_allowed,
             self.control.config.levels[self.level_index].maze,
             self.control.config.levels[self.level_index].gameplay,
@@ -48,14 +50,14 @@ class GameState(State):
         self.display.update_level(self.current_level)
 
     def cleanup(self) -> None:
-        pass
+        self.display.cleanup()
 
     def get_event(self, event: pg.event.Event) -> None:
         action_input: str = ""
         if event.type == pg.KEYDOWN:
             action_input = self.key_unicode_to_action(pg.key.name(event.key))
-            self.done = True
         self.current_level.get_event(event, action_input)
 
     def update(self) -> None:
+        self.current_level.update()
         self.display.draw()

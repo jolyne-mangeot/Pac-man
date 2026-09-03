@@ -2,10 +2,23 @@
 import pygame as pg
 
 
-def prefilled_surface(size: tuple[int, int], alpha: int,
-                      color: pg.Color = pg.Color(0, 0, 0)) -> pg.Surface:
+def new_surface(size: tuple[int, int] = (0, 0), alpha: int = 0,
+                color: pg.Color = pg.Color(0, 0, 0)) -> pg.Surface:
     surface: pg.Surface = pg.Surface(size, pg.SRCALPHA)
     surface.fill((color[0], color[1], color[2], alpha))
+    return surface
+
+
+def render_word(style: Style, word: str, margin: int = 1) -> pg.Surface:
+    render_width: int = style.letter_spacing * (len(word) + margin)
+    surface: pg.Surface = new_surface(
+        (render_width, style.text_rect.height), 0)
+    for index, letter in enumerate(word):
+        letter_render: pg.Surface = style.font.render(
+            letter, True, style.color)
+        letter_rect: pg.Rect = letter_render.get_rect(midleft=(
+            style.letter_spacing * index, int(style.text_rect.height / 2)))
+        surface.blit(letter_render, letter_rect)
     return surface
 
 
@@ -25,7 +38,7 @@ class Style:
     def __init__(
             self, color: pg.Color = pg.Color(0, 0, 0),
             font: pg.font.Font = pg.font.SysFont("Times New Roman", 22),
-            graphic: pg.Surface = prefilled_surface((250, 30), 0),
+            graphic: pg.Surface = new_surface((250, 30), 0),
             text_rect: pg.Rect = pg.Rect(10, 5, 230, 20),
             letter_spacing: int = 8) -> None:
         """Instantiate method for a PlaceHolder object, all attributes have
@@ -64,7 +77,7 @@ class PlaceHolder:
     def render_texts(
             self, surface: pg.Surface, style: Style, text: str,
             position: int, total_slots: int) -> None:
-        text_render: pg.Surface = self.render_word(style, text)
+        text_render: pg.Surface = render_word(style, text)
         text_rect: pg.Rect = text_render.get_rect()
         if total_slots == 1:
             text_rect.center = style.text_rect.center
@@ -76,15 +89,3 @@ class PlaceHolder:
             text_rect.center = (int(style.text_rect.width / total_slots),
                                 style.text_rect.centery)
         surface.blit(text_render, text_rect)
-
-    def render_word(self, style: Style, word: str) -> pg.Surface:
-        render_width: int = style.letter_spacing * (len(word) + 1)
-        surface: pg.Surface = prefilled_surface(
-            (render_width, style.text_rect.height), 0)
-        for index, letter in enumerate(word):
-            letter_render: pg.Surface = style.font.render(
-                letter, True, style.color)
-            letter_rect: pg.Rect = letter_render.get_rect(midleft=(
-                style.letter_spacing * index, int(style.text_rect.height / 2)))
-            surface.blit(letter_render, letter_rect)
-        return surface

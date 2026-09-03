@@ -45,7 +45,7 @@ class SpriteSheet:
         if colorkey is not None:
             if colorkey == -1:
                 colorkey = image.get_at((0, 0))
-            image.set_colorkey(colorkey, pg.RLEACCEL)
+            image.set_colorkey(colorkey)
 
         return image
 
@@ -61,6 +61,17 @@ class Display:
         add as attribute.
         """
         self.control: Control = control
+
+    def mixer(self, action: str) -> None:
+        """Plays a sound from the sounds dict attribute if the given action
+        exists in the sfx control channel.
+        """
+        if self.sounds.get(action, None) is not None:
+            self.control.sfx_channel.play(self.sounds[action])
+
+    # _________________________________________________________________________
+    #                    COMMON METHODS TO MAIN MENUES
+    # _________________________________________________________________________
 
     def load_main_menues(self) -> None:
         """Loads all necessary assets for the main and options menus and
@@ -142,14 +153,3 @@ class Display:
         self.menu_render: MenuRender = MenuRender(
             self.control.interface, menu, from_top=from_top,
             holder=self.place_holder, dialogs=self.control.dialogs)
-
-    @staticmethod
-    def new_surface(size: tuple[int, int]) -> pg.Surface:
-        return pg.Surface(size, pg.SRCALPHA).convert_alpha()
-
-    def mixer(self, action: str) -> None:
-        """Plays a sound from the sounds dict attribute if the given action
-        exists in the sfx control channel.
-        """
-        if self.sounds.get(action, None) is not None:
-            self.control.sfx_channel.play(self.sounds[action])

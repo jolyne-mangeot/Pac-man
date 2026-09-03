@@ -174,12 +174,12 @@ class Map:
     def update_gum(self, pos_pacman: tuple[int, int]) -> str:
         """Update gum on the grid depending on Pacman position."""
         if self.map[pos_pacman[0]][pos_pacman[1]].simple_gum is True:
-            self.map[pos_pacman[0]][pos_pacman[1]].simple_gum is False
+            self.map[pos_pacman[0]][pos_pacman[1]].simple_gum = False
             self.simple_gums.remove(pos_pacman)
             self.nb_simple_gum -= 1
             return "simple_gum"
         elif self.map[pos_pacman[0]][pos_pacman[1]].super_gum is True:
-            self.map[pos_pacman[0]][pos_pacman[1]].super_gum is False
+            self.map[pos_pacman[0]][pos_pacman[1]].super_gum = False
             self.super_gums.remove(pos_pacman)
             self.nb_super_gum -= 1
             return "super_gum"

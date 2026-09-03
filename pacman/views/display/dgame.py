@@ -4,9 +4,11 @@ from random import randint as rand, choice
 
 import pygame as pg
 
-from pacman.controllers import Control
-from pacman.models import Level
 from .display import Display, SpriteSheet
+from pacman.controllers import Control
+from pacman.models import (
+    Level, OPPOSITE_DIRECTION, Movements, Directions, Entity)
+from pacman.views import Style, render_word, new_surface
 
 
 class LevelDisplay:
@@ -50,7 +52,7 @@ class LevelDisplay:
         self.cell_gap = int(cell_size // 2.3)
         cell_gap = self.cell_gap
 
-        self.maze_surf = self.display.new_surface(self.coords(
+        self.maze_surf = new_surface(self.coords(
             self.level.map.width, self.level.map.height + 1, -0.5, -1))
 
         assets: LevelTheme = self.display.themed_assets[self.level.theme]
@@ -81,7 +83,7 @@ class LevelDisplay:
             for x in range(self.level.map.width):
                 walls: int = self.level.map.map[x][y].walls
 
-                cell: pg.Surface = self.display.new_surface((16, 16))
+                cell: pg.Surface = new_surface((16, 16))
                 cell.blits([
                     (p_a_w["ground_surface"], (rand(-48, 0), rand(-48, 0))),
                     (assets["binary_cell_borders"][walls], (0, 0))])
@@ -117,39 +119,94 @@ class LevelDisplay:
                             frame, (self.cell_size, self.cell_size))
                             for frame in frames]})
 
+    def render_entity(
+            self, name: str, char: Entity, direction: Directions
+            ) -> tuple[pg.Surface, pg.Rect]:
+        coords: tuple[int, int] = self.coords(*char.pos)
+        origin: Movements = Movements[
+            OPPOSITE_DIRECTION[direction].name].value
+        offset: int = 0
+        if char.direction.value != 15:
+            offset = int(
+                (char.current_speed - self.level.char_anim[name])
+                * (self.cell_size + self.cell_gap)
+                / char.current_speed)
+        position: tuple[int, int] = (
+            coords[0] + (origin[0] * offset),
+            coords[1] + (origin[1] * offset))
+        mode: str = "super" if char.is_super else "normal"
+        frame: int = int(
+            self.level.char_anim[name] * 3 / char.current_speed) % 3
+        return (
+            self.characters[name][cast(Literal["normal", "super"], mode)][
+                direction.name][frame],
+            pg.Rect(*position, self.cell_size, self.cell_size))
+
+    def render_interface(self) -> tuple[pg.Surface, pg.Rect]:
+        ui_surf: pg.Surface = new_surface(
+            self.display.scaled_ui["level_ui"].get_size())
+        ui_h: int = ui_surf.get_height()
+        ui_w: int = ui_surf.get_width()
+        ui_surf.fill((15, 15, 15))
+        level_id: pg.Surface = render_word(self.display.ui_styles["level"],
+            str(self.level.level_id % 100), 0)
+        score: pg.Surface = render_word(self.display.ui_styles["score"],
+            str(self.level.score % 10000), 0)
+        time: int = self.level.level_timer
+        timer: pg.Surface = render_word(self.display.ui_styles["timer"],
+            f"{time // 60:02d}:{time % 60:02d}", 0)
+
+        visual_elements: list[tuple[pg.Surface, pg.Rect]] = [
+            (self.display.scaled_ui["level_ui"], (0, 0)),
+            (level_id, level_id.get_rect(midright=(ui_h * 0.91, ui_h * 0.5))),
+            (score, score.get_rect(midright=(ui_h * 3.39, ui_h * 0.5))),
+            (timer, timer.get_rect(center=(ui_w / 2, ui_h / 2)))]
+        ui_surf.blits(visual_elements)
+        return (ui_surf, ui_surf.get_rect())
+
     def draw(self) -> None:
+        control_interface: pg.Surface = self.display.control.interface
         self.display.control.screen.fill((0, 0, 0))
-        game_surf: pg.Surface = self.display.new_surface((
-            self.display.control.interface.get_width(),
-            int(self.display.control.interface.get_height() * 0.85)))
+        game_surf: pg.Surface = new_surface((
+            control_interface.get_width(),
+            int(control_interface.get_height() * 0.85)))
 
         maze_surf: pg.Surface = self.maze_surf.copy()
         visual_elements: list[tuple[pg.Surface, pg.Rect]] = []
+
         visual_elements.extend([(
-            self.gum[self.level.anim_tick],
+            self.gum[self.level.level_timer % 3],
             pg.Rect(*self.coords(*gum), self.cell_size, self.cell_size))
             for gum in self.level.map.simple_gums])
+
         visual_elements.extend([(
-            self.sup_gum[self.level.anim_tick],
+            self.sup_gum[self.level.level_timer % 3],
             pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
             for sup_gum in self.level.map.super_gums])
-        mode: str = "super" if self.level.super_mode else "normal"
-        dir: dict[int, str] = {1: "north", 2: "east", 4: "south", 8: "west",
-                               15: "north"}
-        visual_elements.extend([(
-            self.characters[name][cast(Literal["normal", "super"], mode)][
-                dir[char.direction.value]][self.level.anim_tick],
-            pg.Rect(*self.coords(*char.pos), self.cell_size, self.cell_size))
-            for name, char in self.level.ghosts.items() if char.is_alive])
+
+        direction: Directions = next(dir for dir in (
+            self.level.pacman.direction, self.level.pacman.next_direction,
+            Directions.DOWN) if dir.value != 15)
+        if self.level.pacman.is_alive is True:
+            visual_elements.append(self.render_entity(
+                "Pacman", self.level.pacman, direction))
+        for name, ghost in self.level.ghosts.items():
+            direction = (ghost.direction if ghost.direction.value
+                         != 15 else Directions.DOWN)
+            if ghost.is_alive is True:
+                visual_elements.append(self.render_entity(
+                    name, ghost, direction))
+
         maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
         game_surf.blit(maze_surf, maze_surf.get_rect(
             center=game_surf.get_rect().center))
-        self.display.control.interface.blit(game_surf, (
-            0, int(self.display.control.interface.get_height() * 0.15)))
+        control_interface.blits([
+            (game_surf, (0, int(control_interface.get_height() * 0.15))),
+            self.render_interface()])
 
         self.display.control.screen.blit(
-            self.display.control.interface,
+            control_interface,
             self.display.control.interface_rect)
 
 
@@ -170,54 +227,101 @@ class CharacterSprites(TypedDict):
 class GameDisplay(Display):
     def __init__(self, control: Control) -> None:
         super().__init__(control)
+        self.themed_assets: dict[str, LevelTheme]
+        self.interface: dict[str, pg.Surface]
+        self.scaled_ui: dict[str, pg.Surface]
+        self.ui_fonts: dict[str, pg.font.Font]
+        self.characters: dict[str, CharacterSprites]
         self.level_display: LevelDisplay
         self.load_level_assets()
         self.load_characters_sprites()
 
     def startup(self) -> None:
-        pass
+        self.scale_level_ui()
 
     def cleanup(self) -> None:
         del self.level_display
+        del self.scaled_ui
+        del self.ui_fonts
 
     def load_level_assets(self) -> None:
-        self.themed_assets: dict[str, LevelTheme] = {}
+        self.themed_assets = {}
         for theme in ("grassy", "dungeon"):
             self.load_theme_sprites(theme)
+        level_ui_sheet: SpriteSheet = SpriteSheet(
+            "pacman/assets/interface/life_and_energy.png")
+        self.interface = {
+            "level_ui": level_ui_sheet.get_sprite((0, 0), (640, 72)),
+            "super_bar": level_ui_sheet.get_sprite((532, 89), (95, 24))}
+
+    def scale_level_ui(self) -> None:
+        ui_h: int = int(self.control.interface.get_height() * 0.15)
+        ui_w: int = int(self.control.interface.get_width())
+        self.scaled_ui = {
+            "level_ui": pg.transform.scale(
+                self.interface["level_ui"], (ui_w, ui_h)),
+            "super_bar": pg.transform.scale(
+                self.interface["super_bar"], (ui_w * 0.25, ui_h * 0.3))}
+        self.ui_fonts = {
+            "level": pg.font.Font(
+                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.45)),
+            "score": pg.font.Font(
+                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.45)),
+            "timer": pg.font.Font(
+                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.32))}
+        self.ui_fonts["level"].set_bold(True)
+        self.ui_fonts["timer"].set_bold(True)
+        color: pg.Color = pg.Color(255, 255, 255)
+        self.ui_styles: dict[str, Style] = {
+            "level": Style(
+                color, self.ui_fonts["level"], new_surface(),
+                pg.Rect(ui_h * 0.194, ui_h * 0.194, ui_h * 0.76, ui_h * 0.58),
+                ui_h * 0.35),
+            "score": Style(
+                color, self.ui_fonts["score"], new_surface(),
+                pg.Rect(ui_h * 1.08, ui_h * 0.194, ui_h * 2.33, ui_h * 0.58),
+                ui_h * 0.35),
+            "timer": Style(
+                color, self.ui_fonts["timer"], new_surface(),
+                pg.Rect(ui_h * 3.9, ui_h * 0.2, ui_h * 1.06, ui_h * 0.56),
+                ui_h * 0.27)
+        }
 
     def load_characters_sprites(self) -> None:
         normal_sht: SpriteSheet = SpriteSheet(
             "pacman/assets/level/skellies_premade_1.png")
         super_sht: SpriteSheet = SpriteSheet(
             "pacman/assets/level/skellies_premade_2.png")
+        pacman_sht: SpriteSheet = SpriteSheet(
+            "pacman/assets/level/example_characters.png")
 
         def get_frames(coords: tuple[int, int], sheet: SpriteSheet
                        ) -> list[pg.Surface]:
             return [
-                sheet.get_sprite(
-                    (coords[0] + 16 * index, coords[1]), (16, 16), -1)
+                sheet.get_sprite((coords[0] + 16 * index, coords[1]), (16, 16))
                 for index in range(3)]
 
-        def load_sprites(coords: tuple[int, int]) -> CharacterSprites:
-            sprites: CharacterSprites = {"normal": {}, "super": {}}
-            for mode, sheet in zip(
-                    ("normal", "super"), (normal_sht, super_sht)):
-                sprites[cast(Literal["normal", "super"], mode)].update({
-                    "north": get_frames((coords[0], coords[1] + 48), sheet),
-                    "east": get_frames((coords[0], coords[1] + 32), sheet),
-                    "west": get_frames((coords[0], coords[1] + 16), sheet),
-                    "south": get_frames((coords[0], coords[1]), sheet)})
-            return sprites
+        def load_sprites(coords: tuple[int, int], sheet: SpriteSheet
+                         ) -> CharacterSprites:
+            return {
+                    "UP": get_frames((coords[0], coords[1] + 48), sheet),
+                    "RIGHT": get_frames((coords[0], coords[1] + 32), sheet),
+                    "LEFT": get_frames((coords[0], coords[1] + 16), sheet),
+                    "DOWN": get_frames((coords[0], coords[1]), sheet)}
 
         sheet_coords: dict[str, tuple[int, int]] = {
-            "Pacman": (0, 0),
             "Blinky": (10 * 16 * 3, 2 * 16 * 4),
             "Pinky": (8 * 16 * 3, 14 * 16 * 4),
             "Inky": (0, 0),
             "Clyde": (0, 0)}
-        self.characters: dict[str, CharacterSprites] = {}
+        pacman_coords: tuple[int, int] = (5 * 16 * 3, 4 * 16 * 4)
+        self.characters = {
+            "Pacman": {"normal": load_sprites(pacman_coords, pacman_sht),
+                       "super": load_sprites(pacman_coords, pacman_sht)}}
         for name, coords in sheet_coords.items():
-            self.characters.update({name: load_sprites(coords)})
+            self.characters.update({
+                name: {"normal": load_sprites(coords, normal_sht),
+                       "super": load_sprites(coords, super_sht)}})
 
     def load_theme_sprites(self, theme: str) -> None:
         sheet: SpriteSheet = SpriteSheet(
@@ -233,7 +337,7 @@ class GameDisplay(Display):
             "sw_angle": sheet.get_sprite((112, 16), (16, 16))}
 
         def create_cell_borders(borders: list[str]) -> pg.Surface:
-            cell: pg.Surface = self.new_surface((16, 16))
+            cell: pg.Surface = new_surface((16, 16))
             cell.blits([(tile_sprites[border], (0, 0)) for border in borders])
             return cell
 
@@ -262,8 +366,8 @@ class GameDisplay(Display):
             "small_wall": sheet.get_sprite((64, 32), (8, 16)),
             "down_wall": sheet.get_sprite((80, 32), (16, 32)),
             "small_down_wall": sheet.get_sprite((80, 32), (8, 32)),
-            "h_path": self.new_surface((8, 16)),
-            "v_path": self.new_surface((16, 8))}
+            "h_path": new_surface((8, 16)),
+            "v_path": new_surface((16, 8))}
         paths_and_walls["h_path"].blits([
             (paths_and_walls["ground_surface"], (0, 0)),
             (tile_sprites["n_wall"], (0, 0)),
@@ -277,6 +381,9 @@ class GameDisplay(Display):
             sheet.get_sprite((coords), (16, 16)) for coords in (
                 (128, 0), (144, 0), (128, 16), (144, 16))]
 
+        gum: list[pg.Surface] = [new_surface((16, 16))] * 3
+        pg.draw.circle(gum[0], pg.Color(255, 255, 255), (8, 8), 1.2)
+
         sup_gum_sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/level/" + theme + "_sup_gum.png")
         sup_gum: list[pg.Surface] = []
@@ -289,12 +396,11 @@ class GameDisplay(Display):
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
             "decorations": decorations,
-            "gum": sup_gum,
+            "gum": gum,
             "sup_gum": sup_gum}})
 
     def update_level(self, level: Level) -> None:
         self.level_display = LevelDisplay(self, level)
 
     def draw(self) -> None:
-        self.control.screen.fill((0, 0, 255))
         self.level_display.draw()

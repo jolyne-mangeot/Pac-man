@@ -1,2 +1,2 @@
-text_holder.png:
-	- Golden-UI by Buch on OpenGameArt: https://opengameart.org/users/buch
+ui_big_pieces.png:
+	- Golden UI - Bigger Than Ever edition by Buch on OpenGameArt: https://opengameart.org/users/buch
