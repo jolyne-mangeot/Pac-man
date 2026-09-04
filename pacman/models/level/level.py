@@ -25,17 +25,19 @@ ANIM_TICK: int = 15
 
 class Level:
     def __init__(
-            self, level_id: int,  player_lives: int, cheats_allowed: bool,
-            maze_config: MazeConfig, gameplay: GameplayConfig,
-            scores_config: ScoresConfig) -> None:
+            self, level_id: int, max_lives: int, player_lives: int,
+            cheats_allowed: bool, maze_config: MazeConfig,
+            gameplay: GameplayConfig, scores_config: ScoresConfig) -> None:
         self.level_id: int = level_id
+        self.max_lives: int = max_lives
         self.lives: int = player_lives
         self.cheats_allowed: bool = cheats_allowed
         self.cheats_used: bool = False
         self.theme: str = gameplay.theme
         self.level_duration: int = gameplay.timer
         self.level_timer: int = gameplay.timer
-        self.super_duration: int = gameplay.super_duration
+        self.super_duration: int = gameplay.super_duration * 1000
+        self.super_anim: int = 0
         self.scores_ref: ScoresConfig = scores_config
         self.score: int = 0
         self.scores: dict[str, int] = {
@@ -140,6 +142,7 @@ class Level:
         self.scores[type] += amount
 
     def activate_super(self) -> None:
+        self.super_anim = self.super_duration
         self.pacman.is_super = True
         self.pacman.current_speed = self.pacman.super_speed
         self.update_entity_timer_instant("Pacman", self.pacman)
@@ -148,9 +151,10 @@ class Level:
                 ghost.is_super = True
                 ghost.current_speed = ghost.super_speed
                 self.update_entity_timer_instant(name, ghost)
-        pg.time.set_timer(Timers.SUPER.value, self.super_duration * 1000, 1)
+        pg.time.set_timer(Timers.SUPER.value, self.super_duration, 1)
 
     def deactivate_super(self) -> None:
+        self.super_anim = 0
         self.pacman.is_super = False
         self.pacman.current_speed = self.pacman.speed
         self.update_entity_timer_instant("Pacman", self.pacman)
@@ -163,6 +167,7 @@ class Level:
         if self.pacman.is_alive is True:
             self.move_pacman()
         else:
+            self.lives -= 1
             self.pacman.is_alive = True
             self.pacman.direction = Directions.NONE
             self.pacman.respawn()
@@ -171,6 +176,10 @@ class Level:
                 ghost.respawn()
 
     def update_animations(self) -> None:
+        if self.pacman.is_super is True:
+            self.super_anim -= ANIM_TICK
+            if self.super_anim < 0:
+                self.super_anim = 0
         if self.pacman.is_alive and self.pacman.direction.value != 15:
             self.char_anim["Pacman"] += ANIM_TICK
             if self.char_anim["Pacman"] > self.pacman.current_speed:
@@ -186,7 +195,7 @@ class Level:
 
     def theoric_position(self, name: str, entity: Entity) -> tuple[int, int]:
         theoric_pos: tuple[int, int] = entity.pos
-        if self.char_anim[name] < entity.current_speed // 2:
+        if self.char_anim[name] < entity.current_speed // 2.2:
             opposite_move: tuple[int, int] = (
                 Movements[OPPOSITE_DIRECTION[entity.direction].name].value)
             theoric_pos = (theoric_pos[0] + opposite_move[0],
@@ -208,7 +217,6 @@ class Level:
             if ghost_pos == pac_pos:
                 if ghost.is_super is False:
                     self.pacman.is_alive = False
-                    self.lives -= 1
                     pg.time.set_timer(Timers.PACMAN.value, 2000, 1)
                 else:
                     self.gain_score("ghost", self.scores_ref.ghost)

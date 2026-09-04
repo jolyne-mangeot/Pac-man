@@ -18,6 +18,7 @@ class LevelDisplay:
 
         self.maze_surf: pg.Surface
         self.characters: dict[str, CharacterSprites]
+        self.life_bar: pg.Surface
 
         self.cell_size: int
         self.cell_gap: int
@@ -26,6 +27,7 @@ class LevelDisplay:
 
         self.render_maze()
         self.scale_characters()
+        self.scale_ui()
 
     def coords(self, x: int, y: int, h_path: float = 0,
                v_path: float = 0) -> tuple[int, int]:
@@ -119,11 +121,33 @@ class LevelDisplay:
                             frame, (self.cell_size, self.cell_size))
                             for frame in frames]})
 
+    def scale_ui(self) -> None:
+        ui_size: tuple[int, int] = (
+            self.display.scaled_ui["level_ui"].get_size())
+        bar_w: int = int(ui_size[1] * 2.92)
+        bar_h: int = int(ui_size[1] * 0.29)
+        life_gap: int = int((self.level.max_lives - 1) / bar_w * 100)
+        life_size: int = int((bar_w - life_gap) / self.level.max_lives)
+        life_part: pg.Surface = pg.transform.scale(
+            self.display.interface["life_bar"], (life_size, bar_h))
+        bar_start: pg.Surface = pg.transform.scale(
+            self.display.interface["life_bar_s"], (ui_size[1] * 0.02, bar_h))
+        bar_end: pg.Surface = pg.transform.scale(
+            self.display.interface["life_bar_e"], (ui_size[1] * 0.02, bar_h))
+        blits: list[tuple[pg.Surface, pg.Rect]] = [
+            (bar_start, pg.Rect(0, 0, 0, 0)),
+            (bar_end, bar_end.get_rect(topright=(bar_w, 0)))]
+        for i in range(self.level.max_lives):
+            blits.insert(0, (
+                life_part, pg.Rect((life_size * i) + (life_gap * i), 0, 0, 0)))
+        self.life_bar = new_surface((bar_w, bar_h))
+        self.life_bar.blits(blits)
+
     def render_entity(
             self, name: str, char: Entity, direction: Directions
             ) -> tuple[pg.Surface, pg.Rect]:
         coords: tuple[int, int] = self.coords(*char.pos)
-        origin: Movements = Movements[
+        origin: tuple[int, int] = Movements[
             OPPOSITE_DIRECTION[direction].name].value
         offset: int = 0
         if char.direction.value != 15:
@@ -148,20 +172,36 @@ class LevelDisplay:
         ui_h: int = ui_surf.get_height()
         ui_w: int = ui_surf.get_width()
         ui_surf.fill((15, 15, 15))
-        level_id: pg.Surface = render_word(self.display.ui_styles["level"],
-            str(self.level.level_id % 100), 0)
-        score: pg.Surface = render_word(self.display.ui_styles["score"],
-            str(self.level.score % 10000), 0)
+        level_id: pg.Surface = render_word(
+            self.display.ui_styles["level"], str(self.level.level_id % 100), 0)
+        score: pg.Surface = render_word(
+            self.display.ui_styles["score"], str(self.level.score % 10000), 0)
         time: int = self.level.level_timer
-        timer: pg.Surface = render_word(self.display.ui_styles["timer"],
+        timer: pg.Surface = render_word(
+            self.display.ui_styles["timer"],
             f"{time // 60:02d}:{time % 60:02d}", 0)
 
-        visual_elements: list[tuple[pg.Surface, pg.Rect]] = [
-            (self.display.scaled_ui["level_ui"], (0, 0)),
+        life_size: tuple[int, int] = self.life_bar.get_size()
+        life_bar: tuple[pg.Surface, pg.Rect, pg.Rect] = (
+            self.life_bar, pg.Rect(ui_h * 5.66, ui_h * 0.175, 0, 0), pg.Rect(
+                0, 0, (life_size[0] - (self.level.max_lives - self.level.lives)
+                       * life_size[0] / self.level.max_lives),
+                life_size[1]))
+
+        super_size: tuple[int, int] = (
+            self.display.scaled_ui["super_bar"].get_size())
+        super_visual: tuple[pg.Surface, pg.Rect, pg.Rect] = (
+            self.display.scaled_ui["super_bar"],
+            pg.Rect(ui_h * 7.46, ui_h * 0.65, 0, 0),
+            pg.Rect(0, 0, self.level.super_anim * super_size[0]
+                    / self.level.super_duration, super_size[1]))
+
+        ui_surf.blits([
+            (self.display.scaled_ui["level_ui"], pg.Rect(0, 0, 0, 0)),
             (level_id, level_id.get_rect(midright=(ui_h * 0.91, ui_h * 0.5))),
             (score, score.get_rect(midright=(ui_h * 3.39, ui_h * 0.5))),
-            (timer, timer.get_rect(center=(ui_w / 2, ui_h / 2)))]
-        ui_surf.blits(visual_elements)
+            (timer, timer.get_rect(center=(ui_w / 2, ui_h / 2))),
+            life_bar, super_visual])
         return (ui_surf, ui_surf.get_rect())
 
     def draw(self) -> None:
@@ -252,7 +292,10 @@ class GameDisplay(Display):
             "pacman/assets/interface/life_and_energy.png")
         self.interface = {
             "level_ui": level_ui_sheet.get_sprite((0, 0), (640, 72)),
-            "super_bar": level_ui_sheet.get_sprite((532, 89), (95, 24))}
+            "life_bar": level_ui_sheet.get_sprite((498, 94), (30, 21)),
+            "life_bar_s": level_ui_sheet.get_sprite((494, 94), (2, 21)),
+            "life_bar_e": level_ui_sheet.get_sprite((530, 94), (2, 21)),
+            "super_bar": level_ui_sheet.get_sprite((537, 94), (85, 14))}
 
     def scale_level_ui(self) -> None:
         ui_h: int = int(self.control.interface.get_height() * 0.15)
@@ -261,7 +304,7 @@ class GameDisplay(Display):
             "level_ui": pg.transform.scale(
                 self.interface["level_ui"], (ui_w, ui_h)),
             "super_bar": pg.transform.scale(
-                self.interface["super_bar"], (ui_w * 0.25, ui_h * 0.3))}
+                self.interface["super_bar"], (ui_h * 1.19, ui_h * 0.19))}
         self.ui_fonts = {
             "level": pg.font.Font(
                 "pacman/assets/fonts/dogica.otf", int(ui_h * 0.45)),
@@ -276,16 +319,15 @@ class GameDisplay(Display):
             "level": Style(
                 color, self.ui_fonts["level"], new_surface(),
                 pg.Rect(ui_h * 0.194, ui_h * 0.194, ui_h * 0.76, ui_h * 0.58),
-                ui_h * 0.35),
+                int(ui_h * 0.35)),
             "score": Style(
                 color, self.ui_fonts["score"], new_surface(),
                 pg.Rect(ui_h * 1.08, ui_h * 0.194, ui_h * 2.33, ui_h * 0.58),
-                ui_h * 0.35),
+                int(ui_h * 0.35)),
             "timer": Style(
                 color, self.ui_fonts["timer"], new_surface(),
                 pg.Rect(ui_h * 3.9, ui_h * 0.2, ui_h * 1.06, ui_h * 0.56),
-                ui_h * 0.27)
-        }
+                int(ui_h * 0.27))}
 
     def load_characters_sprites(self) -> None:
         normal_sht: SpriteSheet = SpriteSheet(
@@ -302,7 +344,7 @@ class GameDisplay(Display):
                 for index in range(3)]
 
         def load_sprites(coords: tuple[int, int], sheet: SpriteSheet
-                         ) -> CharacterSprites:
+                         ) -> dict[str, list[pg.Surface]]:
             return {
                     "UP": get_frames((coords[0], coords[1] + 48), sheet),
                     "RIGHT": get_frames((coords[0], coords[1] + 32), sheet),
