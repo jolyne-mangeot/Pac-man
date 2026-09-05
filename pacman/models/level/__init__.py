@@ -1,5 +1,5 @@
 
-from .level import Level
+from .level import Level, LevelOutput
 
 
-__all__ = ["Level"]
+__all__ = ["Level", "LevelOutput"]

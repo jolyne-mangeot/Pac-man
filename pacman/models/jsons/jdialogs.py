@@ -31,3 +31,6 @@ class Dialogs(JSONModel):
     reset_settings: str = Field(default="reset settings")
     apply: str = Field(default="apply")
     back: str = Field(default="back")
+
+    resume: str = Field(default="Resume")
+    back_to_main: str = Field(default="back to main menu")

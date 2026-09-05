@@ -124,7 +124,7 @@ class Pacman(Entity):
                  initial_pos: tuple[int, int]):
         """Initialises the attributes of the Pacman instance."""
         super().__init__(speed, super_speed, initial_pos)
-        self.next_direction: Directions = Directions.UP
+        self.next_direction: Directions = Directions.NONE
         self.pacman_super: bool = False
 
     def move(self, walls_in_actual_cell: int) -> None:

@@ -249,6 +249,13 @@ class State(ABC):
         self.next = new_state
         self.done = True
 
+    def back_a_state(self) -> None:
+        """Acts the same as switch_state method, but instead of taking a state
+        name in argument, uses the previous attribute of the calling state.
+        """
+        self.next = self.previous
+        self.done = True
+
     def read_input_events(self, event: pg.event.Event) -> tuple[str, str, str]:
         named_key: str = ""
         text_input: str = ""

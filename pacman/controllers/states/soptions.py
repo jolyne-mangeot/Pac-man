@@ -89,7 +89,7 @@ class OptionsMenuState(State):
                            partial(self.reset_settings), "option_update"),
             ActivateOption("apply", "{name}", partial(self.apply_settings)),
             ActivateOption("back", "{name}",
-                           partial(self.switch_state, "main_menu"))]
+                           partial(self.back_a_state))]
 
         self.options_menu = Menu(loop_cursor=False, options=options)
 
@@ -146,7 +146,7 @@ class OptionsMenuState(State):
         return_key: str = self.control.settings.key_config.return_key
         if (self.options_menu.picked_index == -1 and event.type == pg.KEYDOWN
                 and pg.key.name(event.key) == return_key):
-            self.switch_state("main_menu")
+            self.back_a_state()
             return
         self.options_menu.get_event(
             *self.read_input_events(event), "chart")

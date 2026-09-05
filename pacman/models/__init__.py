@@ -12,7 +12,7 @@ from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
 
 from .entity import Entity, Pacman, Ghost, Strategy, strat_dict
 
-from .level import Level
+from .level import Level, LevelOutput
 
 
 __all__ = [
@@ -27,4 +27,4 @@ __all__ = [
 
     "Entity", "Pacman", "Ghost", "Strategy", "strat_dict",
 
-    "Level"]
+    "Level", "LevelOutput"]

@@ -5,10 +5,11 @@ from random import randint as rand, choice
 import pygame as pg
 
 from .display import Display, SpriteSheet
-from pacman.controllers import Control
+from pacman.controllers import Control, Menu
 from pacman.models import (
     Level, OPPOSITE_DIRECTION, Movements, Directions, Entity)
-from pacman.views import Style, render_word, new_surface
+from pacman.views import (
+    Style, PlaceHolder, MenuRender, render_word, new_surface)
 
 
 class LevelDisplay:
@@ -276,8 +277,10 @@ class GameDisplay(Display):
         self.load_level_assets()
         self.load_characters_sprites()
 
-    def startup(self) -> None:
+    def startup(self, pause: Menu, level_end: Menu, end: Menu) -> None:
         self.scale_level_ui()
+        self.pause_menu: MenuRender = MenuRender(
+            self.control.interface, pause, self.control.dialogs)
 
     def cleanup(self) -> None:
         del self.level_display
@@ -444,5 +447,12 @@ class GameDisplay(Display):
     def update_level(self, level: Level) -> None:
         self.level_display = LevelDisplay(self, level)
 
-    def draw(self) -> None:
-        self.level_display.draw()
+    def draw(self, game_state: str) -> None:
+        match game_state:
+            case "level":
+                self.level_display.draw()
+            case "pause":
+                self.control.interface.fill((0, 0, 115))
+                self.pause_menu.draw_vertical_options()
+                self.control.screen.blit(
+                    self.control.interface, self.control.interface_rect)
