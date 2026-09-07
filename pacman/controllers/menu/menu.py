@@ -55,7 +55,8 @@ class Menu:
         """
         self.options: list[Option] = options
         self.loop_cursor: bool = loop_cursor
-        self.select_index: int = 0
+        self.select_index: int = -1
+        self.move_cursor(1)
         self.picked_index: int = -1
         self.last_picked: int = -1
         self.action_done: str = ""
@@ -173,6 +174,9 @@ class Menu:
         attribute. Checks if the select_index attribute has effectively
         changed, and if so, set action_done to "cursor_move"
         """
+        if len(self.options) == 0:
+            self.select_index = 0
+            return
         index: int = self.select_index
         self.change_selected_option(operant)
         while self.options[self.select_index].selectable is False:

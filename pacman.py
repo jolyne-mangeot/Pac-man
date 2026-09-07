@@ -36,9 +36,9 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         output: int = main()
-    except KeyboardInterrupt:
-        output = 1
-        print("\r  ")
+    # except KeyboardInterrupt:
+    #     output = 1
+    #     print("\r  ")
     except ValidationError:
         output = 2
         print("Unexpected error during Parsing of configuration files.")

@@ -17,7 +17,7 @@ class Option(ABC):
     - text: str (parameter) => text returned by the str method when printing
     the object, if the container contains a value by the name of the option,
     formats it into the text with value=container[name] format
-    - container: dict[str, Any] (parameter) => dict reference to be modified by
+    - container: object (parameter) => dict reference to be modified by
     the option if needed
     - selectable: bool => self attributed boolean that can be overridden by
     subclasses. If False, the Menu class will skip over the option during
@@ -37,15 +37,26 @@ class Option(ABC):
     different behavior and update the container's values if needed
     """
     def __init__(
-            self, name: str, text: str,
-            container: dict[str, Any] = {}) -> None:
+            self, name: str, text: str = "{name}",
+            container: object = {}) -> None:
         """Assign name, text and container arguments to the Option object."""
         self.name: str = name
         self.text: str = text
-        self.container: dict[str, Any] = container
+        self.container: object = container
         self.selectable: bool = True
         self.pickable: bool = True
         self.visible: bool = True
+
+    def get_in_container(self, default: Any = None) -> Any:
+        if isinstance(self.container, dict):
+            return self.container.get(self.name, default)
+        return getattr(self.container, self.name, default)
+
+    def set_in_container(self, value: Any) -> None:
+        if isinstance(self.container, dict):
+            self.container[self.name] = value
+        else:
+            setattr(self.container, self.name, value)
 
     def __str__(self) -> str:
         """Returns self.text formatted with the corresponding value from
@@ -53,15 +64,15 @@ class Option(ABC):
         the container's value into a "value" format flag.
         (ex: self.text="I am {value}")
         """
-        if self.container.get(self.name, None) is not None:
+        if self.get_in_container(None) is not None:
             return self.text.format(
-                value=str(self.container.get(self.name)).replace("_", " "))
+                value=str(self.get_in_container("")).replace("_", " "))
         return self.text
 
     def get_texts(self, dialogs: dict[str, str]) -> list[str]:
         texts: list[str] = [self.text.format(name=dialogs.get(self.name, ""))]
-        if self.container.get(self.name, None) is not None:
-            value_text: str = str(self.container.get(self.name))
+        if self.get_in_container(None) is not None:
+            value_text: str = str(self.get_in_container(self.name))
             texts.append(dialogs.get(value_text, value_text).replace("_", " "))
         return texts
 
@@ -110,7 +121,7 @@ class Spacer(Option):
         """
         self.name: str = "spacer"
         self.text: str = ""
-        self.container: dict[str, Any] = {}
+        self.container: object = {}
         self.selectable: bool = False
         self.pickable: bool = False
         self.visible: bool = False
@@ -118,6 +129,26 @@ class Spacer(Option):
     def __str__(self) -> str:
         """Return an empty string. Override of Option to skip conditions."""
         return ""
+
+    def input_event(self, _: str, __: str, ___: str) -> Any:
+        """Does nothing. Override of Option for correct implementation"""
+        pass
+
+
+class TextValueHolder(Option):
+    def __init__(self, name: str, container: object,
+                 text: str = "{name}") -> None:
+        """No arguments, instantiate all Option mandatory attributes with
+        dummy values:
+
+        name="spacer", text="", container={}, selectable=False, pickable=False
+        """
+        self.name: str = name
+        self.text: str = text
+        self.container: object = container
+        self.selectable: bool = False
+        self.pickable: bool = False
+        self.visible: bool = True
 
     def input_event(self, _: str, __: str, ___: str) -> Any:
         """Does nothing. Override of Option for correct implementation"""
@@ -144,9 +175,8 @@ class ActivateOption(Option):
     execution of self.exec
     """
     def __init__(
-            self, name: str, text: str,
-            exec: partial[Any] = partial(lambda: ""),
-            custom_return: Any = None) -> None:
+            self, name: str, exec: partial[Any] = partial(lambda: ""),
+            custom_return: Any = None, text: str = "{name}") -> None:
         """Initializes ActivateOption attributes with the given parameters and
         Option.__init__.
         """
@@ -183,8 +213,8 @@ class ToggleOption(Option):
     "activate", otherwise does nothing.
     """
     def __init__(
-            self, name: str, text: str,
-            container: dict[str, Any] = {}) -> None:
+            self, name: str, container: object,
+            text: str = "{name}") -> None:
         """Initializes ToggleOption attributes with the given parameters and
         Option.__init__.
         """
@@ -193,10 +223,7 @@ class ToggleOption(Option):
 
     def toggle(self) -> None:
         """Switch to True or False the corresponding config entry."""
-        if self.container[self.name] == "True":
-            self.container[self.name] = "False"
-        else:
-            self.container[self.name] = "True"
+        self.set_in_container(not self.get_in_container(False))
 
     def input_event(self, action_key: str, _: str, __: str) -> Any:
         """If action_key is "activate", call self.toggle and return
@@ -235,10 +262,11 @@ class SliderOption(Option):
     factor if a direction key is pressed.
     """
     def __init__(
-            self, name: str, text: str,
-            container: dict[str, Any] = {}, value_range: range = range(0, 0),
-            up_factor: int = 10, down_factor: int = -10, left_factor: int = -1,
-            right_factor: int = 1, cycle: bool = True) -> None:
+            self, name: str, container: object,
+            value_range: range = range(0, 0), up_factor: int = 10,
+            down_factor: int = -10, left_factor: int = -1,
+            right_factor: int = 1, cycle: bool = True, text: str = "{name}"
+            ) -> None:
         """Initializes SliderOption attributes with the given parameters and
         Option.__init__.
         """
@@ -255,13 +283,13 @@ class SliderOption(Option):
         factor, checking if any range limit is reached and updating the
         corresponding config entry accordingly.
         """
-        value: int = int(self.container[self.name])
+        value: int = int(self.get_in_container())
         value += factor
         if value > self.value_range[-1]:
             value = self.value_range[0 if self.cycle else -1]
         elif value < self.value_range[0]:
             value = self.value_range[-1 if self.cycle else 0]
-        self.container[self.name] = value
+        self.set_in_container(value)
 
     def input_event(self, action_key: str, _: str, __: str) -> Any:
         """Calls update_values with the correct factor depending on the
@@ -311,10 +339,10 @@ class SelectionOption(Option):
     down_key left_key and right_key, otherwise doing nothing
     """
     def __init__(
-            self, name: str, text: str, container: dict[str, Any] = {},
-            options: list[Any] = [], up_factor: int = 0,
-            down_factor: int = 0, left_factor: int = -1,
-            right_factor: int = 1, cycle: bool = True) -> None:
+            self, name: str, container: object,
+            options: list[Any] = [], up_factor: int = 0, down_factor: int = 0,
+            left_factor: int = -1, right_factor: int = 1, cycle: bool = True,
+            text: str = "{name}") -> None:
         """Initializes SelectionOption attributes with the given parameters and
         Option.__init__.
         """
@@ -331,7 +359,7 @@ class SelectionOption(Option):
         selected value with the one preceding it in the options list.
         """
         try:
-            index: int = self.options.index(self.container[self.name])
+            index: int = self.options.index(self.get_in_container())
             index += factor
             if index < 0:
                 index = len(self.options) - 1 if self.cycle else 0
@@ -340,9 +368,9 @@ class SelectionOption(Option):
         except ValueError:
             index = 0
         try:
-            self.container[self.name] = self.options[index]
+            self.set_in_container(self.options[index])
         except IndexError:
-            self.container[self.name] = None
+            self.set_in_container(None)
 
     def input_event(self, action_key: str, _: str, __: str) -> Any:
         """Calls self.update_selection with the factor corresponding to the
@@ -420,21 +448,20 @@ class InputOption(Option):
     handle_text_input depending on the flags.
     """
     def __init__(
-            self, name: str, text: str,
-            container: dict[str, Any] = {}, value_len: int = 0,
-            use_text_input: bool = True,
+            self, name: str, container: object = {},
+            value_len: int = 0, use_text_input: bool = True,
             erase_text_on_pick: bool = False,
             input_require_return: bool = True,
             revert_to_default: bool = True,
             excluded_input: list[str] = [],
             char_checker: Callable[[str], bool] = (
-                lambda s: str.isprintable(s))) -> None:
+                lambda s: str.isprintable(s)), text: str = "{name}") -> None:
         """Initializes InputOption attributes with the given parameters and
         Option.__init__.
         """
         Option.__init__(self, name, text, container)
         self.value_len: int = value_len
-        self.value_save: str = container[self.name]
+        self.value_save: str = str(self.get_in_container(""))
         self.use_text_input: bool = use_text_input
         self.revert_to_default: bool = revert_to_default
         self.erase_text_on_pick: bool = erase_text_on_pick
@@ -447,19 +474,19 @@ class InputOption(Option):
         the config dict if appropriate. Replace said value with underscores if
         it is an empty string.
         """
-        if self.container.get(self.name, None) is not None:
-            if str(self.container[self.name]) == "":
+        if self.get_in_container() is not None:
+            if str(self.get_in_container("")) == "":
                 return self.text.format(value=str("_" * self.value_len))
-            return self.text.format(value=str(self.container.get(self.name)))
+            return self.text.format(value=str(self.get_in_container("")))
         return self.text
 
     def get_texts(self, dialogs: dict[str, str]) -> list[str]:
         texts: list[str] = [self.text.format(name=dialogs.get(self.name, ""))]
-        if self.container.get(self.name, None) is not None:
-            if str(self.container[self.name]) == "":
+        if self.get_in_container() is not None:
+            if str(self.get_in_container("")) == "":
                 texts.append(str("_" * self.value_len))
             else:
-                texts.append(str(self.container.get(self.name)))
+                texts.append(str(self.get_in_container("")))
         return texts
 
     def activate(self) -> None:
@@ -470,9 +497,9 @@ class InputOption(Option):
         - replacing the value with an empty string if erase_text_on_pick is
         True
         """
-        self.value_save = self.container[self.name]
+        self.value_save = self.get_in_container("")
         if self.erase_text_on_pick is True:
-            self.container[self.name] = ""
+            self.set_in_container("")
 
     def deactivate(self) -> None:
         """Override of Option's, called when the option is let down by a Menu.
@@ -480,8 +507,9 @@ class InputOption(Option):
         - replacing the value with the value_save if revert_to_default is
         True and the value is left empty
         """
-        if self.revert_to_default and self.container[self.name] == "":
-            self.container[self.name] = self.value_save
+        if (self.revert_to_default
+                and self.get_in_container("") == ""):
+            self.set_in_container(self.value_save)
 
     def is_input_valid(self, input: str) -> bool:
         """Method returning a condition based on the input argument, checking:
@@ -489,7 +517,7 @@ class InputOption(Option):
         - if the input is not in the excluded_input,
         - if the input passes the char_checker function
         """
-        return (len(self.container[self.name]) < self.value_len and
+        return (len(self.get_in_container([])) < self.value_len and
                 input not in self.excluded_input and self.char_checker(input))
 
     def handle_input(self, action_key: str, named_key: str) -> str:
@@ -510,15 +538,14 @@ class InputOption(Option):
         Returns an empty string at the end of the method.
         """
         if self.is_input_valid(named_key):
-            print(named_key, flush=True)
-            self.container[self.name] += named_key
+            self.set_in_container(str(self.get_in_container("")) + named_key)
             if (self.input_require_return is False
-                    and len(self.container[self.name]) >= self.value_len):
+                    and len(self.get_in_container("")) >= self.value_len):
                 return "action_done"
             return "option_input_write"
         elif (named_key == "backspace" or action_key == "return_key"
-                and len(self.container[self.name]) > 0):
-            self.container[self.name] = self.container[self.name][:-1]
+                and len(self.get_in_container("")) > 0):
+            self.set_in_container(self.get_in_container(" ")[:-1])
             return "option_input_erase"
         return ""
 
@@ -536,13 +563,13 @@ class InputOption(Option):
         Returns an empty string at the end of the method.
         """
         if named_key == "backspace":
-            if len(self.container[self.name]) > 0:
-                self.container[self.name] = self.container[self.name][:-1]
+            if len(self.get_in_container("")) > 0:
+                self.set_in_container(self.get_in_container(" ")[:-1])
                 return "option_input_erase"
         elif self.is_input_valid(text_input):
-            self.container[self.name] += text_input
+            self.set_in_container(self.get_in_container("") + text_input)
             if (self.input_require_return is False
-                    and len(self.container[self.name]) >= self.value_len):
+                    and len(self.get_in_container([])) >= self.value_len):
                 return "action_done"
             return "option_input_write"
         return ""

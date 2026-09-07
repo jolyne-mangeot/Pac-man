@@ -5,7 +5,7 @@ from .jsons import (
     json_to_model, model_to_json, Languages, Resolutions)
 
 from .menu import (
-    Option, Spacer, InputOption, SliderOption, ActivateOption,
+    Option, Spacer, TextValueHolder, InputOption, SliderOption, ActivateOption,
     SelectionOption, ToggleOption)
 
 from .mazemap import Map, Cell, Movements, Node, Directions, OPPOSITE_DIRECTION
@@ -20,8 +20,8 @@ __all__ = [
     "Settings", "KeyConfig", "Dialogs", "ACTION_LIST",
     "json_to_model", "model_to_json", "Languages", "Resolutions",
 
-    "Option", "Spacer", "InputOption", "SliderOption", "ActivateOption",
-    "SelectionOption", "ToggleOption",
+    "Option", "Spacer", "TextValueHolder", "InputOption", "SliderOption",
+    "ActivateOption", "SelectionOption", "ToggleOption",
 
     "Map", "Cell", "Movements", "Node", "Directions", "OPPOSITE_DIRECTION",
 

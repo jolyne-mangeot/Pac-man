@@ -127,8 +127,13 @@ class LevelDisplay:
             self.display.scaled_ui["level_ui"].get_size())
         bar_w: int = int(ui_size[1] * 2.92)
         bar_h: int = int(ui_size[1] * 0.29)
-        life_gap: int = int((self.level.max_lives - 1) / bar_w * 100)
-        life_size: int = int((bar_w - life_gap) / self.level.max_lives)
+        if self.level.max_lives > 1:
+            life_size: float = bar_w / (self.level.max_lives + 1)
+            life_gap: float = ((bar_w - life_size * self.level.max_lives)
+                               / (self.level.max_lives - 1))
+        else:
+            life_size = bar_w
+            life_gap = 0
         life_part: pg.Surface = pg.transform.scale(
             self.display.interface["life_bar"], (life_size, bar_h))
         bar_start: pg.Surface = pg.transform.scale(
@@ -225,18 +230,19 @@ class LevelDisplay:
             pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
             for sup_gum in self.level.map.super_gums])
 
-        direction: Directions = next(dir for dir in (
-            self.level.pacman.direction, self.level.pacman.next_direction,
-            Directions.DOWN) if dir.value != 15)
-        if self.level.pacman.is_alive is True:
-            visual_elements.append(self.render_entity(
-                "Pacman", self.level.pacman, direction))
         for name, ghost in self.level.ghosts.items():
-            direction = (ghost.direction if ghost.direction.value
-                         != 15 else Directions.DOWN)
+            direction: Directions = (ghost.direction if ghost.direction.value
+                                     != 15 else Directions.DOWN)
             if ghost.is_alive is True:
                 visual_elements.append(self.render_entity(
                     name, ghost, direction))
+
+        if self.level.pacman.is_alive is True:
+            direction = next(dir for dir in (
+                self.level.pacman.direction, self.level.pacman.next_direction,
+                Directions.DOWN) if dir.value != 15)
+            visual_elements.append(self.render_entity(
+                "Pacman", self.level.pacman, direction))
 
         maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
@@ -245,10 +251,6 @@ class LevelDisplay:
         control_interface.blits([
             (game_surf, (0, int(control_interface.get_height() * 0.15))),
             self.render_interface()])
-
-        self.display.control.screen.blit(
-            control_interface,
-            self.display.control.interface_rect)
 
 
 class LevelTheme(TypedDict):
@@ -270,17 +272,28 @@ class GameDisplay(Display):
         super().__init__(control)
         self.themed_assets: dict[str, LevelTheme]
         self.interface: dict[str, pg.Surface]
+        self.characters: dict[str, CharacterSprites]
+
+        self.level_display: LevelDisplay
         self.scaled_ui: dict[str, pg.Surface]
         self.ui_fonts: dict[str, pg.font.Font]
-        self.characters: dict[str, CharacterSprites]
-        self.level_display: LevelDisplay
+
+        self.pause_menu: MenuRender
+        self.level_end_menu: MenuRender
+        self.end_screen: MenuRender
+
+        self.load_menu_buttons()
         self.load_level_assets()
         self.load_characters_sprites()
 
     def startup(self, pause: Menu, level_end: Menu, end: Menu) -> None:
         self.scale_level_ui()
-        self.pause_menu: MenuRender = MenuRender(
-            self.control.interface, pause, self.control.dialogs)
+        self.pause_menu = self.init_menu(self.scale_menu_holders(), pause)
+        end_holders: PlaceHolder = self.scale_menu_holders(
+            (0.8, 0.1), (0.12, 0.12, 0.76, 0.76))
+        from_top: int = self.control.interface.get_height() // 6
+        self.level_end_menu = self.init_menu(end_holders, level_end, from_top)
+        self.end_screen = self.init_menu(end_holders, end, from_top)
 
     def cleanup(self) -> None:
         del self.level_display
@@ -454,5 +467,8 @@ class GameDisplay(Display):
             case "pause":
                 self.control.interface.fill((0, 0, 115))
                 self.pause_menu.draw_vertical_options()
-                self.control.screen.blit(
-                    self.control.interface, self.control.interface_rect)
+            case "victory" | "defeat":
+                self.control.interface.fill((71, 71, 71))
+                self.level_end_menu.draw_vertical_options()
+        self.control.screen.blit(
+            self.control.interface, self.control.interface_rect)

@@ -1,6 +1,7 @@
 
 from .display import Display
-from pacman.controllers import Menu
+from pacman.controllers import Control, Menu
+from pacman.views import MenuRender
 
 
 class MainMenuDisplay(Display):
@@ -19,12 +20,15 @@ class MainMenuDisplay(Display):
     - cleanup => deletes the MenuRender object to save memory
     - draw => fills the screen with a background and draws the main menu
     """
+    def __init__(self, control: Control) -> None:
+        super().__init__(control)
+        self.menu_render: MenuRender
+
     def startup(self, menu: Menu) -> None:
         """Called when the MainMenuState comes up and initialize all needed
         visual variables.
         """
-        self.scale_holders((0.3, 0.08), (0.05, 0.05, 0.95, 0.95))
-        self.init_menu(menu)
+        self.menu_render = self.init_menu(self.scale_menu_holders(), menu)
 
     def cleanup(self) -> None:
         """Called when the MainMenuState is left, deletes the menu_render

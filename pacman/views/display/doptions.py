@@ -1,6 +1,7 @@
 
 from .display import Display
-from pacman.controllers import Menu
+from pacman.views import MenuRender
+from pacman.controllers import Control, Menu
 
 
 class OptionsMenuDisplay(Display):
@@ -19,12 +20,17 @@ class OptionsMenuDisplay(Display):
     - cleanup => deletes the MenuRender object to save memory
     - draw => fills the screen with a background and draws the main menu
     """
+    def __init__(self, control: Control) -> None:
+        super().__init__(control)
+        self.menu_render: MenuRender
+
     def startup(self, menu: Menu) -> None:
         """Called when the OptionsMenuState comes up and initialize all needed
         visual variables.
         """
-        self.scale_holders((0.55, 0.08), (0.12, 0.07, 0.8, 0.86))
-        self.init_menu(menu, int(self.control.screen.get_height() / 10))
+        self.menu_render = self.init_menu(
+            self.scale_menu_holders((0.55, 0.08), (0.12, 0.07, 0.8, 0.86)),
+            menu, int(self.control.screen.get_height() / 10))
 
     def cleanup(self) -> None:
         """Called when the OptionsMenuState is left, deletes the menu_render

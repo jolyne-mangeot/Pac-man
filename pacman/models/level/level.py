@@ -1,5 +1,6 @@
 
 from enum import IntEnum
+from typing import TypedDict
 
 import pygame as pg
 
@@ -18,15 +19,13 @@ class Timers(IntEnum):
 ANIM_TICK: int = 15
 
 
-class LevelOutput:
-    def __init__(self, victorious: bool, lives: int, cheats_used: bool,
-                 level_timer: int, score: int, scores: dict[str, int]) -> None:
-        self.victorious: bool = victorious
-        self.lives: int = lives
-        self.cheats_used: bool = cheats_used
-        self.level_timer: int = level_timer
-        self.score: int = score
-        self.scores: dict[str, int] = scores
+class LevelOutput(TypedDict):
+    victorious: bool
+    lives: int
+    cheats_used: bool
+    time_taken: int
+    score: int
+    scores: dict[str, int]
 
 
 class Level:
@@ -122,7 +121,8 @@ class Level:
         elif event.type == Timers.ANIMATIONS.value:
             self.update_animations()
 
-    def gain_score(self, type: str, amount: int) -> None:
+    def gain_score(self, type: str) -> None:
+        amount: int = getattr(self.scores_ref, type)
         self.score += amount
         self.scores[type] += amount
 
@@ -150,8 +150,9 @@ class Level:
         else:
             self.lives -= 1
             self.pacman.is_alive = True
-            self.pacman.current_speed = self.pacman.speed
             self.pacman.direction = Directions.NONE
+            self.pacman.next_direction = Directions.NONE
+            self.deactivate_super()
             self.pacman.respawn()
             for ghost in self.ghosts.values():
                 ghost.is_alive = True
@@ -185,11 +186,13 @@ class Level:
         if self.char_anim["Pacman"] == self.pacman.current_speed:
             self.update_pacman()
         pac_pos: tuple[int, int] = self.theoric_position("Pacman", self.pacman)
-        output: str = self.map.update_gum(pac_pos)
+        output: str = ""
+        if self.pacman.is_alive is True:
+            output = self.map.update_gum(pac_pos)
         if output == "simple_gum":
-            self.gain_score("gum", self.scores_ref.gum)
+            self.gain_score("gum")
         elif output == "super_gum":
-            self.gain_score("sup_gum", self.scores_ref.sup_gum)
+            self.gain_score("sup_gum")
             self.activate_super()
         for name, ghost in self.ghosts.items():
             if self.char_anim[name] == ghost.current_speed:
@@ -203,10 +206,9 @@ class Level:
                 if ghost.is_super is False:
                     self.pacman.is_alive = False
                     self.pacman.current_speed = 2000
-                    self.pacman.direction = Directions.NONE
                     self.char_anim["Pacman"] = 0
                 else:
-                    self.gain_score("ghost", self.scores_ref.ghost)
+                    self.gain_score("ghost")
                     self.char_anim[name] = 0
                     ghost.respawn()
                     ghost.current_speed = ghost.down_time
@@ -214,13 +216,19 @@ class Level:
                     ghost.is_alive = False
 
     def create_level_output(self, victorious: bool) -> LevelOutput:
-        return LevelOutput(victorious, self.lives, self.cheats_used,
-                           self.level_timer, self.score, self.scores)
+        return {
+            "victorious": victorious,
+            "lives": self.lives,
+            "cheats_used": self.cheats_used,
+            "time_taken": self.level_duration - self.level_timer,
+            "score": self.score,
+            "scores": self.scores}
 
     def update(self) -> None | LevelOutput:
         self.update_entities()
         if self.level_timer == 0 or self.lives == 0:
             return self.create_level_output(False)
         if self.map.check_gum() is True:
+            self.gain_score("level")
             return self.create_level_output(True)
         return None

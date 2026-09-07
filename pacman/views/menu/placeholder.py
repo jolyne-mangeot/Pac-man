@@ -56,7 +56,7 @@ class PlaceHolder:
             self, styles: list[Style] = [Style(), Style(), Style()]) -> None:
         self.styles: list[Style] = styles
 
-    def pre_render(self, texts: list[str], visible: bool
+    def pre_render(self, texts: list[str], visible: bool = True
                    ) -> list[tuple[pg.Surface, pg.Rect]]:
         """Pre-renders the option given as argument in three states: picked,
         deselected and selected, each with their associated fonts and colors,

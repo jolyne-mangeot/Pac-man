@@ -1,6 +1,6 @@
 
-from typing import ClassVar, Any, Iterable
-from random import randint
+from typing import ClassVar, Any, Iterable, get_args
+from random import randint, choice
 
 from pydantic import Field, field_validator, ValidationInfo
 
@@ -18,8 +18,8 @@ class PlayerConfig(JSONModel):
 
 
 class MazeConfig(JSONModel):
-    width: int = Field(ge=11, le=100, default=11)
-    height: int = Field(ge=11, le=100, default=11)
+    width: int = Field(ge=3, le=100, default=11)
+    height: int = Field(ge=3, le=100, default=11)
     gum_percent: int = Field(ge=0, le=100, default=80)
     seed: int = Field(ge=0, default_factory=lambda: randint(0, 10000000))
 
@@ -28,8 +28,8 @@ class GhostConfig(JSONModel):
     idle_strat: str = Field(default="AlternateAngleStrat")
     chase_strat: str = Field(default="ChaseOnSpot")
     escape_strat: str = Field(default="PatrollingAngleStrat")
-    speed: int = Field(ge=0, le=20, default=3)
-    super_speed: int = Field(ge=0, le=20, default=3)
+    speed: int = Field(ge=0, le=20, default=10)
+    super_speed: int = Field(ge=0, le=20, default=10)
     escape_radius: int = Field(ge=0, default=5)
     chase_radius: int = Field(ge=0, default=5)
     chasing_stamina: int = Field(ge=0, default=10)
@@ -49,11 +49,11 @@ class GhostConfig(JSONModel):
 
 class GameplayConfig(JSONModel):
     timer: int = Field(gt=0, default=90)
-    theme: themes = Field(default="grassy")
+    theme: themes = Field(default_factory=lambda: choice(get_args(themes)))
     life_regen: int = Field(ge=0, default=0)
     super_duration: int = Field(ge=0, default=8)
-    pac_man_speed: int = Field(ge=0, default=3)
-    super_pac_man_speed: int = Field(ge=0, default=4)
+    pac_man_speed: int = Field(ge=0, default=10)
+    super_pac_man_speed: int = Field(ge=0, default=11)
     ghosts: dict[str, GhostConfig] = Field(
         min_length=0, max_length=4,
         default={"Blinky": GhostConfig(), "Pinky": GhostConfig(),
@@ -129,7 +129,10 @@ class Config(JSONModel):
             for config in value:
                 if isinstance(config, LevelConfig):
                     level_list.append(config)
-                elif isinstance(config, dict) and len(config) > 0:
-                    level_list.append(LevelConfig(**config))
+                elif isinstance(config, dict):
+                    if len(config) > 0:
+                        level_list.append(LevelConfig(**config))
+                    else:
+                        level_list.append(LevelConfig())
             return level_list
         return None

@@ -33,4 +33,13 @@ class Dialogs(JSONModel):
     back: str = Field(default="back")
 
     resume: str = Field(default="Resume")
-    back_to_main: str = Field(default="back to main menu")
+    give_up: str = Field(default="give up")
+
+    time_taken: str = Field(default="Time taken")
+    gum: str = Field(default="Gums")
+    sup_gum: str = Field(default="Super gums")
+    ghost: str = Field(default="Ghosts")
+    level: str = Field(default="Level")
+    score: str = Field(default="Total score")
+    current_score: str = Field(default="Current score")
+    continue_next: str = Field(default="Continue to next level")

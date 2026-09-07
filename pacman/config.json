@@ -6,10 +6,10 @@
 	"levels": [
 		{
 			"maze": {
-				"width": 19,
-				"height": 11,
-				"gum_percent": 80
-				//"seed": 68771
+				"width": 7,
+				"height": 7,
+				"gum_percent": 25,
+				"seed": 68771
 			},
 			"gameplay": {
 				"theme": "dungeon",

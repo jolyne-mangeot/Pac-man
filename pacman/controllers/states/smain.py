@@ -41,7 +41,7 @@ class MainMenuState(State):
         """
         State.__init__(self, control)
         self.display: MainMenuDisplay = MainMenuDisplay(self.control)
-        self.display.load_main_menues()
+        self.display.load_menu_buttons()
         self.main_menu: Menu
 
     def __init_menu__(self) -> None:
@@ -50,14 +50,12 @@ class MainMenuState(State):
         """
         self.main_menu = Menu(loop_cursor=False, options=[
             ActivateOption(
-                "play", "{name}", partial(self.switch_state, "game_menu")),
+                "play", partial(self.switch_state, "game_menu")),
             ActivateOption(
-                "highscores", "{name}",
-                partial(self.switch_state, "highscores_menu")),
+                "highscores", partial(self.switch_state, "highscores_menu")),
             ActivateOption(
-                "settings", "{name}",
-                partial(self.switch_state, "options_menu")),
-            ActivateOption("quit", "{name}", partial(lambda: "program_quit"))])
+                "settings", partial(self.switch_state, "options_menu")),
+            ActivateOption("quit", partial(lambda: "program_quit"))])
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options

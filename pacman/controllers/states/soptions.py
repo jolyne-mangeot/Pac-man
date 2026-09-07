@@ -55,7 +55,7 @@ class OptionsMenuState(State):
         """
         State.__init__(self, control)
         self.display: OptionsMenuDisplay = OptionsMenuDisplay(self.control)
-        self.display.load_main_menues()
+        self.display.load_menu_buttons()
         self.settings: dict[str, Any]
         self.options_menu: Menu
 
@@ -67,29 +67,24 @@ class OptionsMenuState(State):
         self.settings = self.control.settings.model_dump()
         options: list[Option] = [
             SelectionOption(
-                "lang", "{name}:", self.settings,
-                [str(lang) for lang in Languages]),
+                "lang", self.settings, [str(lang) for lang in Languages]),
             SelectionOption(
-                "res", "{name}:", self.settings, cycle=False,
-                options=[res for res in Resolutions]),
+                "res", self.settings, [res for res in Resolutions],
+                cycle=False),
             SliderOption(
-                "sfx_vol", "{name}:",
-                self.settings, range(0, 11), 0, 0, cycle=False),
+                "sfx_vol", self.settings, range(0, 11), 0, 0, cycle=False),
             SliderOption(
-                "bgm_vol", "{name}:",
-                self.settings, range(0, 11), 0, 0, cycle=False),
+                "bgm_vol", self.settings, range(0, 11), 0, 0, cycle=False),
             Spacer(), Spacer(), *[
                 InputOption(
-                    key, "{name}:",
-                    self.settings["key_config"], 1, False, True, False,
+                    key, self.settings["key_config"], 1, False, True, False,
                     excluded_input=["return", "escape", "backspace"]
                 ) for key in ACTION_LIST],
             Spacer(), Spacer(),
-            ActivateOption("reset_settings", "{name}",
-                           partial(self.reset_settings), "option_update"),
-            ActivateOption("apply", "{name}", partial(self.apply_settings)),
-            ActivateOption("back", "{name}",
-                           partial(self.back_a_state))]
+            ActivateOption("reset_settings", partial(self.reset_settings),
+                           "option_update"),
+            ActivateOption("apply", partial(self.apply_settings)),
+            ActivateOption("back", partial(self.back_a_state))]
 
         self.options_menu = Menu(loop_cursor=False, options=options)
 

@@ -73,7 +73,7 @@ class Display:
     #                    COMMON METHODS TO MAIN MENUES
     # _________________________________________________________________________
 
-    def load_main_menues(self) -> None:
+    def load_menu_buttons(self) -> None:
         """Loads all necessary assets for the main and options menus and
         place them in self assigned attributes to be used later.
 
@@ -101,9 +101,10 @@ class Display:
                 "pacman/assets/sfx/ui/Close.wav"),
             "program_quit": pg.mixer.Sound("pacman/assets/sfx/ui/Equip.wav")}
 
-    def scale_holders(
-            self, holder_size_factor: tuple[float, float],
-            text_rect_factor: tuple[float, float, float, float]) -> None:
+    def scale_menu_holders(
+            self, holder_size_factor: tuple[float, float] = (0.3, 0.08),
+            text_rect_factor: tuple[float, float, float, float]
+            = (0.05, 0.05, 0.95, 0.95)) -> PlaceHolder:
         """Create a PlaceHolder using multiple instantiated Style objects and
         assign it to self for later display usage.
 
@@ -141,15 +142,16 @@ class Display:
             font=picked_font, graphic=self.picked_hold, text_rect=rect,
             letter_spacing=int(screen_h * 0.023))
 
-        self.place_holder: PlaceHolder = PlaceHolder([
+        return PlaceHolder([
             des_style, sel_style, pik_style])
 
-    def init_menu(self, menu: Menu, from_top: int = -1) -> None:
+    def init_menu(self, place_holder: PlaceHolder, menu: Menu,
+                  from_top: int = -1) -> MenuRender:
         """Method instantiating a MenuRender object and taking it as attribute.
         Pre-enter the control's interface and dialogs, the display's place
         holder and inserts the arguments menu and from_top, which is the only
         changing parameter between different calls.
         """
-        self.menu_render: MenuRender = MenuRender(
+        return MenuRender(
             self.control.interface, menu, from_top=from_top,
-            holder=self.place_holder, dialogs=self.control.dialogs)
+            holder=place_holder, dialogs=self.control.dialogs)
