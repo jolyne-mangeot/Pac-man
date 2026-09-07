@@ -241,4 +241,11 @@ class Ghost(Entity):
         """Function to move away from Pacman according to the escape
         behaviour.
         """
-        pass
+        if self.current_stamina < self.max_stamina:
+            self.current_stamina += 1
+        if calculate_manhattan(self.pos, pacman_pos) <= self.escape_radius:
+            self.pos, self.direction = self.escape_strat.move(
+                self.pos, pacman_pos)
+        else:
+            self.pos, self.direction = self.idle_strat.move(
+                self.pos, pacman_pos)

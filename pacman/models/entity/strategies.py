@@ -167,6 +167,9 @@ class Strategy(ABC):
 
         return list(path_queue)
 
+# _________________________________________________________________________
+#                           CHASE STRATEGIES
+# _________________________________________________________________________
 
 class ChaseStumbling(Strategy):
     """Class ChaseStalking, inheriting from Strategy.
@@ -330,6 +333,9 @@ class ChaseOnSpot(Strategy):
             ghost_pos[1] + Movements[self.path[0].name].value[1])
         return (self.ghost_saved_pos, self.path.pop(0))
 
+# _________________________________________________________________________
+#                          IDLE STRATEGIES
+# _________________________________________________________________________
 
 class AlternateAngleStrat(Strategy):
     """Class AlternateAngleStrat, inheriting from Strategy.
@@ -489,15 +495,74 @@ class PatrollingAngleStrat(Strategy):
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             area = self.ghost_area(ghost_pos)
             target: tuple[int, int] = self.choose_target(area, ghost_pos)
-            print("target: ", target)
             self.path = self.find_path(ghost_pos, target,
                                        calculate_manhattan)
-            print("path: ", self.path)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
         return (self.ghost_saved_pos, self.path.pop(0))
 
+# _________________________________________________________________________
+#                          ESCAPE STRATEGIES
+# _________________________________________________________________________
+
+class EscapeDynamicStrat(Strategy):
+    """Class EscapeDynamicStrategy, inheriting from Strategy.
+
+    #### Description:
+    Move 
+
+    #### Inherited attributes:
+    - maze(Map): The Map instancied.
+    - grid (list[list[Cell]]): Reference to the gris of Cells used by the
+      strategy to determine valid movements and paths.
+    - xmax (int): number of cells in horizontal axis.
+    - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Sequence of directions leading to the target.
+    - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
+      continue to move toward target when this strategy is called again.
+
+    #### Attributes:
+    - target (tuple[int, int]): Current destination selected by the strategy.
+
+    #### Methods:
+    - move(): Calculate the next position towards the current target.
+    """
+    def __init__(self, maze: Map):
+        """Initialises the attributes of the PatrollingAngleStrat instance."""
+        super().__init__(maze)
+
+    def choose_target(self, ghost_pos: tuple[int, int],
+                      pacman_pos: tuple[int, int]) -> tuple[int, int]:
+            """Select a new destination for the ghost within a given area.
+    
+            Randomly picks a cell inside the bounds of `area`. If the chosen
+            cell is a wall (no accessible neighbours) or corresponds to the
+            ghost's current position, the selection is retried recursively
+            until a valid cell is found.
+            """
+            ghost_cell: Cell = self.maze.get_cell(ghost_pos)
+            pacman_cell: Cell = self.maze.get_cell(pacman_pos)
+            for node in ghost_cell.neighbor_nodes:
+                if node not in pacman_cell.neighbor_nodes:
+                    target: tuple[int, int] = node.coords
+                    break
+                else:
+                    continue
+            return target
+
+    def move(self, ghost_pos: tuple[int, int],
+                 pacman_pos: tuple[int, int]) -> tuple[
+                     tuple[int, int], Directions]:
+        if (self.path == [] or ghost_pos != self.ghost_saved_pos or ghost_pos
+            in self.maze.intersection_cells):
+            target: tuple[int, int] = self.choose_target(ghost_pos, pacman_pos)
+            self.path = self.find_path(ghost_pos, target,
+                                                   calculate_manhattan)
+        self.ghost_saved_pos = (
+                    ghost_pos[0] + Movements[self.path[0].name].value[0],
+                    ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
 
 def calculate_manhattan(ghost: tuple[int, int],
                         target: tuple[int, int]) -> int:
@@ -513,6 +578,9 @@ def calculate_manhattan(ghost: tuple[int, int],
 
 strat_dict: dict[str, Type[Strategy]] = {
     "AlternateAngleStrat": AlternateAngleStrat,
-    "ChaseOnSpot": ChaseOnSpot,
     "PatrollingAngleStrat": PatrollingAngleStrat,
-    "ChaseStumbling": ChaseStumbling}
+    "ChaseOnSpot": ChaseOnSpot,
+    "ChaseStumbling": ChaseStumbling,
+    "ChaseDynamic": ChaseDynamic,
+    "EscapeDynamicStrat": EscapeDynamicStrat}
+
