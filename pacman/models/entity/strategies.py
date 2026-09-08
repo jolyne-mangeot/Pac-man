@@ -23,12 +23,26 @@ sets, scores, predecessors) is kept in an `AStarState` instance so
 that the `Strategy` methods themselves stay stateless between calls.
 
 #### Classes:
-- AStarState: Stores the temporary state used by the A* algorithm.
 - Strategy(ABC): Base class for ghost movement strategies.
-- AlternateAngleStrat(Strategy): Move the ghost between randomly selected
-  points of the maze.
-- PatrollingAngleStrat(Strategy): Move the ghost in a patrolling behavior
-  inside a specific area.
+- ChaseStumbling(Strategy): Chase Pacman with occasional random detours.
+- ChaseDynamic(Strategy): Continuously re-target Pacman's live position.
+- ChaseOnSpot(Strategy): Chase the position where Pacman was last spotted.
+- AlternateAngleStrat(Strategy): Patrol between key points of the maze.
+- PatrollingAngleStrat(Strategy): Patrol randomly inside one quarter
+  of the maze.
+- EscapeDynamicStrat(Strategy): Flee from Pacman towards a neighbouring
+  intersection not reachable by Pacman if possible.
+
+#### Functions:
+- calculate_manhattan(): Compute the Manhattan distance between two
+  positions.
+
+#### Variables:
+- strat_dict: Used by Ghost.__init__ to instanciate strategies.
+
+Note: the `Strategy.find_path()` A* implementation stores its temporary
+per-node data (distance, path, predecessor) in a local `Origin` helper
+class.
 """
 from abc import ABC, abstractmethod
 from typing import Type
@@ -510,7 +524,14 @@ class EscapeDynamicStrat(Strategy):
     """Class EscapeDynamicStrategy, inheriting from Strategy.
 
     #### Description:
-    Move 
+    Move the ghost away from Pacman by heading towards a neighbouring
+    intersection that Pacman cannot reach in a single hop.
+
+    This strategy inspects the ghost's neighbouring intersection nodes
+    and picks the first one that does not also appear among Pacman's
+    neighbouring nodes, using it as an escape target. The path is
+    recomputed whenever the ghost reaches an intersection or has no
+    path stored.
 
     #### Inherited attributes:
     - maze(Map): The Map instancied.
@@ -534,12 +555,12 @@ class EscapeDynamicStrat(Strategy):
 
     def choose_target(self, ghost_pos: tuple[int, int],
                       pacman_pos: tuple[int, int]) -> tuple[int, int]:
-            """Select a new destination for the ghost within a given area.
-    
-            Randomly picks a cell inside the bounds of `area`. If the chosen
-            cell is a wall (no accessible neighbours) or corresponds to the
-            ghost's current position, the selection is retried recursively
-            until a valid cell is found.
+            """Select an escape destination for the ghost.
+
+            Iterates over the ghost's neighbouring intersection nodes and
+            returns the coordinates of the first one that is not also a
+            neighbour of Pacman's current cell, so the ghost heads towards
+            a intersection Pacman cannot reach in one direct move.
             """
             ghost_cell: Cell = self.maze.get_cell(ghost_pos)
             pacman_cell: Cell = self.maze.get_cell(pacman_pos)

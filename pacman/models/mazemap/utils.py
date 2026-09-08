@@ -17,7 +17,7 @@ instance containing its coordinates, walls and gum states.
 - Movements(Enum): Associates each movement direction with its coordinate
   offset.
 - Cell: Represents a single cell of the maze.
-- Node: Store additional informations about each cell for path calculation>
+- Node: Store additional informations about each cell for path calculation.
 
 #### Functions:
 - maze_interface(): Generate a maze and convert it into a two-dimensional
@@ -106,12 +106,17 @@ class Node:
     Node Class
 
     #### Description:
-    Store additional informations about each cell
-    of the Map. In this graph implementation, each intersection cell
-    holds these informations about each of their neighbours intersections.
-    Helps navigating and saving traveling time.
+    Store additional information about a neighbouring intersection cell,
+    used by the A* pathfinding algorithm to navigate the maze graph
+    efficiently without recomputing paths cell by cell.
 
     Attributes:
+    - coords (tuple[int, int]): Coordinates of the neighbouring
+      intersection cell.
+    - distance (int): Number of cells travelled between the origin
+      intersection and this neighbour.
+    - path (tuple[Directions, ...]): Sequence of directions to follow
+      from the origin intersection to reach this neighbour.
     """
     def __init__(
             self, coords: tuple[int, int], distance: int,
