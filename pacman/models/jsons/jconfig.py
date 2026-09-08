@@ -9,7 +9,8 @@ from .utils import JSONModel, themes
 
 STRATS: tuple[str, ...] = (
     "AlternateAngleStrat", "PatrollingAngleStrat", "ChaseOnSpot",
-    "ChaseStumbling", "ChaseDynamic", "EscapeDynamicStrat")
+    "ChaseStumbling", "ChaseDynamic", "EscapeMaxDistance", "EscapeToCorner",
+    "EscapeDynamic")
 
 
 class PlayerConfig(JSONModel):

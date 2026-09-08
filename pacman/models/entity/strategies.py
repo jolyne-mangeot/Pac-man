@@ -30,8 +30,12 @@ that the `Strategy` methods themselves stay stateless between calls.
 - AlternateAngleStrat(Strategy): Patrol between key points of the maze.
 - PatrollingAngleStrat(Strategy): Patrol randomly inside one quarter
   of the maze.
-- EscapeDynamicStrat(Strategy): Flee from Pacman towards a neighbouring
-  intersection not reachable by Pacman if possible.
+- EscapeMaxDistance(Strategy): Flee towards the neighbouring intersection
+  farthest from Pacman.
+- EscapeToCorner(Strategy): Flee towards the maze corner farthest from
+  Pacman.
+- EscapeDynamic(Strategy): React cell-by-cell, moving in whichever open
+  direction maximises the immediate distance to Pacman.
 
 #### Functions:
 - calculate_manhattan(): Compute the Manhattan distance between two
@@ -520,22 +524,24 @@ class PatrollingAngleStrat(Strategy):
 #                          ESCAPE STRATEGIES
 # _________________________________________________________________________
 
-class EscapeDynamicStrat(Strategy):
-    """Class EscapeDynamicStrategy, inheriting from Strategy.
+class EscapeMaxDistance(Strategy):
+    """Class EscapeMaxDistance, inheriting from Strategy.
 
     #### Description:
-    Move the ghost away from Pacman by heading towards a neighbouring
-    intersection that Pacman cannot reach in a single hop.
+    Move the ghost away from Pacman by heading towards the neighbouring
+    intersection that maximises the Manhattan distance to Pacman.
 
-    This strategy inspects the ghost's neighbouring intersection nodes
-    and picks the first one that does not also appear among Pacman's
-    neighbouring nodes, using it as an escape target. The path is
-    recomputed whenever the ghost reaches an intersection or has no
-    path stored.
+    This strategy inspects every neighbouring intersection node reachable
+    from the ghost's current intersection and selects the one whose
+    coordinates are the farthest from Pacman's position. 
+
+    The target and path are recomputed whenever the ghost reaches an
+    intersection, has no path stored, or just switched into this
+    strategy.
 
     #### Inherited attributes:
     - maze(Map): The Map instancied.
-    - grid (list[list[Cell]]): Reference to the gris of Cells used by the
+    - grid (list[list[Cell]]): Reference to the grid of Cells used by the
       strategy to determine valid movements and paths.
     - xmax (int): number of cells in horizontal axis.
     - ymax (int): number of cells in vertical axis.
@@ -543,11 +549,10 @@ class EscapeDynamicStrat(Strategy):
     - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
       continue to move toward target when this strategy is called again.
 
-    #### Attributes:
-    - target (tuple[int, int]): Current destination selected by the strategy.
-
     #### Methods:
-    - move(): Calculate the next position towards the current target.
+    - choose_target(): Select the farthest reachable intersection from
+      Pacman among the ghost's neighbours.
+    - move(): Calculate the next position away from Pacman.
     """
     def __init__(self, maze: Map):
         """Initialises the attributes of the PatrollingAngleStrat instance."""
@@ -555,26 +560,31 @@ class EscapeDynamicStrat(Strategy):
 
     def choose_target(self, ghost_pos: tuple[int, int],
                       pacman_pos: tuple[int, int]) -> tuple[int, int]:
-            """Select an escape destination for the ghost.
+        """Select the escape destination for the ghost.
 
-            Iterates over the ghost's neighbouring intersection nodes and
-            returns the coordinates of the first one that is not also a
-            neighbour of Pacman's current cell, so the ghost heads towards
-            a intersection Pacman cannot reach in one direct move.
-            """
-            ghost_cell: Cell = self.maze.get_cell(ghost_pos)
-            pacman_cell: Cell = self.maze.get_cell(pacman_pos)
-            for node in ghost_cell.neighbor_nodes:
-                if node not in pacman_cell.neighbor_nodes:
-                    target: tuple[int, int] = node.coords
-                    break
-                else:
-                    continue
-            return target
+        Looks at every intersection node reachable from the ghost's
+        current position and returns the coordinates of the one that
+        maximises the Manhattan distance to Pacman.
+        """
+        best_distance: int = -1
+        ghost_cell: Cell = self.maze.get_cell(ghost_pos)
+        for node in ghost_cell.neighbor_nodes:
+            distance: int = calculate_manhattan(node.coords, pacman_pos)
+            if distance > best_distance:
+                best_distance = distance
+                target: tuple[int, int] = node.coords
+        return target
 
     def move(self, ghost_pos: tuple[int, int],
                  pacman_pos: tuple[int, int]) -> tuple[
                      tuple[int, int], Directions]:
+        """Calculate the next position away from Pacman.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, or if the ghost just
+        reached an intersection, a new escape target is chosen and a new
+        path towards it is computed.
+        """
         if (self.path == [] or ghost_pos != self.ghost_saved_pos or ghost_pos
             in self.maze.intersection_cells):
             target: tuple[int, int] = self.choose_target(ghost_pos, pacman_pos)
@@ -584,6 +594,138 @@ class EscapeDynamicStrat(Strategy):
                     ghost_pos[0] + Movements[self.path[0].name].value[0],
                     ghost_pos[1] + Movements[self.path[0].name].value[1])
         return (self.ghost_saved_pos, self.path.pop(0))
+
+
+class EscapeToCorner(Strategy):
+    """Class EscapeToCorner, inheriting from Strategy.
+
+    #### Description:
+    Move the ghost towards the map corner farthest from Pacman.
+
+    This strategy picks the corner cell that maximises the Manhattan
+    distance to Pacman, then calculates a path from the ghost's position
+    towards that corner. The target is only reselected once the ghost has
+    reached it or has no path stored, so the ghost commits to a single corner
+    for the length of the chase.
+
+    #### Inherited attributes:
+    - maze(Map): The Map instancied.
+    - grid (list[list[Cell]]): Reference to the grid of Cells used by the
+      strategy to determine valid movements and paths.
+    - xmax (int): number of cells in horizontal axis.
+    - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Sequence of directions leading to the target.
+    - ghost_saved_pos (tuple[int, int]): Previous ghost position used to
+      continue to move toward target when this strategy is called again.
+
+    #### Methods:
+    - choose_target(): Select the farthest corner of the maze from Pacman.
+    - move(): Calculate the next position towards the chosen corner.
+    """
+    def __init__(self, maze: Map):
+        """Initialises the attributes of the EscapeToCorner instance."""
+        super().__init__(maze)
+
+    def choose_target(self, pacman_pos: tuple[int, int]) -> tuple[int, int]:
+        """Select the maze corner farthest from Pacman.
+
+        Compares the Manhattan distance between Pacman's position and
+        each of the four corners of the maze, and returns the coordinates
+        of the corner with the greatest distance.
+        """
+        corners: list[tuple[int, int]] = [(0, 0),
+                                          (0, self.ymax),
+                                          (self.xmax, 0),
+                                          (self.xmax, self.ymax)]
+        return max(corners,
+                  key=lambda corner: calculate_manhattan(corner, pacman_pos))
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[
+                 tuple[int, int], Directions]:
+        """Calculate the next position towards the chosen corner.
+
+        If no path is currently stored, or if the ghost's position no
+        longer matches the last saved position, the farthest corner from
+        Pacman is (re)selected and a new path towards it is computed.
+        """
+        if self.path == [] or ghost_pos != self.ghost_saved_pos:
+            target: tuple[int, int] = self.choose_target(pacman_pos)
+            self.path = self.find_path(ghost_pos, target,
+                                       calculate_manhattan)
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
+
+
+class EscapeDynamic(Strategy):
+    """Class EscapeDynamic, inheriting from Strategy.
+
+    #### Description:
+    Move the ghost away from Pacman using an immediate, cell-by-cell
+    reaction rather than a full path computed through the intersection
+    graph.
+
+    Because it recomputes its move at every single cell instead of only
+    at intersections, this strategy reacts faster to Pacman's exact
+    position than the graph-based escape strategies (EscapeMaxDistance,
+    EscapeToCorner), at the cost of only reasoning one step ahead.
+
+    At every call it looks at the open walls of the ghost's current cell
+    and picks, among the open directions, the one that maximises the
+    resulting Manhattan distance to Pacman. 
+
+    #### Inherited attributes:
+    - maze(Map): The Map instancied.
+    - grid (list[list[Cell]]): Reference to the grid of Cells used by the
+      strategy to determine valid movements and paths.
+    - xmax (int): number of cells in horizontal axis.
+    - ymax (int): number of cells in vertical axis.
+    - path (list[Directions]): Unused by this strategy, kept empty for
+      interface consistency with `Strategy`.
+    - ghost_saved_pos (tuple[int, int]): Stores the position returned by
+      the last `move()` call. Not read by this strategy itself, kept for
+      interface consistency with the other strategies.
+
+    #### Methods:
+    - move(): Calculate the next reflex position away from Pacman.
+    """
+    def __init__(self, maze: Map):
+        """Initialises the attributes of the PanicStrat instance."""
+        super().__init__(maze)
+
+    def move(self, ghost_pos: tuple[int, int],
+             pacman_pos: tuple[int, int]) -> tuple[
+                 tuple[int, int], Directions]:
+        """Calculate the next position away from Pacman.
+
+        Looks at every open direction from the ghost's current cell and
+        picks the one that maximises the resulting Manhattan distance to
+        Pacman.
+        """
+        best_directions: list[Directions] = []
+        best_distance: int = -1
+        for direction in Directions:
+            if (direction == Directions.NONE or
+                self.maze.get_cell(ghost_pos).walls & direction.value):
+                continue
+            next_pos = (
+                ghost_pos[0] + Movements[direction.name].value[0],
+                ghost_pos[1] + Movements[direction.name].value[1])
+            distance = calculate_manhattan(next_pos, pacman_pos)
+            if distance > best_distance:
+                best_distance = distance
+                best_directions = [direction]
+            elif distance == best_distance:
+                best_directions.append(direction)
+
+        chosen_direction: Directions = choice(best_directions)
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[chosen_direction.name].value[0],
+            ghost_pos[1] + Movements[chosen_direction.name].value[1])
+        return (self.ghost_saved_pos, chosen_direction)
+
 
 def calculate_manhattan(ghost: tuple[int, int],
                         target: tuple[int, int]) -> int:
@@ -603,5 +745,7 @@ strat_dict: dict[str, Type[Strategy]] = {
     "ChaseOnSpot": ChaseOnSpot,
     "ChaseStumbling": ChaseStumbling,
     "ChaseDynamic": ChaseDynamic,
-    "EscapeDynamicStrat": EscapeDynamicStrat}
+    "EscapeMaxDistance": EscapeMaxDistance,
+    "EscapeToCorner": EscapeToCorner,
+    "EscapeDynamic": EscapeDynamic}
 
