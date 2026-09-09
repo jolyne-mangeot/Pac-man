@@ -202,7 +202,7 @@ class Level:
                     ghost.is_alive = True
                     ghost.current_speed = ghost.speed
             ghost_pos: tuple[int, int] = self.theoric_position(name, ghost)
-            if ghost_pos == pac_pos:
+            if ghost_pos == pac_pos and ghost.is_alive is True:
                 if ghost.is_super is False:
                     self.pacman.is_alive = False
                     self.pacman.current_speed = 2000

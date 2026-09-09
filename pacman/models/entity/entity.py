@@ -29,11 +29,6 @@ and movement behaviours to be implemented independently from the entity.
 - Entity(ABC): Base class for all movable game entities.
 - Pacman(Entity): Represents the player-controlled Pacman entity.
 - Ghost(Entity): Represents a ghost controlled by movement strategies.
-
-### Dependencies:
-- strategies: Provides the strategy interface and implementations used by
-  ghosts.
-- Cell: Represents the cells of the game map used by ghost strategies.
 """
 from abc import ABC
 
@@ -241,4 +236,11 @@ class Ghost(Entity):
         """Function to move away from Pacman according to the escape
         behaviour.
         """
-        pass
+        if self.current_stamina < self.max_stamina:
+            self.current_stamina += 1
+        if calculate_manhattan(self.pos, pacman_pos) <= self.escape_radius:
+            self.pos, self.direction = self.escape_strat.move(
+                self.pos, pacman_pos)
+        else:
+            self.pos, self.direction = self.idle_strat.move(
+                self.pos, pacman_pos)

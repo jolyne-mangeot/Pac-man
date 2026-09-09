@@ -1,4 +1,6 @@
 
+from collections.abc import Callable
+
 import pygame as pg
 
 from pacman.controllers import Menu
@@ -61,6 +63,11 @@ class MenuRender:
         self.rendered: dict[str, list[tuple[pg.Surface, pg.Rect]]]
         self.renders: list[tuple[pg.Surface, pg.Rect]]
         self.pre_render_all_options(dialogs)
+
+        self.draw_methods: dict[str, Callable[[], None]] = {
+            "vertical": self.draw_vertical_options,
+            "horizontal": self.draw_horizontal_options,
+            "select": self.draw_selected_option}
 
     # _________________________________________________________________________
     #                         Rendering-related Methods
@@ -128,10 +135,12 @@ class MenuRender:
         the center of the first displayed option.
         """
         self.update_rendered_list()
+        renders: list[tuple[pg.Surface, pg.Rect]] = []
         for index, option in enumerate(self.renders):
             option[1].center = (
                 self.from_left, self.from_top + index * self.spacer)
-            self.screen.blit(option[0], option[1])
+            renders.append(option)
+        self.screen.blits(renders)
 
     def draw_horizontal_options(self) -> None:
         """Places based on the from_left and from_top attributes and displays
@@ -172,8 +181,8 @@ class MenuRender:
         for index, option in enumerate(
                 self.renders[min_index:select_index]):
             option[1].center = (
-                self.from_left, self.from_top - (select_index - index)
-                * self.spacer)
+                self.from_left,
+                self.from_top - (select_index - index) * self.spacer)
             self.screen.blit(option[0], option[1])
 
         select_render = self.renders[select_index]
@@ -219,3 +228,6 @@ class MenuRender:
         select_render = self.rendered["select"][self.menu.select_index]
         select_render[1].center = (self.from_left, self.from_top)
         self.screen.blit(select_render[0], select_render[1])
+
+    def draw(self, arrangement: str) -> None:
+        self.draw_methods.get(arrangement, lambda: None)()

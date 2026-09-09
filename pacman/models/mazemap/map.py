@@ -14,7 +14,8 @@ The `Map` class is responsible for:
 - placing regular and super gums on valid cells;
 - removing gums when Pacman collects them;
 - keeping track of the remaining gums;
-- determining whether all gums have been collected.
+- determining whether all gums have been collected;
+- construct the intersections graph.
 
 
 ### Classes:
@@ -72,6 +73,10 @@ class Map:
     - nb_super_gum (int): Number of super gums currently present.
     - intersection_cells(set[tuple[int, int]]): All intersections of the
       maze (cells with 3 or 4 opened walls).
+    - simple_gums (set[tuple[int, int]]): Coordinates of all cells
+      currently containing a regular gum.
+    - super_gums (set[tuple[int, int]]): Coordinates of all cells
+      currently containing a super gum.
 
 
     ### Methods:
@@ -86,7 +91,6 @@ class Map:
       cell of the maze.
     - find_intersect(): Follow a corridor from a cell to the next
       intersection in a given direction.
-      directly reachable from a position.
     - generate_cell_graph(): Build the graph of cells and their
       neighbour nodes, used by the A* pathfinding algorithm.
     """

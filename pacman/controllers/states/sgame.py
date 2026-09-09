@@ -5,12 +5,15 @@ import pygame as pg
 
 from pacman.controllers import Control, State, Menu
 from pacman.models import (
-    Level, LevelOutput, ActivateOption, Spacer, TextValueHolder)
+    Level, LevelOutput,
+    ActivateOption, Spacer, TextHolder, TextValueHolder, InputOption)
 from pacman.views import GameDisplay
 
 
 class Player:
-    def __init__(self, max_lives: int, cheats_allowed: bool) -> None:
+    def __init__(self, player_name: str, max_lives: int, cheats_allowed: bool
+                 ) -> None:
+        self.player_name: str = player_name
         self.max_lives: int = max_lives
         self.cheats_allowed: bool = cheats_allowed
         self.cheats_used: bool = False
@@ -41,11 +44,10 @@ class GameState(State):
         self.next = "main_menu"
         self.display: GameDisplay = GameDisplay(control)
         self.current_state: str = "level"
-        self.pause_menu: Menu
-        self.level_end_menu: Menu
-        self.end_screen: Menu
+        self.menues: dict[str, tuple[Menu, str]]
 
         self.level_index: int = -1
+        self.player_name: str = ""
         self.player: Player
         self.current_level: Level
         self.current_output: LevelOutput = {
@@ -57,52 +59,64 @@ class GameState(State):
             "scores": {"gum": 0, "sup_gum": 0, "ghost": 0, "level": 0}}
 
     def __init_menues__(self) -> None:
-        self.pause_menu = Menu(loop_cursor=False, options=[
-            ActivateOption("resume",
-                           partial(self.change_game_state, "level")),
+        pause_menu = Menu(loop_cursor=False, options=[
+            ActivateOption("resume", partial(self.change_game_state, "level")),
             ActivateOption("settings",
                            partial(self.switch_state, "options_menu")),
-            Spacer(),
-            ActivateOption("give_up",
-                           partial(self.leave_game))])
-        self.level_end_menu = Menu(loop_cursor=False, options=[
+            Spacer(), ActivateOption("give_up", partial(self.leave_game))])
+        level_end_menu = Menu(loop_cursor=False, options=[
             TextValueHolder("time_taken", self.current_output),
             *[TextValueHolder(name, self.current_output["scores"])
-              for name in self.current_output["scores"].keys()],
-            Spacer(),
+              for name in self.current_output["scores"].keys()], Spacer(),
             TextValueHolder("score", self.current_output),
-            TextValueHolder("current_score", self.player),
-            Spacer(),
+            TextValueHolder("current_score", self.player), Spacer(),
             ActivateOption("continue_next", partial(self.access_next_level))])
-        self.end_screen = Menu()
+        end_screen = Menu(loop_cursor=False, options=[
+            TextHolder("run_end"), TextValueHolder("level_index", self),
+            TextValueHolder("playtime", self.player),
+            *[TextValueHolder(name, self.player.scores)
+                for name in self.player.scores.keys()], Spacer(),
+            TextValueHolder("current_score", self.player),
+            InputOption("player_name", self.player, 10,
+                        char_checker=lambda s: s.isalnum()),
+            ActivateOption("save_score", partial(self.save_score)),
+            ActivateOption("end_run", partial(self.leave_game))])
+        self.menues = {
+            "pause": (pause_menu, "vertical"),
+            "victory": (level_end_menu, "vertical"),
+            "defeat": (level_end_menu, "vertical"),
+            "end": (end_screen, "vertical")}
+
+    def startup(self) -> None:
+        if self.level_index == -1:
+            self.level_index = 0
+            self.player = Player(
+                self.player_name, self.control.config.player.lives_count,
+                self.control.config.player.cheats_allowed)
+            self.__init_menues__()
+            self.display.startup(self.menues)
+            self.instantiate_level()
+        else:
+            self.__init_menues__()
+            self.display.startup(self.menues)
+            self.display.update_level(self.current_level)
 
     def change_game_state(self, state: str) -> None:
         self.current_state = state
 
+    def save_score(self) -> None:
+        pass
+
     def leave_game(self) -> None:
         self.level_index = -1
-        del self.pause_menu
-        del self.level_end_menu
-        del self.end_screen
+        del self.menues
 
         del self.player
         del self.current_level
         self.switch_state("main_menu")
 
-    def startup(self) -> None:
-        if self.level_index == -1:
-            self.level_index = 0
-            self.player = Player(self.control.config.player.lives_count,
-                                 self.control.config.player.cheats_allowed)
-            self.__init_menues__()
-            self.display.startup(
-                self.pause_menu, self.level_end_menu, self.end_screen)
-            self.instantiate_level()
-        else:
-            self.__init_menues__()
-            self.display.startup(
-                self.pause_menu, self.level_end_menu, self.end_screen)
-            self.display.update_level(self.current_level)
+    def cleanup(self) -> None:
+        self.display.cleanup()
 
     def instantiate_level(self) -> None:
         self.player.regen_life(
@@ -132,31 +146,24 @@ class GameState(State):
         else:
             self.current_state = "end"
 
-    def cleanup(self) -> None:
-        self.display.cleanup()
+    def access_run_end(self) -> None:
+        self.current_state = "end"
+        if self.player.cheats_used is True:
+            self.menues["end"][0].options[8] = TextHolder("cheats_used")
 
     def get_event(self, event: pg.event.Event) -> None:
-        action_key: str = ""
-        if event.type == pg.KEYDOWN:
-            action_key = self.key_unicode_to_action(pg.key.name(event.key))
-        match self.current_state:
-            case "level":
-                if action_key == "return_key":
-                    self.current_state = "pause"
-                    action_key = ""
-                self.current_level.get_event(event, action_key)
-            case "pause":
-                if action_key == "return_key":
-                    self.change_game_state("level")
-                elif event.type == pg.KEYDOWN:
-                    self.pause_menu.get_event(
-                        event.key, action_key, "", "vertical")
-            case "victory" | "defeat":
-                if event.type == pg.KEYDOWN:
-                    self.level_end_menu.get_event(
-                        event.key, action_key, "", "vertical")
-            case "end":
-                pass
+        inputs: tuple[str, str, str] = self.read_input_events(event)
+        if self.current_state == "level":
+            if inputs[1] == "return_key":
+                self.change_game_state("pause")
+                return
+            self.current_level.get_event(event, inputs[1])
+        elif self.current_state == "pause":
+            if inputs[1] == "return_key":
+                self.change_game_state("level")
+        if self.current_state in self.menues.keys():
+            menu: tuple[Menu, str] = self.menues[self.current_state]
+            menu[0].get_event(*self.read_input_events(event), menu[1])
 
     def update(self) -> None:
         if self.current_state == "level":
@@ -164,8 +171,7 @@ class GameState(State):
             if level_output is not None:
                 self.update_output(level_output)
                 self.player.update_with_output(self.current_output)
-                self.display.level_end_menu.pre_render_all_options(
-                    self.control.dialogs)
+                self.display.update_level_output(self.current_output)
                 self.current_state = (
                     "victory" if level_output["victorious"] is True
                     else "defeat")

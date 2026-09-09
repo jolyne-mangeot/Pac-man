@@ -135,8 +135,28 @@ class Spacer(Option):
         pass
 
 
+class TextHolder(Option):
+    def __init__(self, name: str, selectable: bool = False,
+                 text: str = "{name}") -> None:
+        """No arguments, instantiate all Option mandatory attributes with
+        dummy values:
+
+        name="spacer", text="", container={}, selectable=False, pickable=False
+        """
+        self.name: str = name
+        self.text: str = text
+        self.container: object = {}
+        self.selectable: bool = selectable
+        self.pickable: bool = False
+        self.visible: bool = True
+
+    def input_event(self, _: str, __: str, ___: str) -> Any:
+        """Does nothing. Override of Option for correct implementation"""
+        pass
+
+
 class TextValueHolder(Option):
-    def __init__(self, name: str, container: object,
+    def __init__(self, name: str, container: object, selectable: bool = False,
                  text: str = "{name}") -> None:
         """No arguments, instantiate all Option mandatory attributes with
         dummy values:
@@ -146,7 +166,7 @@ class TextValueHolder(Option):
         self.name: str = name
         self.text: str = text
         self.container: object = container
-        self.selectable: bool = False
+        self.selectable: bool = selectable
         self.pickable: bool = False
         self.visible: bool = True
 
@@ -455,7 +475,7 @@ class InputOption(Option):
             revert_to_default: bool = True,
             excluded_input: list[str] = [],
             char_checker: Callable[[str], bool] = (
-                lambda s: str.isprintable(s)), text: str = "{name}") -> None:
+                lambda s: s.isprintable()), text: str = "{name}") -> None:
         """Initializes InputOption attributes with the given parameters and
         Option.__init__.
         """
@@ -517,7 +537,7 @@ class InputOption(Option):
         - if the input is not in the excluded_input,
         - if the input passes the char_checker function
         """
-        return (len(self.get_in_container([])) < self.value_len and
+        return (len(self.get_in_container("")) < self.value_len and
                 input not in self.excluded_input and self.char_checker(input))
 
     def handle_input(self, action_key: str, named_key: str) -> str:

@@ -42,4 +42,13 @@ class Dialogs(JSONModel):
     level: str = Field(default="Level")
     score: str = Field(default="Total score")
     current_score: str = Field(default="Current score")
-    continue_next: str = Field(default="Continue to next level")
+    continue_next: str = Field(default="Continue")
+
+    run_end: str = Field(default="End of run")
+    level_index: str = Field(default="Level reached")
+    playtime: str = Field(default="Run time")
+
+    player_name: str = Field(default="Enter your name")
+    save_score: str = Field(default="Save score")
+    cheats_used: str = Field(default="Cheats were used...")
+    end_run: str = Field(default="Return to main menu")

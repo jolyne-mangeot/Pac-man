@@ -7,7 +7,7 @@ import pygame as pg
 from .display import Display, SpriteSheet
 from pacman.controllers import Control, Menu
 from pacman.models import (
-    Level, OPPOSITE_DIRECTION, Movements, Directions, Entity)
+    Level, LevelOutput, OPPOSITE_DIRECTION, Movements, Directions, Entity)
 from pacman.views import (
     Style, PlaceHolder, MenuRender, render_word, new_surface)
 
@@ -278,24 +278,37 @@ class GameDisplay(Display):
         self.scaled_ui: dict[str, pg.Surface]
         self.ui_fonts: dict[str, pg.font.Font]
 
-        self.pause_menu: MenuRender
-        self.level_end_menu: MenuRender
-        self.end_screen: MenuRender
+        self.menu_renders: dict[str, tuple[MenuRender, str]]
+        self.victory_defeat_holder: PlaceHolder
+        self.level_end_text: tuple[pg.Surface, pg.Rect]
 
         self.load_menu_buttons()
         self.load_level_assets()
         self.load_characters_sprites()
 
-    def startup(self, pause: Menu, level_end: Menu, end: Menu) -> None:
+    def startup(self, menues: dict[str, tuple[Menu, str]]) -> None:
         self.scale_level_ui()
-        self.pause_menu = self.init_menu(self.scale_menu_holders(), pause)
-        end_holders: PlaceHolder = self.scale_menu_holders(
-            (0.8, 0.1), (0.12, 0.12, 0.76, 0.76))
-        from_top: int = self.control.interface.get_height() // 6
-        self.level_end_menu = self.init_menu(end_holders, level_end, from_top)
-        self.end_screen = self.init_menu(end_holders, end, from_top)
+
+        holder: PlaceHolder = self.scale_menu_holders(
+            (0.8, 0.075), (0.12, 0.12, 0.76, 0.76))
+        from_top: int = self.control.interface.get_height() // 4
+        level_end: MenuRender = self.init_menu(
+            holder, menues["victory"][0], from_top)
+
+        self.victory_defeat_holder = PlaceHolder(holder.styles[1:])
+        self.menu_renders = {
+            "pause": (
+                self.init_menu(self.scale_menu_holders(), menues["pause"][0]),
+                menues["pause"][1]),
+            "victory": (level_end, "vertical"),
+            "defeat": (level_end, "vertical"),
+            "end": (self.init_menu(holder, menues["end"][0], from_top // 2),
+                    "vertical")}
 
     def cleanup(self) -> None:
+        del self.menu_renders
+        del self.level_end_text
+        del self.victory_defeat_holder
         del self.level_display
         del self.scaled_ui
         del self.ui_fonts
@@ -460,15 +473,30 @@ class GameDisplay(Display):
     def update_level(self, level: Level) -> None:
         self.level_display = LevelDisplay(self, level)
 
+    def update_level_output(self, output: LevelOutput) -> None:
+        if output["victorious"] is True:
+            self.level_end_text = self.victory_defeat_holder.pre_render(
+                ["Level complete !"])[1]
+        else:
+            self.level_end_text = self.victory_defeat_holder.pre_render(
+                ["Level failed..."])[0]
+        self.level_end_text[1].midtop = (
+            self.control.interface.get_width() // 2,
+            self.control.interface.get_height() // 12)
+        self.menu_renders["victory"][0].pre_render_all_options(
+            self.control.dialogs)
+
     def draw(self, game_state: str) -> None:
+        self.control.interface.fill((71, 71, 71))
         match game_state:
             case "level":
                 self.level_display.draw()
-            case "pause":
-                self.control.interface.fill((0, 0, 115))
-                self.pause_menu.draw_vertical_options()
             case "victory" | "defeat":
-                self.control.interface.fill((71, 71, 71))
-                self.level_end_menu.draw_vertical_options()
+                self.control.interface.blit(*self.level_end_text)
+        if game_state in self.menu_renders.keys():
+            menu_render: tuple[MenuRender, str] = self.menu_renders[game_state]
+            menu_render[0].pre_render_option(
+                self.control.dialogs)
+            menu_render[0].draw(menu_render[1])
         self.control.screen.blit(
             self.control.interface, self.control.interface_rect)
