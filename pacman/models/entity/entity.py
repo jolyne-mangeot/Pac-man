@@ -74,6 +74,7 @@ class Entity(ABC):
         self.initial_pos: tuple[int, int] = initial_pos
         self.pos: tuple[int, int] = initial_pos
         self.direction: Directions = Directions.NONE
+        self.is_super: bool = False
         self.is_alive: bool = True
 
     def respawn(self) -> None:

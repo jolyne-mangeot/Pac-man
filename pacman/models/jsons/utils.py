@@ -140,7 +140,7 @@ def json_to_model(
         return model(**extra_args)
 
 
-def model_to_json(model: JSONModel, file_path: str = "") -> None:
+def model_to_json(model: JSONModel, file_path: str = "") -> bool:
     """Takes a JSONModel object and an optional file_path to save its content
     back into a json file.
 
@@ -149,6 +149,7 @@ def model_to_json(model: JSONModel, file_path: str = "") -> None:
     write it with the model_dump_json BaseModel method, excluding the
     file_name field.
     """
+    success: bool = False
     path: str = (file_path if file_path != ""
                  else "pacman/" + model.file_name + ".json")
     with open(path, "w") as file:
@@ -158,3 +159,5 @@ def model_to_json(model: JSONModel, file_path: str = "") -> None:
         print(
             "Information written out from Model of type "
             f"{model.__class__.__name__}:\n{format}")
+        success = True
+    return success

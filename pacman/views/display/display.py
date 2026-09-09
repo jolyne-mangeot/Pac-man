@@ -146,12 +146,14 @@ class Display:
             des_style, sel_style, pik_style])
 
     def init_menu(self, place_holder: PlaceHolder, menu: Menu,
-                  from_top: int = -1) -> MenuRender:
+                  from_top: int = -1, from_left: int = -1, spacer: int = -1
+                  ) -> MenuRender:
         """Method instantiating a MenuRender object and taking it as attribute.
         Pre-enter the control's interface and dialogs, the display's place
         holder and inserts the arguments menu and from_top, which is the only
         changing parameter between different calls.
         """
         return MenuRender(
-            self.control.interface, menu, from_top=from_top,
+            self.control.interface, menu,
+            from_top=from_top, from_left=from_left, spacer=spacer,
             holder=place_holder, dialogs=self.control.dialogs)

@@ -41,7 +41,6 @@ class MainMenuState(State):
         """
         State.__init__(self, control)
         self.display: MainMenuDisplay = MainMenuDisplay(self.control)
-        self.display.load_menu_buttons()
         self.main_menu: Menu
 
     def __init_menu__(self) -> None:

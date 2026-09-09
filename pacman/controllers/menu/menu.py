@@ -174,8 +174,9 @@ class Menu:
         attribute. Checks if the select_index attribute has effectively
         changed, and if so, set action_done to "cursor_move"
         """
-        if len(self.options) == 0:
-            self.select_index = 0
+        if self.options == [] or any(
+                [opt.selectable for opt in self.options]) is False:
+            self.select_index = -1
             return
         index: int = self.select_index
         self.change_selected_option(operant)

@@ -70,7 +70,6 @@ class Level:
         self.pacman = Pacman(
             config.pac_man_speed, config.super_pac_man_speed,
             ((maze.width - 1) // 2, (maze.height - 1) // 2))
-        self.pacman.is_super = False
         self.pacman.speed = self.calc_speed(self.pacman.speed)
         self.pacman.super_speed = self.calc_speed(self.pacman.super_speed)
         self.pacman.current_speed = self.pacman.speed
@@ -88,7 +87,6 @@ class Level:
                 new_ghost: Ghost = Ghost(
                     **config.ghosts[name].model_dump(),
                     initial_pos=pos, maze=self.map)
-                new_ghost.is_super = False
                 new_ghost.speed = self.calc_speed(new_ghost.speed)
                 new_ghost.super_speed = self.calc_speed(new_ghost.super_speed)
                 new_ghost.down_time *= 1000

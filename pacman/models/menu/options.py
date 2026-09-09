@@ -70,7 +70,10 @@ class Option(ABC):
         return self.text
 
     def get_texts(self, dialogs: dict[str, str]) -> list[str]:
-        texts: list[str] = [self.text.format(name=dialogs.get(self.name, ""))]
+        texts: list[str] = []
+        if self.text != "":
+            texts.append(self.text.format(name=dialogs.get(
+                self.name, self.name)))
         if self.get_in_container(None) is not None:
             value_text: str = str(self.get_in_container(self.name))
             texts.append(dialogs.get(value_text, value_text).replace("_", " "))

@@ -15,6 +15,10 @@ run: install
 	source $(BIN)/activate \
 	&& $(PYTHON) $(NAME) $(ARGS)
 
+skip_install:
+	source $(BIN)/activate \
+	&& $(PYTHON) $(NAME) $(ARGS)
+
 debug: install
 	source $(BIN)/activate \
 	&& $(PYTHON) -m pdb $(NAME) $(ARGS)

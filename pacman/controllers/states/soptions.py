@@ -6,8 +6,7 @@ import pygame as pg
 
 from pacman.controllers import Control, State, Menu
 from pacman.models import (
-    model_to_json, Option,
-    Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
+    Option, Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
     Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
 from pacman.views import OptionsMenuDisplay
 
@@ -108,7 +107,6 @@ class OptionsMenuState(State):
         effectively apply the new settings.
         """
         self.control.settings = Settings(**self.settings)
-        model_to_json(self.control.settings)
         self.cleanup()
         self.control.update_options()
         self.startup()

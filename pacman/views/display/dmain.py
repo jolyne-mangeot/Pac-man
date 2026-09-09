@@ -23,6 +23,7 @@ class MainMenuDisplay(Display):
     def __init__(self, control: Control) -> None:
         super().__init__(control)
         self.menu_render: MenuRender
+        self.load_menu_buttons()
 
     def startup(self, menu: Menu) -> None:
         """Called when the MainMenuState comes up and initialize all needed

@@ -1,8 +1,8 @@
 
 from pacman.controllers import (
     Control, State,
-    MainMenuState, OptionsMenuState, GameState)
+    MainMenuState, OptionsMenuState, HighscoresMenuState, GameState)
 
 __all__ = [
     "Control", "State",
-    "MainMenuState", "OptionsMenuState", "GameState"]
+    "MainMenuState", "OptionsMenuState", "HighscoresMenuState", "GameState"]

@@ -1,7 +1,7 @@
 
 from .jsons import (
     Config, MazeConfig, GameplayConfig, ScoresConfig,
-    Settings, KeyConfig, Dialogs, ACTION_LIST,
+    Settings, KeyConfig, Highscores, Score, Dialogs, ACTION_LIST,
     json_to_model, model_to_json, Languages, Resolutions)
 
 from .menu import (
@@ -17,7 +17,7 @@ from .level import Level, LevelOutput
 
 __all__ = [
     "Config", "MazeConfig", "GameplayConfig", "ScoresConfig",
-    "Settings", "KeyConfig", "Dialogs", "ACTION_LIST",
+    "Settings", "KeyConfig", "Highscores", "Score", "Dialogs", "ACTION_LIST",
     "json_to_model", "model_to_json", "Languages", "Resolutions",
 
     "Option", "Spacer", "TextHolder", "TextValueHolder", "InputOption",

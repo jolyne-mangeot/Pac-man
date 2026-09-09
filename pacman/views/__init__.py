@@ -1,10 +1,14 @@
 
 from .menu import MenuRender, Style, PlaceHolder, new_surface, render_word
 
-from .display import Display, MainMenuDisplay, OptionsMenuDisplay, GameDisplay
+from .display import (
+    Display,
+    MainMenuDisplay, OptionsMenuDisplay, HighscoresMenuDisplay, GameDisplay)
 
 
 __all__ = [
     "MenuRender", "Style", "PlaceHolder", "new_surface", "render_word",
 
-    "Display", "MainMenuDisplay", "OptionsMenuDisplay", "GameDisplay"]
+    "Display",
+    "MainMenuDisplay", "OptionsMenuDisplay", "HighscoresMenuDisplay",
+    "GameDisplay"]

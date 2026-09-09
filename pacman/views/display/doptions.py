@@ -43,7 +43,7 @@ class OptionsMenuDisplay(Display):
         the background and the main_menu object using its dedicated method.
         """
         self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 255, 255))
+        self.control.interface.fill((255, 120, 0))
         self.menu_render.draw_chart_options(int(
             self.control.interface.get_width() / 2))
         self.control.screen.blit(

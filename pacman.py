@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from pacman import (
     Control, State,
-    MainMenuState, OptionsMenuState, GameState)
+    MainMenuState, OptionsMenuState, HighscoresMenuState, GameState)
 
 
 def main() -> int:
@@ -24,6 +24,7 @@ def main() -> int:
     state_dict: dict[str, State] = {
         "main_menu": MainMenuState(game),
         "options_menu": OptionsMenuState(game),
+        "highscores_menu": HighscoresMenuState(game),
         "game_menu": GameState(game)}
 
     game.set_up_states(state_dict)

@@ -4,7 +4,9 @@ from typing import cast
 
 import pygame as pg
 
-from pacman.models import Settings, KeyConfig, Config, Dialogs, json_to_model
+from pacman.models import (
+    Config, Settings, KeyConfig, Highscores, Dialogs,
+    json_to_model, model_to_json)
 
 
 pg.init()
@@ -74,6 +76,8 @@ class Control:
         self.settings: Settings = cast(Settings, json_to_model(
             Settings, extra_args={"key_config": json_to_model(
                 KeyConfig, sub_dict="key_config")}))
+        self.highscores: Highscores = cast(
+            Highscores, json_to_model(Highscores))
         self.dialogs: dict[str, str] = cast(dict[str, str], json_to_model(
             Dialogs,
             "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
@@ -81,7 +85,7 @@ class Control:
 
         self.screen: pg.Surface
         self.interface: pg.Surface = pg.Surface((100, 100))
-        self.interface_rect: pg.Rect = self.interface.get_rect()
+        self.interface_rect: pg.Rect
         self.update_display()
         self.screen_rect: pg.Rect = self.screen.get_rect()
         self.bgm_channel: pg.mixer.Channel = pg.mixer.Channel(0)
@@ -131,6 +135,7 @@ class Control:
         file, update_display method to accord to new resolution settings and
         set new volumes for the sfx and bgm sound channels.
         """
+        model_to_json(self.settings)
         self.dialogs = cast(dict[str, str], json_to_model(
             Dialogs,
             "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
@@ -139,6 +144,9 @@ class Control:
         self.bgm_channel.set_volume(self.settings.bgm_vol / 10)
         self.sfx_channel.set_volume(self.settings.sfx_vol / 10)
         self.screen_rect = self.screen.get_rect()
+
+    def update_highscores(self) -> bool:
+        return model_to_json(self.highscores)
 
     def set_up_states(self, state_dict: dict[str, State]) -> None:
         """Takes a dict of State objects given by the main function of the

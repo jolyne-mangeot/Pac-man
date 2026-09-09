@@ -95,6 +95,8 @@ class MenuRender:
         updating each list in the rendered dict with the returned tuple of
         renders.
         """
+        if self.menu.options == []:
+            return
         if index == -1:
             if self.menu.picked_index != -1:
                 index = self.menu.picked_index
@@ -187,9 +189,11 @@ class MenuRender:
 
         select_render = self.renders[select_index]
         select_render[1].center = (
-            self.from_left, self.from_top + select_index)
+            self.from_left, self.from_top)
         self.screen.blit(select_render[0], select_render[1])
 
+        if max_index <= select_index + 1:
+            return
         for index, option in enumerate(self.renders[
                 select_index + 1:max_index + 1], 1):
             option[1].center = (
