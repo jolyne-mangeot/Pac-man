@@ -24,7 +24,7 @@ that the `Strategy` methods themselves stay stateless between calls.
 
 #### Classes:
 - Strategy(ABC): Base class for ghost movement strategies.
-- ChaseStumbling(Strategy): Chase Pacman with occasional random detours.
+- ChaseFumbling(Strategy): Chase Pacman with occasional random detours.
 - ChaseDynamic(Strategy): Continuously re-target Pacman's live position.
 - ChaseOnSpot(Strategy): Chase the position where Pacman was last spotted.
 - AlternateAngleStrat(Strategy): Patrol between key points of the maze.
@@ -97,6 +97,15 @@ class Strategy(ABC):
     def move(self, ghost_pos: tuple[int, int], pacman_pos: tuple[int, int]
              ) -> tuple[tuple[int, int], Directions]:
         pass
+
+    def random_direction(self, ghost_pos: tuple[int, int]) -> Directions:
+        ghost_walls: int = self.maze.get_cell(ghost_pos).walls
+        passages: list[Directions] = []
+        for direction in Directions:
+            if ghost_walls & direction.value:
+                continue
+            passages.append(direction)
+        return choice(passages)
 
     def find_path(
             self, ghost: tuple[int, int], target: tuple[int, int],
@@ -189,8 +198,8 @@ class Strategy(ABC):
 #                           CHASE STRATEGIES
 # _________________________________________________________________________
 
-class ChaseStumbling(Strategy):
-    """Class ChaseStalking, inheriting from Strategy.
+class ChaseFumbling(Strategy):
+    """Class ChaseFumbling, inheriting from Strategy.
 
     #### Description:
     Move the ghost to the node closest to Pacman. If Pac-Man enters the ghost’s
@@ -298,6 +307,10 @@ class ChaseDynamic(Strategy):
             ghost_pos in self.maze.intersection_cells):
             self.path = self.find_path(ghost_pos, pacman_pos,
                                        calculate_manhattan)
+
+        if self.path == []:
+            self.path.append(self.random_direction(ghost_pos))
+
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -346,6 +359,10 @@ class ChaseOnSpot(Strategy):
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             self.path = self.find_path(ghost_pos, pacman_pos,
                                        calculate_manhattan)
+
+        if self.path == []:
+            self.path.append(self.random_direction(ghost_pos))
+
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -515,6 +532,7 @@ class PatrollingAngleStrat(Strategy):
             target: tuple[int, int] = self.choose_target(area, ghost_pos)
             self.path = self.find_path(ghost_pos, target,
                                        calculate_manhattan)
+
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -743,7 +761,7 @@ strat_dict: dict[str, Type[Strategy]] = {
     "AlternateAngleStrat": AlternateAngleStrat,
     "PatrollingAngleStrat": PatrollingAngleStrat,
     "ChaseOnSpot": ChaseOnSpot,
-    "ChaseStumbling": ChaseStumbling,
+    "ChaseFumbling": ChaseFumbling,
     "ChaseDynamic": ChaseDynamic,
     "EscapeMaxDistance": EscapeMaxDistance,
     "EscapeToCorner": EscapeToCorner,

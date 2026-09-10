@@ -43,7 +43,7 @@
 					//  },
 					//  "Inky": {
 					//  	"idle_strat": "AlternateAngleStrat",
-					//  	"chase_strat": "ChaseStumbling",
+					//  	"chase_strat": "ChaseFumbling",
 					//  	"escape_strat": "EscapeMaxDistance",
 					//  	"speed": 12,
 					//  	"super_speed": 10,
@@ -55,7 +55,7 @@
 					"Clyde": {
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseDynamic",
-						"escape_strat": "EscapeDynamic",
+						"escape_strat": "EscapeMaxDistance",
 						"speed": 12,
 						"super_speed": 10,
 						"escape_radius": 6,

@@ -24,34 +24,17 @@ We used a MVC architecture wich is a fundamental design pattern that helps us or
 ![MVC architecture](https://www.crio.do/blog/content/images/2021/07/Components-of-MVC-Architecture-Pattern.png)
 
 #### Controller
-Mettre image schéma final des dossiers avec files (voir section model)
-Mettre image class diagram de Controller
+Description de ce qu'il y a dans controller
 #### Model
 The “models” module contains all of the game's logic and state, independent of the display (View) and input handling/game loop (Controller). It is divided into several submodules:
 
-Mettre image schéma final des dossiers avec files :
-pacman/models
-	entity/
-		entity.py
-		strategies.py
-	 json/
-		jconfig.py
-		jdialogs.py
-		jsettings.py
-		utils.py
-	 level/
-		level.pu
-	 mazemap/
-		map.py
-		utils.py
-	 menu/
-		options.py
 
-Mettre image class diagram de Models
+Description de ce qu'il y a dans model
 
 #### View
-Mettre image schéma final des dossiers avec files (voir section model)
-Mettre image class diagram de View
+Description de ce qu'il y a dans view
+
+#### Class diagram
 
 ## Configuration
 
