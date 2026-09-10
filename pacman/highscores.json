@@ -1,3 +1,11 @@
 {
-    "scores": []
+    "scores": [
+        {
+            "player": "weewee",
+            "score": 100,
+            "level_reached": 3,
+            "time_taken": 0,
+            "remaining_lives": 3
+        }
+    ]
 }

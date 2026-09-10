@@ -279,8 +279,6 @@ class GameDisplay(Display):
         self.ui_fonts: dict[str, pg.font.Font]
 
         self.menu_renders: dict[str, tuple[MenuRender, str]]
-        self.victory_defeat_holder: PlaceHolder
-        self.level_end_text: tuple[pg.Surface, pg.Rect]
 
         self.load_menu_buttons()
         self.load_level_assets()
@@ -291,24 +289,24 @@ class GameDisplay(Display):
 
         holder: PlaceHolder = self.scale_menu_holders(
             (0.8, 0.075), (0.12, 0.12, 0.76, 0.76))
-        from_top: int = self.control.interface.get_height() // 4
+        from_top: int = self.control.interface.get_height() // 8
         level_end: MenuRender = self.init_menu(
             holder, menues["victory"][0], from_top)
 
-        self.victory_defeat_holder = PlaceHolder(holder.styles[1:])
         self.menu_renders = {
             "pause": (
-                self.init_menu(self.scale_menu_holders(), menues["pause"][0]),
-                menues["pause"][1]),
+                self.init_menu(self.scale_menu_holders(), menues["pause"][0],
+                               from_top), menues["pause"][1]),
+            "cheats": (
+                self.init_menu(holder, menues["cheats"][0], from_top),
+                menues["cheats"][1]),
             "victory": (level_end, "vertical"),
             "defeat": (level_end, "vertical"),
-            "end": (self.init_menu(holder, menues["end"][0], from_top // 2),
+            "end": (self.init_menu(holder, menues["end"][0], from_top),
                     "vertical")}
 
     def cleanup(self) -> None:
         del self.menu_renders
-        del self.level_end_text
-        del self.victory_defeat_holder
         del self.level_display
         del self.scaled_ui
         del self.ui_fonts
@@ -474,29 +472,23 @@ class GameDisplay(Display):
         self.level_display = LevelDisplay(self, level)
 
     def update_level_output(self, output: LevelOutput) -> None:
+        level_end_menu: Menu = self.menu_renders["victory"][0].menu
         if output["victorious"] is True:
-            self.level_end_text = self.victory_defeat_holder.pre_render(
-                ["Level complete !"])[1]
+            level_end_menu.options[0].static_style = "picked"
+            level_end_menu.options[0].name = "level_win"
         else:
-            self.level_end_text = self.victory_defeat_holder.pre_render(
-                ["Level failed..."])[0]
-        self.level_end_text[1].midtop = (
-            self.control.interface.get_width() // 2,
-            self.control.interface.get_height() // 12)
+            level_end_menu.options[0].static_style = "select"
+            level_end_menu.options[0].name = "level_fail"
         self.menu_renders["victory"][0].pre_render_all_options(
             self.control.dialogs)
 
     def draw(self, game_state: str) -> None:
         self.control.interface.fill((71, 71, 71))
-        match game_state:
-            case "level":
-                self.level_display.draw()
-            case "victory" | "defeat":
-                self.control.interface.blit(*self.level_end_text)
+        if game_state == "level":
+            self.level_display.draw()
         if game_state in self.menu_renders.keys():
             menu_render: tuple[MenuRender, str] = self.menu_renders[game_state]
-            menu_render[0].pre_render_option(
-                self.control.dialogs)
+            menu_render[0].pre_render_option(self.control.dialogs)
             menu_render[0].draw(menu_render[1])
         self.control.screen.blit(
             self.control.interface, self.control.interface_rect)

@@ -37,11 +37,12 @@ class Option(ABC):
     different behavior and update the container's values if needed
     """
     def __init__(
-            self, name: str, text: str = "{name}",
+            self, name: str, text: str = "{name}", static_style: str = "",
             container: object = {}) -> None:
         """Assign name, text and container arguments to the Option object."""
         self.name: str = name
         self.text: str = text
+        self.static_style: str = static_style
         self.container: object = container
         self.selectable: bool = True
         self.pickable: bool = True
@@ -72,8 +73,7 @@ class Option(ABC):
     def get_texts(self, dialogs: dict[str, str]) -> list[str]:
         texts: list[str] = []
         if self.text != "":
-            texts.append(self.text.format(name=dialogs.get(
-                self.name, self.name)))
+            texts.append(self.text.format(name=dialogs.get(self.name, "")))
         if self.get_in_container(None) is not None:
             value_text: str = str(self.get_in_container(self.name))
             texts.append(dialogs.get(value_text, value_text).replace("_", " "))
@@ -124,6 +124,7 @@ class Spacer(Option):
         """
         self.name: str = "spacer"
         self.text: str = ""
+        self.static_style: str = ""
         self.container: object = {}
         self.selectable: bool = False
         self.pickable: bool = False
@@ -140,7 +141,7 @@ class Spacer(Option):
 
 class TextHolder(Option):
     def __init__(self, name: str, selectable: bool = False,
-                 text: str = "{name}") -> None:
+                 static_style: str = "", text: str = "{name}") -> None:
         """No arguments, instantiate all Option mandatory attributes with
         dummy values:
 
@@ -148,6 +149,7 @@ class TextHolder(Option):
         """
         self.name: str = name
         self.text: str = text
+        self.static_style: str = static_style
         self.container: object = {}
         self.selectable: bool = selectable
         self.pickable: bool = False
@@ -160,7 +162,7 @@ class TextHolder(Option):
 
 class TextValueHolder(Option):
     def __init__(self, name: str, container: object, selectable: bool = False,
-                 text: str = "{name}") -> None:
+                 static_style: str = "", text: str = "{name}") -> None:
         """No arguments, instantiate all Option mandatory attributes with
         dummy values:
 
@@ -168,6 +170,7 @@ class TextValueHolder(Option):
         """
         self.name: str = name
         self.text: str = text
+        self.static_style: str = static_style
         self.container: object = container
         self.selectable: bool = selectable
         self.pickable: bool = False
@@ -199,11 +202,12 @@ class ActivateOption(Option):
     """
     def __init__(
             self, name: str, exec: partial[Any] = partial(lambda: ""),
-            custom_return: Any = None, text: str = "{name}") -> None:
+            custom_return: Any = None, static_style: str = "",
+            text: str = "{name}") -> None:
         """Initializes ActivateOption attributes with the given parameters and
         Option.__init__.
         """
-        Option.__init__(self, name, text)
+        Option.__init__(self, name, text, static_style)
         self.exec: partial[Any] = exec
         self.custom_return: Any = custom_return
         self.pickable: bool = False
@@ -236,13 +240,23 @@ class ToggleOption(Option):
     "activate", otherwise does nothing.
     """
     def __init__(
-            self, name: str, container: object,
+            self, name: str, container: object, static_style: str = "",
             text: str = "{name}") -> None:
         """Initializes ToggleOption attributes with the given parameters and
         Option.__init__.
         """
-        Option.__init__(self, name, text, container)
+        Option.__init__(self, name, text, static_style, container)
         self.pickable: bool = False
+
+    def get_texts(self, dialogs: dict[str, str]) -> list[str]:
+        texts: list[str] = []
+        if self.text != "":
+            texts.append(self.text.format(name=dialogs.get(self.name, "")))
+        if self.get_in_container(None) is not None:
+            value_text: str = dialogs.get(
+                str(self.get_in_container(self.name)).lower(), "false")
+            texts.append(dialogs.get(value_text, value_text).replace("_", " "))
+        return texts
 
     def toggle(self) -> None:
         """Switch to True or False the corresponding config entry."""
@@ -288,12 +302,13 @@ class SliderOption(Option):
             self, name: str, container: object,
             value_range: range = range(0, 0), up_factor: int = 10,
             down_factor: int = -10, left_factor: int = -1,
-            right_factor: int = 1, cycle: bool = True, text: str = "{name}"
+            right_factor: int = 1, cycle: bool = True,
+            static_style: str = "", text: str = "{name}"
             ) -> None:
         """Initializes SliderOption attributes with the given parameters and
         Option.__init__.
         """
-        Option.__init__(self, name, text, container)
+        Option.__init__(self, name, text, static_style, container)
         self.value_range: range = value_range
         self.up_factor: int = up_factor
         self.down_factor: int = down_factor
@@ -365,11 +380,11 @@ class SelectionOption(Option):
             self, name: str, container: object,
             options: list[Any] = [], up_factor: int = 0, down_factor: int = 0,
             left_factor: int = -1, right_factor: int = 1, cycle: bool = True,
-            text: str = "{name}") -> None:
+            static_style: str = "", text: str = "{name}") -> None:
         """Initializes SelectionOption attributes with the given parameters and
         Option.__init__.
         """
-        Option.__init__(self, name, text, container)
+        Option.__init__(self, name, text, static_style, container)
         self.options: list[str] = options
         self.up_factor: int = up_factor
         self.down_factor: int = down_factor
@@ -478,11 +493,12 @@ class InputOption(Option):
             revert_to_default: bool = True,
             excluded_input: list[str] = [],
             char_checker: Callable[[str], bool] = (
-                lambda s: s.isprintable()), text: str = "{name}") -> None:
+                lambda s: s.isprintable()),
+            static_style: str = "", text: str = "{name}") -> None:
         """Initializes InputOption attributes with the given parameters and
         Option.__init__.
         """
-        Option.__init__(self, name, text, container)
+        Option.__init__(self, name, text, static_style, container)
         self.value_len: int = value_len
         self.value_save: str = str(self.get_in_container(""))
         self.use_text_input: bool = use_text_input

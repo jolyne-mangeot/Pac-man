@@ -41,9 +41,21 @@ class Dialogs(JSONModel):
     remaining_lives: str = Field(default="Remaining lives")
     reset_highscores: str = Field(default="reset")
 
+    paused: str = Field(default="Pause menu")
     resume: str = Field(default="Resume")
     give_up: str = Field(default="give up")
 
+    cheats_menu: str = Field(default="Cheats menu")
+    true: str = Field(default="True")
+    false: str = Field(default="False")
+    invincibility: str = Field(default="Invincibility")
+    infinite_super: str = Field(default="Infinite Super")
+    super_speed: str = Field(default="Super speed")
+    life_gains: str = Field(default="Gain life")
+    skip_level: str = Field(default="Skip level")
+
+    level_win: str = Field(default="Level complete !")
+    level_fail: str = Field(default="Level failed...")
     gum: str = Field(default="Gums")
     sup_gum: str = Field(default="Super gums")
     ghost: str = Field(default="Ghosts")

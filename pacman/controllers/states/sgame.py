@@ -5,9 +5,14 @@ import pygame as pg
 
 from pacman.controllers import Control, State, Menu
 from pacman.models import (
-    Level, LevelOutput, Highscores, Score,
-    ActivateOption, Spacer, TextHolder, TextValueHolder, InputOption)
+    Level, LevelOutput, Cheats, Highscores, Score, ActivateOption, Spacer,
+    TextHolder, TextValueHolder, InputOption, ToggleOption, SliderOption)
 from pacman.views import GameDisplay
+
+
+CHEAT_CODE: tuple[str, ...] = (
+    "up_key", "up_key", "down_key", "down_key", "left_key", "right_key",
+    "left_key", "right_key", "confirm_key", "return_key")
 
 
 class Player:
@@ -16,7 +21,7 @@ class Player:
         self.player_name: str = player_name
         self.max_lives: int = max_lives
         self.cheats_allowed: bool = cheats_allowed
-        self.cheats_used: bool = True
+        self.cheats_used: bool = False
         self.lives: int = max_lives
         self.playtime: int = 0
         self.current_score: int = 0
@@ -30,8 +35,6 @@ class Player:
 
     def update_with_output(self, output: LevelOutput) -> None:
         self.lives = output["lives"]
-        if self.cheats_used is False:
-            self.cheats_used = output["cheats_used"]
         self.playtime += output["time_taken"]
         self.current_score += output["score"]
         for key, value in output["scores"].items():
@@ -50,21 +53,31 @@ class GameState(State):
         self.player_name: str = "Player"
         self.player: Player
         self.current_level: Level
+        self.cheats: Cheats
+        self.cheats_save: Cheats
+        self.cheat_code_index: int = 0
         self.current_output: LevelOutput = {
-            "victorious": True,
-            "lives": 3,
-            "cheats_used": False,
-            "time_taken": 0,
-            "score": 2000,
+            "victorious": True, "lives": 3, "time_taken": 0, "score": 2000,
             "scores": {"gum": 0, "sup_gum": 0, "ghost": 0, "level": 0}}
 
     def __init_menues__(self) -> None:
         pause_menu = Menu(loop_cursor=False, options=[
+            TextHolder("paused", static_style="picked"), Spacer(), Spacer(),
             ActivateOption("resume", partial(self.change_game_state, "level")),
             ActivateOption("settings",
                            partial(self.switch_state, "options_menu")),
             Spacer(), ActivateOption("give_up", partial(self.leave_game))])
+        cheats_menu = Menu(loop_cursor=False, options=[
+            TextHolder("cheats_menu", static_style="picked"), Spacer(),
+            ToggleOption("invincibility", self.cheats),
+            ToggleOption("infinite_super", self.cheats),
+            ToggleOption("super_speed", self.cheats),
+            SliderOption("life_gains", self.cheats,
+                         range(0, self.player.max_lives), 0, 0, cycle=False),
+            ToggleOption("skip_level", self.cheats),
+            Spacer(), ActivateOption("apply", partial(self.apply_cheats))])
         level_end_menu = Menu(loop_cursor=False, options=[
+            TextHolder("level_win", static_style="picked"),
             TextValueHolder("time_taken", self.current_output),
             *[TextValueHolder(name, self.current_output["scores"])
               for name in self.current_output["scores"].keys()], Spacer(),
@@ -72,10 +85,11 @@ class GameState(State):
             TextValueHolder("current_score", self.player), Spacer(),
             ActivateOption("continue_next", partial(self.access_next_level))])
         end_screen = Menu(loop_cursor=False, options=[
-            TextHolder("run_end"), TextValueHolder("level_reached", self),
+            TextHolder("run_end", static_style="picked"),
+            TextValueHolder("level_reached", self),
             TextValueHolder("playtime", self.player),
             *[TextValueHolder(name, self.player.scores)
-                for name in self.player.scores.keys()], Spacer(),
+              for name in self.player.scores.keys()], Spacer(),
             TextValueHolder("current_score", self.player),
             InputOption("player_name", self.player, 10,
                         char_checker=lambda s: s.isalnum()),
@@ -83,6 +97,7 @@ class GameState(State):
             ActivateOption("end_run", partial(self.leave_game))])
         self.menues = {
             "pause": (pause_menu, "vertical"),
+            "cheats": (cheats_menu, "vertical"),
             "victory": (level_end_menu, "vertical"),
             "defeat": (level_end_menu, "vertical"),
             "end": (end_screen, "vertical")}
@@ -93,6 +108,10 @@ class GameState(State):
             self.player = Player(
                 self.player_name, self.control.config.player.lives_count,
                 self.control.config.player.cheats_allowed)
+            self.cheats = {
+                "invincibility": False, "infinite_super": False,
+                "super_speed": False, "skip_level": False, "life_gains": 0}
+            self.cheats_save = self.cheats.copy()
             self.__init_menues__()
             self.display.startup(self.menues)
             self.instantiate_level()
@@ -103,6 +122,24 @@ class GameState(State):
 
     def change_game_state(self, state: str) -> None:
         self.current_state = state
+        if state in self.menues.keys():
+            self.menues[state][0].reset_cursor()
+
+    def apply_cheats(self) -> None:
+        if self.player.cheats_used is False:
+            self.player.cheats_used = any(self.cheats.values())
+        self.player.lives = self.current_level.lives
+        self.player.regen_life(self.cheats["life_gains"])
+        self.current_level.lives = self.player.lives
+        if self.cheats["infinite_super"] is True:
+            self.current_level.activate_super()
+        if self.cheats["skip_level"] is True:
+            self.skip_level()
+            self.cheats["skip_level"] = False
+            self.display.menu_renders["cheats"][0].pre_render_option(
+                self.control.dialogs, 6)
+            return
+        self.change_game_state("level")
 
     def save_score(self) -> None:
         self.control.highscores = Highscores(
@@ -133,21 +170,27 @@ class GameState(State):
         self.player.regen_life(
             self.control.config.levels[self.level_reached].gameplay.life_regen)
         self.current_level = Level(
-            self.level_reached + 1, self.player.max_lives,
-            self.player.lives, self.player.cheats_allowed,
+            self.level_reached + 1, self.player.max_lives, self.player.lives,
             self.control.config.levels[self.level_reached].maze,
             self.control.config.levels[self.level_reached].gameplay,
-            self.control.config.levels[self.level_reached].scores)
+            self.control.config.levels[self.level_reached].scores, self.cheats)
         self.display.update_level(self.current_level)
+        self.apply_cheats()
         self.current_state = "level"
 
     def update_output(self, level_output: LevelOutput) -> None:
         self.current_output["victorious"] = level_output["victorious"]
         self.current_output["lives"] = level_output["lives"]
-        self.current_output["cheats_used"] = level_output["cheats_used"]
         self.current_output["time_taken"] = level_output["time_taken"]
         self.current_output["score"] = level_output["score"]
         self.current_output["scores"].update(level_output["scores"])
+
+    def skip_level(self) -> None:
+        self.cheats_used = True
+        self.update_output(self.current_level.skip_level())
+        self.player.update_with_output(self.current_output)
+        self.display.update_level_output(self.current_output)
+        self.current_state = "victory"
 
     def access_next_level(self) -> None:
         self.level_reached += 1
@@ -161,18 +204,32 @@ class GameState(State):
         self.current_state = "end"
         if self.player.cheats_used is True:
             self.menues["end"][0].options[10] = TextHolder("cheats_used")
-            self.display.menu_renders["end"][0].pre_render_option(
-                self.control.dialogs, 10)
+        self.display.menu_renders["end"][0].pre_render_all_options(
+            self.control.dialogs)
 
     def get_event(self, event: pg.event.Event) -> None:
         inputs: tuple[str, str, str] = self.read_input_events(event)
         if self.current_state == "level":
+            if inputs[1] != "":
+                if inputs[1] == CHEAT_CODE[self.cheat_code_index]:
+                    self.cheat_code_index += 1
+                else:
+                    self.cheat_code_index = 0
             if inputs[1] == "return_key":
-                self.change_game_state("pause")
-                return
-            self.current_level.get_event(event, inputs[1])
+                if self.cheat_code_index == 10:
+                    self.change_game_state("cheats")
+                    self.cheats_save.update(self.cheats)
+                    self.cheat_code_index = 0
+                else:
+                    self.change_game_state("pause")
+            else:
+                self.current_level.get_event(event, inputs[1])
         elif self.current_state == "pause":
             if inputs[1] == "return_key":
+                self.change_game_state("level")
+        elif self.current_state == "cheats":
+            if inputs[1] == "return_key":
+                self.cheats.update(self.cheats_save)
                 self.change_game_state("level")
         if self.current_state in self.menues.keys():
             menu: tuple[Menu, str] = self.menues[self.current_state]

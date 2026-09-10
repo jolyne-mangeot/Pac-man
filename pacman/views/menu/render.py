@@ -117,14 +117,16 @@ class MenuRender:
         deselected renders of all options and replacing the corresponding
         element with its picked or selected style if applicable.
         """
-        self.renders = [
-            render for render in self.rendered["deselect"]]
-        if self.menu.picked_index != -1:
-            self.renders[self.menu.picked_index] = self.rendered["picked"][
-                self.menu.picked_index]
-        elif self.menu.select_index != -1:
-            self.renders[self.menu.select_index] = self.rendered["select"][
-                self.menu.select_index]
+        self.renders = []
+        for index, option in enumerate(self.menu.options):
+            self.renders.append(self.rendered.get(
+                option.static_style, self.rendered["deselect"])[index])
+        picked: int = self.menu.picked_index
+        select: int = self.menu.select_index
+        if picked != -1 and self.menu.options[picked].static_style == "":
+            self.renders[picked] = self.rendered["picked"][picked]
+        elif select != -1 and self.menu.options[select].static_style == "":
+            self.renders[select] = self.rendered["select"][select]
 
     # _________________________________________________________________________
     #                          Display-related Methods

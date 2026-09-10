@@ -6,8 +6,8 @@
 	"levels": [
 		{
 			"maze": {
-				"width": 7,
-				"height": 7,
+				"width": 12,
+				"height": 12,
 				"gum_percent": 25,
 				"seed": 68771
 			},
@@ -23,7 +23,7 @@
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseOnSpot",
 						"escape_strat": "EscapeToCorner",
-						"speed": 12,
+						"speed": 10,
 						"super_speed": 10,
 						"escape_radius": 0,
 						"chase_radius": 0,
@@ -34,7 +34,7 @@
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseOnSpot",
 						"escape_strat": "EscapeMaxDistance",
-						"speed": 12,
+						"speed": 10,
 						"super_speed": 10,
 						"escape_radius": 5,
 						"chase_radius": 2,
@@ -45,7 +45,7 @@
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseStumbling",
 						"escape_strat": "EscapeMaxDistance",
-						"speed": 12,
+						"speed": 10,
 						"super_speed": 10,
 						"escape_radius": 5,
 						"chase_radius": 2,
@@ -56,7 +56,7 @@
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseDynamic",
 						"escape_strat": "EscapeDynamic",
-						"speed": 12,
+						"speed": 10,
 						"super_speed": 10,
 						"escape_radius": 6,
 						"chase_radius": 6,

@@ -10,19 +10,26 @@ from pacman.models import (
     Map, Directions, OPPOSITE_DIRECTION, Movements)
 
 
+ANIM_TICK: int = 15
+
+
+class Cheats(TypedDict):
+    invincibility: bool
+    infinite_super: bool
+    super_speed: bool
+    skip_level: bool
+    life_gains: int
+
+
 class Timers(IntEnum):
     LEVEL = pg.USEREVENT + 0
     SUPER = pg.USEREVENT + 1
     ANIMATIONS = pg.USEREVENT + 2
 
 
-ANIM_TICK: int = 15
-
-
 class LevelOutput(TypedDict):
     victorious: bool
     lives: int
-    cheats_used: bool
     time_taken: int
     score: int
     scores: dict[str, int]
@@ -31,14 +38,13 @@ class LevelOutput(TypedDict):
 class Level:
     def __init__(
             self, level_id: int, max_lives: int, player_lives: int,
-            cheats_allowed: bool, maze_config: MazeConfig,
-            gameplay: GameplayConfig, scores_config: ScoresConfig) -> None:
+            maze_config: MazeConfig, gameplay: GameplayConfig,
+            scores_config: ScoresConfig, cheats: Cheats) -> None:
         self.level_id: int = level_id
         self.max_lives: int = max_lives
         self.lives: int = player_lives
-        self.cheats_allowed: bool = cheats_allowed
-        self.cheats_used: bool = False
         self.theme: str = gameplay.theme
+        self.cheats: Cheats = cheats
         self.level_duration: int = gameplay.timer
         self.level_timer: int = gameplay.timer
         self.super_duration: int = gameplay.super_duration * 1000
@@ -127,7 +133,10 @@ class Level:
     def activate_super(self) -> None:
         self.super_anim = self.super_duration
         self.pacman.is_super = True
-        self.pacman.current_speed = self.pacman.super_speed
+        if self.cheats["super_speed"] is True:
+            self.pacman.current_speed = 300
+        else:
+            self.pacman.current_speed = self.pacman.super_speed
         for ghost in self.ghosts.values():
             if ghost.is_alive is True:
                 ghost.is_super = True
@@ -137,7 +146,10 @@ class Level:
     def deactivate_super(self) -> None:
         self.super_anim = 0
         self.pacman.is_super = False
-        self.pacman.current_speed = self.pacman.speed
+        if self.cheats["super_speed"] is True:
+            self.pacman.current_speed = 300
+        else:
+            self.pacman.current_speed = self.pacman.speed
         for ghost in self.ghosts.values():
             ghost.is_super = False
             ghost.current_speed = ghost.speed
@@ -150,7 +162,8 @@ class Level:
             self.pacman.is_alive = True
             self.pacman.direction = Directions.NONE
             self.pacman.next_direction = Directions.NONE
-            self.deactivate_super()
+            if self.cheats["infinite_super"] is False:
+                self.deactivate_super()
             self.pacman.respawn()
             for ghost in self.ghosts.values():
                 ghost.is_alive = True
@@ -158,7 +171,8 @@ class Level:
 
     def update_animations(self) -> None:
         if self.pacman.is_super is True:
-            self.super_anim -= ANIM_TICK
+            if self.cheats["infinite_super"] is False:
+                self.super_anim -= ANIM_TICK
             if self.super_anim < 0:
                 self.deactivate_super()
                 self.super_anim = 0
@@ -201,26 +215,30 @@ class Level:
                     ghost.current_speed = ghost.speed
             ghost_pos: tuple[int, int] = self.theoric_position(name, ghost)
             if ghost_pos == pac_pos and ghost.is_alive is True:
-                if ghost.is_super is False:
-                    self.pacman.is_alive = False
-                    self.pacman.current_speed = 2000
-                    self.char_anim["Pacman"] = 0
-                else:
+                if ghost.is_super is True:
                     self.gain_score("ghost")
                     self.char_anim[name] = 0
                     ghost.respawn()
                     ghost.current_speed = ghost.down_time
-                    ghost.is_super = False
+                    if self.cheats["infinite_super"] is False:
+                        ghost.is_super = False
                     ghost.is_alive = False
+                elif self.cheats["invincibility"] is False:
+                    self.pacman.is_alive = False
+                    self.pacman.current_speed = 2000
+                    self.char_anim["Pacman"] = 0
 
     def create_level_output(self, victorious: bool) -> LevelOutput:
         return {
             "victorious": victorious,
             "lives": self.lives,
-            "cheats_used": self.cheats_used,
             "time_taken": self.level_duration - self.level_timer,
             "score": self.score,
             "scores": self.scores}
+
+    def skip_level(self) -> LevelOutput:
+        self.gain_score("level")
+        return self.create_level_output(True)
 
     def update(self) -> None | LevelOutput:
         self.update_entities()

@@ -55,15 +55,12 @@ class Menu:
         """
         self.options: list[Option] = options
         self.loop_cursor: bool = loop_cursor
-        self.select_index: int = -1
-        self.move_cursor(1)
+        self.select_index: int = 0
+        self.reset_cursor()
         self.picked_index: int = -1
         self.last_picked: int = -1
         self.action_done: str = ""
 
-    # _________________________________________________________________________
-    #                           Events-related Methods
-    # _________________________________________________________________________
     def unpick_option(self) -> None:
         """Called to deactivate a picked option. Calls its deactivate method,
         update the last_picked index with the picked_index that's later reset
@@ -116,6 +113,7 @@ class Menu:
                 action_key, named_key, text_input)
             if curr_option.pickable is False:
                 self.action_done = ""
+                self.last_picked = self.picked_index
                 self.picked_index = -1
             if output == "action_done":
                 self.unpick_option()
@@ -167,6 +165,10 @@ class Menu:
                 self.move_cursor(2)
         else:
             self.get_event_horizontal(key_input)
+
+    def reset_cursor(self) -> None:
+        self.select_index = -1
+        self.move_cursor(1)
 
     def move_cursor(self, operant: int) -> None:
         """Updates the selected index with the change_selected_option method
