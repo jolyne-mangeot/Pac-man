@@ -19,7 +19,6 @@
 				"pac_man_speed": 12,
 				"super_pac_man_speed": 13,
 				"ghosts": {
-<<<<<<< HEAD
 					"Blinky": {
 						"idle_strat": "AlternateAngleStrat",
 						"chase_strat": "ChaseOnSpot",
@@ -58,46 +57,6 @@
 						"chase_strat": "ChaseDynamic",
 						"escape_strat": "EscapeDynamic",
 						"speed": 10,
-=======
-					//  "Blinky": {
-					//  	"idle_strat": "AlternateAngleStrat",
-					//  	"chase_strat": "ChaseOnSpot",
-					//  	"escape_strat": "EscapeToCorner",
-					//  	"speed": 12,
-					//  	"super_speed": 10,
-					//  	"escape_radius": 0,
-					//  	"chase_radius": 0,
-					//  	"chasing_stamina": 10,
-					//  	"down_time": 3
-					//  },
-					//  "Pinky": {
-					//  	"idle_strat": "AlternateAngleStrat",
-					//  	"chase_strat": "ChaseOnSpot",
-					//  	"escape_strat": "EscapeMaxDistance",
-					//  	"speed": 12,
-					//  	"super_speed": 10,
-					//  	"escape_radius": 5,
-					//  	"chase_radius": 2,
-					//  	"chasing_stamina": 10,
-					//  	"down_time": 3
-					//  },
-					//  "Inky": {
-					//  	"idle_strat": "AlternateAngleStrat",
-					//  	"chase_strat": "ChaseFumbling",
-					//  	"escape_strat": "EscapeMaxDistance",
-					//  	"speed": 12,
-					//  	"super_speed": 10,
-					//  	"escape_radius": 5,
-					//  	"chase_radius": 2,
-					//  	"chasing_stamina": 10,
-					//  	"down_time": 3
-					//  },
-					"Clyde": {
-						"idle_strat": "AlternateAngleStrat",
-						"chase_strat": "ChaseDynamic",
-						"escape_strat": "EscapeMaxDistance",
-						"speed": 12,
->>>>>>> origin/entity_map
 						"super_speed": 10,
 						"escape_radius": 6,
 						"chase_radius": 6,
