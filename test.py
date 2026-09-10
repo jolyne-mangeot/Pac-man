@@ -1,5 +1,5 @@
 
-from pacman.models import Pacman, Map, Strategy, strat_dict
+from pacman.models import Pacman, Map, strat_dict
 
 
 def display_maze(map_test: Map, pacman_test: Pacman) -> None:

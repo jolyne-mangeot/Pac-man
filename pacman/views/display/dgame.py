@@ -157,13 +157,12 @@ class LevelDisplay:
             OPPOSITE_DIRECTION[direction].name].value
         offset: int = 0
         if char.direction.value != 15:
+            prog: int = char.current_speed - self.level.char_anim[name]
+            prog = prog if prog > 0 else 0
             offset = int(
-                (char.current_speed - self.level.char_anim[name])
-                * (self.cell_size + self.cell_gap)
-                / char.current_speed)
+                prog * (self.cell_size + self.cell_gap) / char.current_speed)
         position: tuple[int, int] = (
-            coords[0] + (origin[0] * offset),
-            coords[1] + (origin[1] * offset))
+            coords[0] + (origin[0] * offset), coords[1] + (origin[1] * offset))
         mode: str = "super" if char.is_super else "normal"
         frame: int = int(
             self.level.char_anim[name] * 3 / char.current_speed) % 3
@@ -230,19 +229,14 @@ class LevelDisplay:
             pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
             for sup_gum in self.level.map.super_gums])
 
-        for name, ghost in self.level.ghosts.items():
-            direction: Directions = (ghost.direction if ghost.direction.value
-                                     != 15 else Directions.DOWN)
-            if ghost.is_alive is True:
-                visual_elements.append(self.render_entity(
-                    name, ghost, direction))
-
-        if self.level.pacman.is_alive is True:
-            direction = next(dir for dir in (
-                self.level.pacman.direction, self.level.pacman.next_direction,
+        for name, char in self.level.chars.items():
+            direction: Directions = next(dir for dir in (
+                char.direction,
+                getattr(char, "next_direction", Directions.NONE),
                 Directions.DOWN) if dir.value != 15)
-            visual_elements.append(self.render_entity(
-                "Pacman", self.level.pacman, direction))
+            if char.is_alive is True:
+                visual_elements.append(self.render_entity(
+                    name, char, direction))
 
         maze_surf.blits(visual_elements)
         game_surf.fill((15, 15, 15))
@@ -333,12 +327,9 @@ class GameDisplay(Display):
             "super_bar": pg.transform.scale(
                 self.interface["super_bar"], (ui_h * 1.19, ui_h * 0.19))}
         self.ui_fonts = {
-            "level": pg.font.Font(
-                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.45)),
-            "score": pg.font.Font(
-                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.45)),
-            "timer": pg.font.Font(
-                "pacman/assets/fonts/dogica.otf", int(ui_h * 0.32))}
+            "level": pg.font.Font(self.font_path, int(ui_h * 0.45)),
+            "score": pg.font.Font(self.font_path, int(ui_h * 0.45)),
+            "timer": pg.font.Font(self.font_path, int(ui_h * 0.32))}
         self.ui_fonts["level"].set_bold(True)
         self.ui_fonts["timer"].set_bold(True)
         color: pg.Color = pg.Color(255, 255, 255)
@@ -378,16 +369,16 @@ class GameDisplay(Display):
                     "LEFT": get_frames((coords[0], coords[1] + 16), sheet),
                     "DOWN": get_frames((coords[0], coords[1]), sheet)}
 
-        sheet_coords: dict[str, tuple[int, int]] = {
+        pacman_pos: tuple[int, int] = (5 * 16 * 3, 4 * 16 * 4)
+        sheet_pos: dict[str, tuple[int, int]] = {
             "Blinky": (10 * 16 * 3, 2 * 16 * 4),
             "Pinky": (8 * 16 * 3, 14 * 16 * 4),
             "Inky": (0, 0),
             "Clyde": (0, 0)}
-        pacman_coords: tuple[int, int] = (5 * 16 * 3, 4 * 16 * 4)
         self.characters = {
-            "Pacman": {"normal": load_sprites(pacman_coords, pacman_sht),
-                       "super": load_sprites(pacman_coords, pacman_sht)}}
-        for name, coords in sheet_coords.items():
+            "Pacman": {"normal": load_sprites(pacman_pos, pacman_sht),
+                       "super": load_sprites(pacman_pos, pacman_sht)}}
+        for name, coords in sheet_pos.items():
             self.characters.update({
                 name: {"normal": load_sprites(coords, normal_sht),
                        "super": load_sprites(coords, super_sht)}})
@@ -453,20 +444,17 @@ class GameDisplay(Display):
         gum: list[pg.Surface] = [new_surface((16, 16))] * 3
         pg.draw.circle(gum[0], pg.Color(255, 255, 255), (8, 8), 1.2)
 
-        sup_gum_sheet: SpriteSheet = SpriteSheet(
+        sup_gum_sht: SpriteSheet = SpriteSheet(
             "pacman/assets/level/" + theme + "_sup_gum.png")
         sup_gum: list[pg.Surface] = []
-        for y in range(3):
-            for x in range(3):
-                sup_gum.append(
-                    sup_gum_sheet.get_sprite((x * 192, y * 192), (192, 192)))
+        for x in range(3):
+            sup_gum.append(sup_gum_sht.get_sprite((x * 192, 192), (192, 192)))
 
         self.themed_assets.update({theme: {
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
             "decorations": decorations,
-            "gum": gum,
-            "sup_gum": sup_gum}})
+            "gum": gum, "sup_gum": sup_gum}})
 
     def update_level(self, level: Level) -> None:
         self.level_display = LevelDisplay(self, level)

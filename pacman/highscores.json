@@ -6,6 +6,13 @@
             "level_reached": 3,
             "time_taken": 0,
             "remaining_lives": 3
+        },
+        {
+            "player": "koko",
+            "score": 5160,
+            "level_reached": 2,
+            "time_taken": 144,
+            "remaining_lives": 3
         }
     ]
 }

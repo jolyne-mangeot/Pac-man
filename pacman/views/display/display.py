@@ -35,10 +35,7 @@ class SpriteSheet:
 
         Returns the new surface.
         """
-        x: int = pos[0]
-        y: int = pos[1]
-
-        rect: pg.Rect = pg.Rect(x, y, *size)
+        rect: pg.Rect = pg.Rect(*pos, *size)
         image: pg.Surface = pg.Surface(size, pg.SRCALPHA, 32).convert_alpha()
         image.blit(self.sheet, (0, 0), rect)
 
@@ -56,6 +53,8 @@ class Display:
     Parent class of all State displaying classes. Contains attributes and
     methods common to multiple states to avoid repetitions.
     """
+    font_path: str = "pacman/assets/fonts/dogica.otf"
+
     def __init__(self, control: Control) -> None:
         """Init method for all Display subclasses, takes a Control object to
         add as attribute.
@@ -88,18 +87,16 @@ class Display:
         self.deselect_hold: pg.Surface = sheet.get_sprite((0, 60), (122, 28))
         self.select_hold: pg.Surface = sheet.get_sprite((0, 0), (122, 28))
         self.picked_hold: pg.Surface = sheet.get_sprite((0, 30), (122, 28))
+        path: str = "pacman/assets/sfx/ui/"
         self.sounds: dict[str, pg.mixer.Sound] = {
-            "cursor_pick": pg.mixer.Sound("pacman/assets/sfx/ui/Confirm.wav"),
-            "cursor_unpick": pg.mixer.Sound("pacman/assets/sfx/ui/Close.wav"),
-            "cursor_move": pg.mixer.Sound("pacman/assets/sfx/ui/Cursor.wav"),
-            "option_update": pg.mixer.Sound("pacman/assets/sfx/ui/Open.wav"),
-            "option_activate": pg.mixer.Sound(
-                "pacman/assets/sfx/ui/Purchase.wav"),
-            "option_input_write": pg.mixer.Sound(
-                "pacman/assets/sfx/ui/Confirm.wav"),
-            "option_input_erase": pg.mixer.Sound(
-                "pacman/assets/sfx/ui/Close.wav"),
-            "program_quit": pg.mixer.Sound("pacman/assets/sfx/ui/Equip.wav")}
+            "cursor_pick": pg.mixer.Sound(path + "Confirm.wav"),
+            "cursor_unpick": pg.mixer.Sound(path + "Close.wav"),
+            "cursor_move": pg.mixer.Sound(path + "Cursor.wav"),
+            "option_update": pg.mixer.Sound(path + "Open.wav"),
+            "option_activate": pg.mixer.Sound(path + "Purchase.wav"),
+            "option_input_write": pg.mixer.Sound(path + "Confirm.wav"),
+            "option_input_erase": pg.mixer.Sound(path + "Close.wav"),
+            "program_quit": pg.mixer.Sound(path + "Equip.wav")}
 
     def scale_menu_holders(
             self, holder_size_factor: tuple[float, float] = (0.3, 0.08),
@@ -124,26 +121,23 @@ class Display:
             int(scale[0] * text_rect_factor[2]),
             int(scale[1] * text_rect_factor[3]))
 
-        plain_font: pg.font.Font = pg.font.Font(
-            "pacman/assets/fonts/dogica.otf",
-            int(screen_h * 0.03))
-        picked_font: pg.font.Font = pg.font.Font(
-            "pacman/assets/fonts/dogica.otf",
-            int(screen_h * 0.03))
+        font_size: int = int(screen_h * 0.03)
+        plain_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
+        picked_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
         picked_font.set_bold(True)
 
+        spacing: int = int(screen_h * 0.023)
         des_style: Style = Style(
             font=plain_font, graphic=self.deselect_hold, text_rect=rect,
-            letter_spacing=int(screen_h * 0.023))
+            letter_spacing=spacing)
         sel_style: Style = Style(
             font=plain_font, graphic=self.select_hold, text_rect=rect,
-            letter_spacing=int(screen_h * 0.023))
+            letter_spacing=spacing)
         pik_style: Style = Style(
             font=picked_font, graphic=self.picked_hold, text_rect=rect,
-            letter_spacing=int(screen_h * 0.023))
+            letter_spacing=spacing)
 
-        return PlaceHolder([
-            des_style, sel_style, pik_style])
+        return PlaceHolder([des_style, sel_style, pik_style])
 
     def init_menu(self, place_holder: PlaceHolder, menu: Menu,
                   from_top: int = -1, from_left: int = -1, spacer: int = -1

@@ -26,14 +26,14 @@ class HighscoresMenuState(State):
         self.index: int = 1
 
     def __init_menu__(self) -> None:
-        self.highscore_title = Menu([TextHolder("highscores_menu")])
-        self.highscore_title.picked_index = 0
+        self.highscore_title = Menu([TextHolder(
+            "highscores_menu", static_style="picked")])
         if self.control.highscores.scores == []:
             self.highscore_index = Menu([])
             self.highscore_list = Menu([TextHolder("no_highscores")])
         else:
             self.highscore_index = Menu([TextValueHolder(
-                "index", self, False, "")])
+                "index", self, False, text="")])
             self.highscore_list = Menu(loop_cursor=False, options=[])
             for score in self.control.highscores.scores:
                 self.highscore_list.options.extend([
@@ -84,6 +84,8 @@ class HighscoresMenuState(State):
         switches the current state to "quit", effectively leaving the program.
         """
         inputs: tuple[str, str, str] = self.read_input_events(event)
+        if inputs[1] == "return_key":
+            self.switch_state("main_menu")
         self.highscore_list.get_event(*inputs, "vertical")
         self.reset_menu.get_event(*inputs, "horizontal")
         self.index = (self.highscore_list.select_index // 5) + 1

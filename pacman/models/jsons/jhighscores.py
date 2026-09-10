@@ -40,7 +40,7 @@ class Highscores(JSONModel):
                         scores.append(Score(**score))
                     except ValidationError:
                         continue
-            scores = sorted(scores, key=lambda sc: sc.score)
+            scores = sorted(scores, key=lambda sc: sc.score, reverse=True)
             if len(scores) > 10:
                 scores = scores[:10]
         return scores

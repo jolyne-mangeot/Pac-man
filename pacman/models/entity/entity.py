@@ -132,7 +132,8 @@ class Pacman(Entity):
         if self.direction != self.next_direction:
             if not (walls_in_actual_cell & (self.next_direction.value)):
                 self.direction = self.next_direction
-        if walls_in_actual_cell & (self.direction.value):
+        if (self.direction == Directions.NONE
+                or walls_in_actual_cell & self.direction.value):
             self.direction = Directions.NONE
             return
         self.pos = (

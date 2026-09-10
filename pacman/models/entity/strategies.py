@@ -48,6 +48,7 @@ Note: the `Strategy.find_path()` A* implementation stores its temporary
 per-node data (distance, path, predecessor) in a local `Origin` helper
 class.
 """
+
 from abc import ABC, abstractmethod
 from typing import Type
 from random import choice, randint
@@ -56,6 +57,9 @@ from collections import deque
 
 from pacman.models import (Map, Cell, Node, Directions, Movements,
                            OPPOSITE_DIRECTION)
+
+
+coords = tuple[int, int]
 
 
 class Strategy(ABC):
@@ -91,14 +95,14 @@ class Strategy(ABC):
         self.xmax: int = len(self.grid) - 1
         self.ymax: int = len(self.grid[0]) - 1
         self.path: list[Directions] = []
-        self.ghost_saved_pos: tuple[int, int] = (-1, -1)
+        self.ghost_saved_pos: coords = (-1, -1)
 
     @abstractmethod
-    def move(self, ghost_pos: tuple[int, int], pacman_pos: tuple[int, int]
-             ) -> tuple[tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         pass
 
-    def random_direction(self, ghost_pos: tuple[int, int]) -> Directions:
+    def random_direction(self, ghost_pos: coords) -> Directions:
         ghost_walls: int = self.maze.get_cell(ghost_pos).walls
         passages: list[Directions] = []
         for direction in Directions:
@@ -107,15 +111,13 @@ class Strategy(ABC):
             passages.append(direction)
         return choice(passages)
 
-    def find_path(
-            self, ghost: tuple[int, int], target: tuple[int, int],
-            priority_calc) -> list[Directions]:
+    def find_path(self, ghost: coords, target: coords) -> list[Directions]:
         """Find the shortest path from ghost to target using a A* Algorithm.
         """
         if ghost == target:
             return []
 
-        def found_target_neighbor(coords: tuple[int, int]) -> Node | None:
+        def found_target_neighbor(coords: coords) -> Node | None:
             """Returns the node at the given coords if it's in target
             neighbor-nodes. Return None if it's not.
             """
@@ -147,17 +149,17 @@ class Strategy(ABC):
             """
             def __init__(self, distance_from_start: int = -1,
                          path: list[Directions] = [],
-                         previous_node: tuple[int, int] = (-1, -1)) -> None:
+                         previous_node: coords = (-1, -1)) -> None:
                 self.distance_from_start: int = distance_from_start
                 self.path: list[Directions] = path
-                self.previous_node: tuple[int, int] = previous_node
+                self.previous_node: coords = previous_node
 
-        known_nodes: list[tuple[int, tuple[int, int]]] = [(0, ghost)]
-        distances_from_start: dict[tuple[int, int], Origin] = {
+        known_nodes: list[tuple[int, coords]] = [(0, ghost)]
+        distances_from_start: dict[coords, Origin] = {
             ghost: Origin(0, [], ghost)}
 
         while target not in distances_from_start.keys():
-            current_node: tuple[int, int] = heappop(known_nodes)[1]
+            current_node: coords = heappop(known_nodes)[1]
 
             target_neighbor = found_target_neighbor(current_node)
             if target_neighbor is not None:
@@ -180,9 +182,8 @@ class Strategy(ABC):
                         sum_of_distances, list(next_node.path),
                         current_node)})
 
-
                     heappush(known_nodes, (
-                        priority_calc(next_node.coords, target),
+                        calculate_manhattan(next_node.coords, target),
                         next_node.coords))
 
         path_queue: deque[Directions] = deque([])
@@ -193,6 +194,7 @@ class Strategy(ABC):
             previous = origin.previous_node
 
         return list(path_queue)
+
 
 # _________________________________________________________________________
 #                           CHASE STRATEGIES
@@ -231,9 +233,8 @@ class ChaseFumbling(Strategy):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[
-                 tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position towards pacman position.
 
         If no path is currently stored, or if the ghost's position no
@@ -254,8 +255,7 @@ class ChaseFumbling(Strategy):
                     ghost_pos[1] + Movements[random_dir.name].value[1])
                 return (random_pos, random_dir)
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
-            self.path = self.find_path(ghost_pos, pacman_pos,
-                                       calculate_manhattan)
+            self.path = self.find_path(ghost_pos, pacman_pos)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -294,19 +294,17 @@ class ChaseDynamic(Strategy):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[
-                 tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position towards pacman position.
 
         If no path is currently stored, or if the ghost's position no
         longer matches the last saved position, a new path towards pacman is
         computed.
         """
-        if (self.path == [] or ghost_pos != self.ghost_saved_pos or
-            ghost_pos in self.maze.intersection_cells):
-            self.path = self.find_path(ghost_pos, pacman_pos,
-                                       calculate_manhattan)
+        if (self.path == [] or ghost_pos != self.ghost_saved_pos
+                or ghost_pos in self.maze.intersection_cells):
+            self.path = self.find_path(ghost_pos, pacman_pos)
 
         if self.path == []:
             self.path.append(self.random_direction(ghost_pos))
@@ -347,9 +345,8 @@ class ChaseOnSpot(Strategy):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[
-                 tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position towards pacman position.
 
         If no path is currently stored, or if the ghost's position no
@@ -357,8 +354,7 @@ class ChaseOnSpot(Strategy):
         computed.
         """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
-            self.path = self.find_path(ghost_pos, pacman_pos,
-                                       calculate_manhattan)
+            self.path = self.find_path(ghost_pos, pacman_pos)
 
         if self.path == []:
             self.path.append(self.random_direction(ghost_pos))
@@ -368,8 +364,9 @@ class ChaseOnSpot(Strategy):
             ghost_pos[1] + Movements[self.path[0].name].value[1])
         return (self.ghost_saved_pos, self.path.pop(0))
 
+
 # _________________________________________________________________________
-#                          IDLE STRATEGIES
+#                             IDLE STRATEGIES
 # _________________________________________________________________________
 
 class AlternateAngleStrat(Strategy):
@@ -409,7 +406,7 @@ class AlternateAngleStrat(Strategy):
         """Initialises the attributes of the AlternateAngleStrat instance."""
         super().__init__(maze)
 
-    def choose_target(self, ghost_pos: tuple[int, int]) -> tuple[int, int]:
+    def choose_target(self, ghost_pos: coords) -> coords:
         """Select a new destination for the ghost.
 
         Chooses a target among the predefined set of important positions
@@ -417,17 +414,15 @@ class AlternateAngleStrat(Strategy):
         ghost's current position from the choices if it happens to match
         one of them.
         """
-        targets: list[tuple[int, int]] = [(0, 0),
-                                          (0, self.ymax),
-                                          (self.xmax, 0),
-                                          (self.xmax, self.ymax),
-                                          (self.xmax // 2, self.ymax // 2)]
+        targets: list[coords] = [
+            (0, 0), (0, self.ymax),
+            (self.xmax, 0), (self.xmax, self.ymax),
+            (self.xmax // 2, self.ymax // 2)]
         if ghost_pos in targets:
             targets.remove(ghost_pos)
         return choice(targets)
 
-    def move(self, ghost_pos: tuple[int, int],
-             _: tuple[int, int]) -> tuple[tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, _: coords) -> tuple[coords, Directions]:
         """Calculate the next position towards the current target.
 
         If no path is currently stored, or if the ghost's position no
@@ -435,9 +430,8 @@ class AlternateAngleStrat(Strategy):
         and a new path towards it should be computed.
         """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
-            target: tuple[int, int] = self.choose_target(ghost_pos)
-            self.path = self.find_path(ghost_pos, target,
-                                       calculate_manhattan)
+            target: coords = self.choose_target(ghost_pos)
+            self.path = self.find_path(ghost_pos, target)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -483,7 +477,7 @@ class PatrollingAngleStrat(Strategy):
         """Initialises the attributes of the PatrollingAngleStrat instance."""
         super().__init__(maze)
 
-    def ghost_area(self, ghost_pos: tuple[int, int]) -> list[tuple[int, int]]:
+    def ghost_area(self, ghost_pos: coords) -> list[coords]:
         """Identifies the area in which the ghost is located. Returns the
         coordinates of the cells at the bottom-left and top-right corners of
         this area.
@@ -503,8 +497,7 @@ class PatrollingAngleStrat(Strategy):
         else:
             return [(0, 0), (middle_x, middle_y)]
 
-    def choose_target(self, area: list[tuple[int, int]],
-                      ghost_pos: tuple[int, int]) -> tuple[int, int]:
+    def choose_target(self, area: list[coords], ghost_pos: coords) -> coords:
         """Select a new destination for the ghost within a given area.
 
         Randomly picks a cell inside the bounds of `area`. If the chosen
@@ -512,15 +505,14 @@ class PatrollingAngleStrat(Strategy):
         ghost's current position, the selection is retried recursively
         until a valid cell is found.
         """
-        target: tuple[int, int] = (randint(area[0][0], area[1][0]),
-                                   randint(area[0][1], area[1][1]))
+        target: coords = (randint(area[0][0], area[1][0]),
+                          randint(area[0][1], area[1][1]))
         if (self.grid[target[0]][target[1]].walls == 15 or
                 self.grid[target[0]][target[1]].coordinates == ghost_pos):
             return self.choose_target(area, ghost_pos)
         return target
 
-    def move(self, ghost_pos: tuple[int, int],
-             _: tuple[int, int]) -> tuple[tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, _: coords) -> tuple[coords, Directions]:
         """Calculate the next position towards the current target.
 
         If no path is currently stored, or if the ghost's position no
@@ -529,17 +521,17 @@ class PatrollingAngleStrat(Strategy):
         """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             area = self.ghost_area(ghost_pos)
-            target: tuple[int, int] = self.choose_target(area, ghost_pos)
-            self.path = self.find_path(ghost_pos, target,
-                                       calculate_manhattan)
+            target: coords = self.choose_target(area, ghost_pos)
+            self.path = self.find_path(ghost_pos, target)
 
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
         return (self.ghost_saved_pos, self.path.pop(0))
 
+
 # _________________________________________________________________________
-#                          ESCAPE STRATEGIES
+#                            ESCAPE STRATEGIES
 # _________________________________________________________________________
 
 class EscapeMaxDistance(Strategy):
@@ -551,7 +543,7 @@ class EscapeMaxDistance(Strategy):
 
     This strategy inspects every neighbouring intersection node reachable
     from the ghost's current intersection and selects the one whose
-    coordinates are the farthest from Pacman's position. 
+    coordinates are the farthest from Pacman's position.
 
     The target and path are recomputed whenever the ghost reaches an
     intersection, has no path stored, or just switched into this
@@ -576,8 +568,7 @@ class EscapeMaxDistance(Strategy):
         """Initialises the attributes of the PatrollingAngleStrat instance."""
         super().__init__(maze)
 
-    def choose_target(self, ghost_pos: tuple[int, int],
-                      pacman_pos: tuple[int, int]) -> tuple[int, int]:
+    def choose_target(self, ghost_pos: coords, pacman_pos: coords) -> coords:
         """Select the escape destination for the ghost.
 
         Looks at every intersection node reachable from the ghost's
@@ -590,12 +581,11 @@ class EscapeMaxDistance(Strategy):
             distance: int = calculate_manhattan(node.coords, pacman_pos)
             if distance > best_distance:
                 best_distance = distance
-                target: tuple[int, int] = node.coords
+                target: coords = node.coords
         return target
 
-    def move(self, ghost_pos: tuple[int, int],
-                 pacman_pos: tuple[int, int]) -> tuple[
-                     tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position away from Pacman.
 
         If no path is currently stored, or if the ghost's position no
@@ -603,11 +593,10 @@ class EscapeMaxDistance(Strategy):
         reached an intersection, a new escape target is chosen and a new
         path towards it is computed.
         """
-        if (self.path == [] or ghost_pos != self.ghost_saved_pos or ghost_pos
-            in self.maze.intersection_cells):
-            target: tuple[int, int] = self.choose_target(ghost_pos, pacman_pos)
-            self.path = self.find_path(ghost_pos, target,
-                                                   calculate_manhattan)
+        if (self.path == [] or ghost_pos != self.ghost_saved_pos
+                or ghost_pos in self.maze.intersection_cells):
+            target: coords = self.choose_target(ghost_pos, pacman_pos)
+            self.path = self.find_path(ghost_pos, target)
         self.ghost_saved_pos = (
                     ghost_pos[0] + Movements[self.path[0].name].value[0],
                     ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -644,23 +633,21 @@ class EscapeToCorner(Strategy):
         """Initialises the attributes of the EscapeToCorner instance."""
         super().__init__(maze)
 
-    def choose_target(self, pacman_pos: tuple[int, int]) -> tuple[int, int]:
+    def choose_target(self, pacman_pos: coords) -> coords:
         """Select the maze corner farthest from Pacman.
 
         Compares the Manhattan distance between Pacman's position and
         each of the four corners of the maze, and returns the coordinates
         of the corner with the greatest distance.
         """
-        corners: list[tuple[int, int]] = [(0, 0),
-                                          (0, self.ymax),
-                                          (self.xmax, 0),
-                                          (self.xmax, self.ymax)]
+        corners: list[coords] = [
+            (0, 0), (0, self.ymax),
+            (self.xmax, 0), (self.xmax, self.ymax)]
         return max(corners,
-                  key=lambda corner: calculate_manhattan(corner, pacman_pos))
+                   key=lambda corner: calculate_manhattan(corner, pacman_pos))
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[
-                 tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position towards the chosen corner.
 
         If no path is currently stored, or if the ghost's position no
@@ -668,9 +655,8 @@ class EscapeToCorner(Strategy):
         Pacman is (re)selected and a new path towards it is computed.
         """
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
-            target: tuple[int, int] = self.choose_target(pacman_pos)
-            self.path = self.find_path(ghost_pos, target,
-                                       calculate_manhattan)
+            target: coords = self.choose_target(pacman_pos)
+            self.path = self.find_path(ghost_pos, target)
         self.ghost_saved_pos = (
             ghost_pos[0] + Movements[self.path[0].name].value[0],
             ghost_pos[1] + Movements[self.path[0].name].value[1])
@@ -692,7 +678,7 @@ class EscapeDynamic(Strategy):
 
     At every call it looks at the open walls of the ghost's current cell
     and picks, among the open directions, the one that maximises the
-    resulting Manhattan distance to Pacman. 
+    resulting Manhattan distance to Pacman.
 
     #### Inherited attributes:
     - maze(Map): The Map instancied.
@@ -713,9 +699,8 @@ class EscapeDynamic(Strategy):
         """Initialises the attributes of the PanicStrat instance."""
         super().__init__(maze)
 
-    def move(self, ghost_pos: tuple[int, int],
-             pacman_pos: tuple[int, int]) -> tuple[
-                 tuple[int, int], Directions]:
+    def move(self, ghost_pos: coords, pacman_pos: coords
+             ) -> tuple[coords, Directions]:
         """Calculate the next position away from Pacman.
 
         Looks at every open direction from the ghost's current cell and
@@ -725,8 +710,8 @@ class EscapeDynamic(Strategy):
         best_directions: list[Directions] = []
         best_distance: int = -1
         for direction in Directions:
-            if (direction == Directions.NONE or
-                self.maze.get_cell(ghost_pos).walls & direction.value):
+            if (direction == Directions.NONE
+                    or self.maze.get_cell(ghost_pos).walls & direction.value):
                 continue
             next_pos = (
                 ghost_pos[0] + Movements[direction.name].value[0],
@@ -745,8 +730,7 @@ class EscapeDynamic(Strategy):
         return (self.ghost_saved_pos, chosen_direction)
 
 
-def calculate_manhattan(ghost: tuple[int, int],
-                        target: tuple[int, int]) -> int:
+def calculate_manhattan(ghost: coords, target: coords) -> int:
     """Calculate the Manhattan distance between two positions and returns
     it.
 
@@ -766,4 +750,3 @@ strat_dict: dict[str, Type[Strategy]] = {
     "EscapeMaxDistance": EscapeMaxDistance,
     "EscapeToCorner": EscapeToCorner,
     "EscapeDynamic": EscapeDynamic}
-
