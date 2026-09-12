@@ -1,5 +1,6 @@
 
 from typing import Any
+from collections.abc import Callable
 
 from pacman.models import Option
 
@@ -7,6 +8,7 @@ from pacman.models import Option
 class Menu:
     """Class Menu
 
+    #### Description:
     Made to list options of different types on the pygame window, and handling
     the user's input accordingly.
 
@@ -28,18 +30,23 @@ class Menu:
     after it's been interacted with
     - action_done: str => string containing various key words used to check
     which action has been done during the get_event method (ex. "cursor_move")
+    - cursor_movement_methods: dict[str, Callable[[str]]] => dict of Menu
+    instance methods used to move the cursor based on an input_key and an
+    alignment
 
     ### Methods:
-    <u>Event handling:</u>
     - get_event => get a pygame Event object to manage options, either changing
     the selected one, picking one or deactivating one. Handles different
     visual configuration like vertical or horizontal menues.
+    - unpick_option => deactivate the picked option using its dedicated method
     - get_event_vertical => handles action input to accord to a vertical
     arrangement of the options with "up_key" and "down_key" inputs
     - get_event_horizontal => handles action input to accord to a horizontal
     arrangement of the options
     - get_event_chart => handles action input to accord to a chart-like
     arrangement of the options (like table cells)
+    - reset_cursor => method called and to call when the cursor needs to be
+    reset to an extremity of the list
     - move_cursor => calls change_selected_option until the currently selected
     option has its attribute "selectable" on True
     - change_selected_option => Apply the factor in argument to the
@@ -55,11 +62,16 @@ class Menu:
         """
         self.options: list[Option] = options
         self.loop_cursor: bool = loop_cursor
-        self.select_index: int = 0
+        self.select_index: int
+        self.picked_index: int
         self.reset_cursor()
-        self.picked_index: int = -1
         self.last_picked: int = -1
         self.action_done: str = ""
+
+        self.cursor_movement_methods: dict[str, Callable[[str], None]] = {
+            "horizontal": self.get_event_horizontal,
+            "vertical": self.get_event_vertical,
+            "chart": self.get_event_chart}
 
     def unpick_option(self) -> None:
         """Called to deactivate a picked option. Calls its deactivate method,
@@ -95,23 +107,21 @@ class Menu:
 
         Returns Any as options input_event method can also do.
         """
-        curr_option: Option = self.options[self.select_index]
+        option: Option = self.options[self.select_index]
         self.action_done = ""
         if action_key == "confirm_key":
             if self.picked_index == -1:
                 self.picked_index = self.select_index
-                self.last_picked = -1
                 self.options[self.picked_index].activate()
                 self.action_done = "cursor_pick"
                 action_key = "activate"
             else:
                 self.unpick_option()
-        if action_key == "return_key" and self.picked_index != -1:
+        elif action_key == "return_key" and self.picked_index != -1:
             self.unpick_option()
         if self.picked_index != -1:
-            output: str = curr_option.input_event(
-                action_key, named_key, text_input)
-            if curr_option.pickable is False:
+            output: str = option.input_event(action_key, named_key, text_input)
+            if option.pickable is False:
                 self.action_done = ""
                 self.last_picked = self.picked_index
                 self.picked_index = -1
@@ -122,10 +132,7 @@ class Menu:
                 if self.action_done == "":
                     self.action_done = output
                 return output
-        {
-            "horizontal": self.get_event_horizontal,
-            "vertical": self.get_event_vertical,
-            "chart": self.get_event_chart}[arrangement](action_key)
+        self.cursor_movement_methods[arrangement](action_key)
 
     def get_event_vertical(self, key_input: str) -> None:
         """Processes vertical movement (up and down) in the menu based on key
@@ -166,26 +173,40 @@ class Menu:
         else:
             self.get_event_horizontal(key_input)
 
-    def reset_cursor(self) -> None:
+    def reset_cursor(self, top_bottom: bool = True) -> None:
+        """Method called and to call when the cursor needs to be reset to an
+        extremity of the list. It resets both the select and picked index to -1
+        and loops to move the cursor to the first selectable option.
+
+        The top_bottom parameter is a boolean: True to select the upmost
+        possible index, False for the last.
+        """
+        self.picked_index = -1
         self.select_index = -1
-        self.move_cursor(1)
+        if top_bottom is True:
+            indexes: range = range(len(self.options))
+        else:
+            indexes = range(len(self.options) - 1, 0, -1)
+        self.select_index = next((
+            index for index in indexes if self.options[index].selectable), -1)
 
     def move_cursor(self, operant: int) -> None:
         """Updates the selected index with the change_selected_option method
         until the currently held option can be selected, by its selectable
         attribute. Checks if the select_index attribute has effectively
-        changed, and if so, set action_done to "cursor_move"
+        changed, and if so, set action_done to "cursor_move". If no option can
+        be selected, the select_index is set to -1.
         """
-        if self.options == [] or any(
-                [opt.selectable for opt in self.options]) is False:
+        if self.options == [] or any([
+                opt.selectable for opt in self.options]) is False:
             self.select_index = -1
-            return
-        index: int = self.select_index
-        self.change_selected_option(operant)
-        while self.options[self.select_index].selectable is False:
+        else:
+            index: int = self.select_index
             self.change_selected_option(operant)
-        if self.select_index != index:
-            self.action_done = "cursor_move"
+            while self.options[self.select_index].selectable is False:
+                self.change_selected_option(operant)
+            if self.select_index != index:
+                self.action_done = "cursor_move"
 
     def change_selected_option(self, operant: int) -> None:
         """Modifies the select_index with the operant given as argument, and
@@ -200,13 +221,9 @@ class Menu:
             if self.loop_cursor is True:
                 self.select_index = max_indicator + self.select_index
             else:
-                self.select_index = next((
-                    index for index in range(max_indicator)
-                    if self.options[index].selectable), 0)
+                self.reset_cursor(True)
         elif self.select_index > max_indicator - 1:
             if self.loop_cursor is True:
                 self.select_index = self.select_index % max_indicator
             else:
-                self.select_index = next((
-                    index for index in range(max_indicator - 1, 0, -1)
-                    if self.options[index].selectable), 0)
+                self.reset_cursor(False)

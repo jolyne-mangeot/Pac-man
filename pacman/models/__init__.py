@@ -1,6 +1,6 @@
 
 from .jsons import (
-    Config, MazeConfig, GameplayConfig, ScoresConfig,
+    Config, MazeConfig, GameplayConfig, ScoresConfig, LevelConfig,
     Settings, KeyConfig, Highscores, Score, Dialogs, ACTION_LIST,
     json_to_model, model_to_json, Languages, Resolutions)
 
@@ -16,7 +16,7 @@ from .level import Level, LevelOutput, Cheats
 
 
 __all__ = [
-    "Config", "MazeConfig", "GameplayConfig", "ScoresConfig",
+    "Config", "MazeConfig", "GameplayConfig", "ScoresConfig", "LevelConfig",
     "Settings", "KeyConfig", "Highscores", "Score", "Dialogs", "ACTION_LIST",
     "json_to_model", "model_to_json", "Languages", "Resolutions",
 

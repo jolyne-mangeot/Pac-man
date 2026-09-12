@@ -14,6 +14,7 @@ from pacman.views import OptionsMenuDisplay
 class OptionsMenuState(State):
     """Class OptionsMenu, subclass of State
 
+    #### Description:
     Represents the settings menu of the game, initializing a Menu object to
     navigate different options: Language, Resolution, SFX and BGM volumes and
     keybindings. Can also reset and apply new settings.
@@ -54,7 +55,6 @@ class OptionsMenuState(State):
         """
         State.__init__(self, control)
         self.display: OptionsMenuDisplay = OptionsMenuDisplay(self.control)
-        self.display.load_menu_buttons()
         self.settings: dict[str, Any]
         self.options_menu: Menu
 
@@ -150,6 +150,5 @@ class OptionsMenuState(State):
         the draw and mixer Display methods.
         """
         self.display.menu_render.pre_render_option(self.control.dialogs)
-        self.display.mixer(self.options_menu.action_done)
+        self.display.menu_mixer([self.options_menu])
         self.display.draw()
-        self.options_menu.action_done = ""

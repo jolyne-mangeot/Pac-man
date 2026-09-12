@@ -1,17 +1,24 @@
 {
     "scores": [
         {
-            "player": "weewee",
-            "score": 100,
-            "level_reached": 3,
-            "time_taken": 0,
-            "remaining_lives": 3
-        },
-        {
             "player": "koko",
             "score": 5160,
             "level_reached": 2,
             "time_taken": 144,
+            "remaining_lives": 3
+        },
+        {
+            "player": "hahaha",
+            "score": 1420,
+            "level_reached": 2,
+            "time_taken": 90,
+            "remaining_lives": 0
+        },
+        {
+            "player": "weewee",
+            "score": 100,
+            "level_reached": 3,
+            "time_taken": 0,
             "remaining_lives": 3
         }
     ]

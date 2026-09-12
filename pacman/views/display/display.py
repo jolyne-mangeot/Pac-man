@@ -8,6 +8,7 @@ from pacman.views import PlaceHolder, Style, MenuRender
 class SpriteSheet:
     """Class SpriteSheet
 
+    #### Description:
     Can be instantiated with the path to an image to then create Pygame
     Surfaces from fractions of it.
 
@@ -50,8 +51,23 @@ class SpriteSheet:
 class Display:
     """Class Display
 
+    #### Description:
     Parent class of all State displaying classes. Contains attributes and
     methods common to multiple states to avoid repetitions.
+
+    ### Parameter:
+    - control: Control => used to access all configuration variables
+
+    ### Methods:
+    - mixer => plays a sound from the sounds dict on the sfx channel
+    - menu_mixer => plays sounds from the sound dict based on the action_done
+    attribute of all given menues on the sfx channel
+    - load_menu_assets => loads up all graphics, fonts and sounds to run
+    a classic Menu object
+    - scale_menu_holders => scales the graphics loaded based on factors in
+    arguments and the interface's size
+    - init_menu => instantiate a MenuRender object with reduced arguments
+    to improve code clarity elsewheres
     """
     font_path: str = "pacman/assets/fonts/dogica.otf"
 
@@ -61,18 +77,28 @@ class Display:
         """
         self.control: Control = control
 
-    def mixer(self, action: str) -> None:
+    def mixer(self, sound: str) -> None:
         """Plays a sound from the sounds dict attribute if the given action
         exists in the sfx control channel.
         """
-        if self.sounds.get(action, None) is not None:
-            self.control.sfx_channel.play(self.sounds[action])
+        if self.sounds.get(sound, None) is not None:
+            self.control.sfx_channel.play(self.sounds[sound])
+
+    def menu_mixer(self, menues: list[Menu] = []) -> None:
+        """For all menues in the given list, plays a sound based on its
+        action_done attribute, then reset it to an empty string to avoid
+        repeating sounds. Plays it all in the sfx channel.
+        """
+        for menu in menues:
+            if self.sounds.get(menu.action_done, None) is not None:
+                self.control.sfx_channel.play(self.sounds[menu.action_done])
+                menu.action_done = ""
 
     # _________________________________________________________________________
     #                    COMMON METHODS TO MAIN MENUES
     # _________________________________________________________________________
 
-    def load_menu_buttons(self) -> None:
+    def load_menu_assets(self) -> None:
         """Loads all necessary assets for the main and options menus and
         place them in self assigned attributes to be used later.
 

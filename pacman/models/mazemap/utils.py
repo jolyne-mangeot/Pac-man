@@ -37,7 +37,7 @@ class Directions(IntEnum):
     The enum values correspond to the wall bitmasks used by the maze.
     `NONE` represents an entity that is currently not moving.
 
-    #### Attributes:
+    ### Attributes:
     - UP (int): Move towards the top of the map.
     - RIGHT (int): Move towards the right of the map.
     - DOWN (int): Move towards the bottom of the map.
@@ -60,7 +60,7 @@ class Movements(Enum):
     Each enum value contains the `(x, y)` displacement associated with
     a movement direction.
 
-    #### Attributes:
+    ### Attributes:
     - UP (tuple[int, int]): Offset `(0, -1)`.
     - RIGHT (tuple[int, int]): Offset `(1, 0)`.
     - DOWN (tuple[int, int]): Offset `(0, 1)`.
@@ -110,7 +110,7 @@ class Node:
     used by the A* pathfinding algorithm to navigate the maze graph
     efficiently without recomputing paths cell by cell.
 
-    Attributes:
+    ### Attributes:
     - coords (tuple[int, int]): Coordinates of the neighbouring
       intersection cell.
     - distance (int): Number of cells travelled between the origin

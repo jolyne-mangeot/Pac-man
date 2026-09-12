@@ -16,14 +16,15 @@ pg.mixer.init(channels=4)
 class Control:
     """Control class
 
-    ### Argument:
-    - config_path, leading to a config json file containing the game's preset
-    data to use.
-
+    #### Description:
     Loads multiple json files (settings.json and a dialog file) and initiates
     every attribute necessary to Pygame such as the screen, the clock, the
     fps and delta_time values, as well as a dictionary of State objects for
     menu manipulating.
+
+    ### Parameter:
+    - config_path, leading to a config json file containing the game's preset
+    data to use.
 
     ### Attributes:
     - config: Config => Config object containing values to pass down to game
@@ -68,9 +69,9 @@ class Control:
     event_loop, update, updates the screen and the delta_time
     """
     def __init__(self, config_path: str) -> None:
-        """Loads a Config object using the config_path argument and a Settings
-        and Dialogs objects consequently. Initiate all instance attributes
-        either using Pygame modules or with default values.
+        """Loads a Config object using the config_path argument and a Settings,
+        Dialogs and Highscores objects consequently. Initiate all instance
+        attributes either using Pygame modules or with default values.
         """
         self.config: Config = cast(Config, json_to_model(Config, config_path))
         self.settings: Settings = cast(Settings, json_to_model(
@@ -146,6 +147,9 @@ class Control:
         self.screen_rect = self.screen.get_rect()
 
     def update_highscores(self) -> bool:
+        """Simply returns the model_to_json function with the highscores
+        attributes, keeping Control as the only class accessing external files.
+        """
         return model_to_json(self.highscores)
 
     def set_up_states(self, state_dict: dict[str, State]) -> None:
@@ -212,6 +216,7 @@ class Control:
 class State(ABC):
     """Abstract class State
 
+    #### Description:
     Parent of all state classes used to set-up game menues, which instances
     are held by control to smoothly switch between them, update them and give
     them all pertinent information.
@@ -265,6 +270,16 @@ class State(ABC):
         self.done = True
 
     def read_input_events(self, event: pg.event.Event) -> tuple[str, str, str]:
+        """Based on a pygame event, parse three strings to return in a tuple
+        for States to take actions upon.
+
+        - named_key => if the event is pygame.KEYDOWN, recovers the literal
+        name of the pressed key
+        - text_input => if the event is pygame.TEXTINPUT, recovers the text
+        attribute of the event
+        - action_key => uses the named key to point out which action it calls
+        based on the KeyConfig (up_key, confirm_key, etc.)
+        """
         named_key: str = ""
         text_input: str = ""
         if event.type == pg.TEXTINPUT:

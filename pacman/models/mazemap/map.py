@@ -62,7 +62,7 @@ class Map:
     game to determine when the current level has been completed.
 
 
-    ### Atributes:
+    ### Attributes:
     - width (int): Number of cells along the horizontal axis.
     - height (int): Number of cells along the vertical axis.
     - gum_percent (int): Percentage of valid cells that should contain

@@ -69,5 +69,6 @@ class Dialogs(JSONModel):
     player_name: str = Field(default="Enter your name")
     save_score: str = Field(default="Save score")
     score_saved: str = Field(default="Score saved !")
+    error_occured: str = Field(default="An error occured...")
     cheats_used: str = Field(default="Cheats were used...")
     end_run: str = Field(default="Return to main menu")

@@ -5,14 +5,20 @@ from pacman.views import MenuRender, PlaceHolder
 
 
 class HighscoresMenuDisplay(Display):
-    """Class MainMenuDisplay, subclass of Display
+    """Class HighscoresMenuDisplay, subclass of Display
 
-    Display class for the MainMenuState, initializing the menu rendering object
+    #### Description:
+    Display class for the HighScoreMenu, initializing the menu rendering object
     and visual scalings. Implement the draw method to display all needed
     elements.
 
     ### Attributes:
     - *Display instance attributes*
+    - highscore_title: MenuRender => render for the menu's title
+    - highscore_index: MenuRender => render for the index of the currently
+    viewed score
+    - highscore_list: MenuRender => render for all scores to be displayed
+    - reset_menu: MenuRender => render for the back and reset buttons
 
     ### Methods:
     - *Display instance methods*
@@ -26,14 +32,12 @@ class HighscoresMenuDisplay(Display):
         self.highscore_index: MenuRender
         self.highscore_list: MenuRender
         self.reset_menu: MenuRender
-
-        self.load_menu_buttons()
-        self.scale_menu_holders()
+        self.load_menu_assets()
 
     def startup(self, highscore_title: Menu, highscore_index: Menu,
                 highscore_list: Menu, reset_menu: Menu) -> None:
-        """Called when the MainMenuState comes up and initialize all needed
-        visual variables.
+        """Called when the HighScoreMenu comes up and initialize all Menu
+        renders using differently sized PlaceHolders objects and placements.
         """
         holder: PlaceHolder = self.scale_menu_holders(
             (0.8, 0.075), (0.12, 0.12, 0.76, 0.76))
@@ -48,8 +52,8 @@ class HighscoresMenuDisplay(Display):
             self.scale_menu_holders(), reset_menu, int(height * 0.85))
 
     def cleanup(self) -> None:
-        """Called when the MainMenuState is left, deletes the menu_render
-        attribute.
+        """Called when the HighScoreMenu is left, deletes all MenuRender
+        attributes.
         """
         del self.highscore_title
         del self.highscore_index
@@ -58,7 +62,8 @@ class HighscoresMenuDisplay(Display):
 
     def draw(self) -> None:
         """Called by update to display all visual elements of the menu, namely
-        the background and the main_menu object using its dedicated method.
+        the background and all MenuRender attributes using their dedicated
+        method.
         """
         self.control.screen.fill((0, 0, 0))
         self.control.interface.fill((255, 120, 0))

@@ -8,6 +8,7 @@ from typing import Any
 class Option(ABC):
     """Abstract class Option:
 
+    #### Description:
     Class made to contain all attributes and methods to update a container's
     value based on different behaviors and input handling.
 
@@ -17,6 +18,9 @@ class Option(ABC):
     - text: str (parameter) => text returned by the str method when printing
     the object, if the container contains a value by the name of the option,
     formats it into the text with value=container[name] format
+    - static_style: str => string made to be either empty, or "deselect",
+    "select" or "picked", to force a certain style to be used to display the
+    Option instance
     - container: object (parameter) => dict reference to be modified by
     the option if needed
     - selectable: bool => self attributed boolean that can be overridden by
@@ -39,7 +43,9 @@ class Option(ABC):
     def __init__(
             self, name: str, text: str = "{name}", static_style: str = "",
             container: object = {}) -> None:
-        """Assign name, text and container arguments to the Option object."""
+        """Assign name, text and container arguments to the Option object.
+        All other attributes are also declared and typed.
+        """
         self.name: str = name
         self.text: str = text
         self.static_style: str = static_style
@@ -49,11 +55,19 @@ class Option(ABC):
         self.visible: bool = True
 
     def get_in_container(self, default: Any = None) -> Any:
+        """Method accessing the Option's container to return one of its values.
+        If the container is a dict, use the right way of getting the value,
+        otherwise call getattr with the name attribute.
+        """
         if isinstance(self.container, dict):
             return self.container.get(self.name, default)
         return getattr(self.container, self.name, default)
 
     def set_in_container(self, value: Any) -> None:
+        """Method accessing the Option's container to modify one of its values.
+        If the container is a dict, use the right way of setting the value,
+        otherwise call setattr with the name attribute.
+        """
         if isinstance(self.container, dict):
             self.container[self.name] = value
         else:
@@ -71,6 +85,10 @@ class Option(ABC):
         return self.text
 
     def get_texts(self, dialogs: dict[str, str]) -> list[str]:
+        """Returns a list of strings containing the Option's name if it's in
+        the given dialogs, and its value in the container if it exists and
+        isn't None.
+        """
         texts: list[str] = []
         if self.text != "":
             texts.append(self.text.format(name=dialogs.get(self.name, "")))
@@ -103,6 +121,7 @@ class Option(ABC):
 class Spacer(Option):
     """Class Spacer, subclass of Option
 
+    #### Description:
     Dummy class to be declared with no argument, useful to separate options in
     a list and create more organised menues. Created to avoid handling None
     values instead.
@@ -140,12 +159,25 @@ class Spacer(Option):
 
 
 class TextHolder(Option):
+    """Class TextHolder, subclass of Option
+
+    #### Description:
+    Option made to display some text. Can be selectable based on the arguments.
+    The name argument isn't used.
+
+    ### Attributes:
+    - *Option instance parameters and attributes*
+
+    ### Method:
+    - *Option instance methods*
+    - input_event (override) => Does nothing
+    """
     def __init__(self, name: str, selectable: bool = False,
                  static_style: str = "", text: str = "{name}") -> None:
-        """No arguments, instantiate all Option mandatory attributes with
-        dummy values:
-
-        name="spacer", text="", container={}, selectable=False, pickable=False
+        """Uses the name, selectable, static_style and text arguments to
+        create an Option made to display a single string. As the container
+        is declared an empty string, the text will be used to browse the
+        dialogs.
         """
         self.name: str = name
         self.text: str = text
@@ -161,12 +193,23 @@ class TextHolder(Option):
 
 
 class TextValueHolder(Option):
+    """Class TextValueHolder, subclass of Option
+
+    #### Description:
+    Option made to display some text and a value. Can be selectable
+    based on the arguments.
+
+    ### Attributes:
+    - *Option instance parameters and attributes*
+
+    ### Method:
+    - *Option instance methods*
+    - input_event (override) => Does nothing
+    """
     def __init__(self, name: str, container: object, selectable: bool = False,
                  static_style: str = "", text: str = "{name}") -> None:
-        """No arguments, instantiate all Option mandatory attributes with
-        dummy values:
-
-        name="spacer", text="", container={}, selectable=False, pickable=False
+        """Uses the name, container, selectable, static_style and text
+        arguments to create an Option made to simply display a value.
         """
         self.name: str = name
         self.text: str = text
@@ -184,6 +227,7 @@ class TextValueHolder(Option):
 class ActivateOption(Option):
     """Class ActivateOption, subclass of Option
 
+    #### Description:
     Made for options to execute functions or methods. Accepts partial returning
     Any, meaning arguments have to be preentered.
 
@@ -226,6 +270,10 @@ class ActivateOption(Option):
 
 class ToggleOption(Option):
     """Class ToggleOption, subclass of Option
+
+    #### Description:
+    Enables the modification of a boolean value. If picked, the value will be
+    switched to True or False.
 
     ### Attributes:
     - *Option instance parameters and attributes*
@@ -274,6 +322,7 @@ class ToggleOption(Option):
 class SliderOption(Option):
     """Class SliderOption, subclass of Option
 
+    #### Description:
     Useful for numeric sliders. Using a range and different factors for each
     direction inputs, updates the container accordingly. Can choose if the
     value cycles around the range or not.
@@ -349,6 +398,7 @@ class SliderOption(Option):
 class SelectionOption(Option):
     """Class SelectionOption, subclass of Option
 
+    #### Description:
     Option to use if the value in the container needs to be part of a list of
     options. When interacted with, this option will update the value with ones
     from the list given at construct. Tries to avoid exceptions (see below).
@@ -430,6 +480,7 @@ class SelectionOption(Option):
 class InputOption(Option):
     """Class InputOption, subclass of Option
 
+    #### Description:
     Option made to receive input and update a string with it. Handles named key
     input (like up, down, space) and raw text. Named key input should be
     reserved for short input cells such as key bindings and make it easier to

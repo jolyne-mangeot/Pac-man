@@ -10,8 +10,9 @@ from pacman.views import MainMenuDisplay
 
 
 class MainMenuState(State):
-    """Class MainMenu, subclass of State
+    """Class MainMenuState, subclass of State
 
+    #### Description:
     Represents the main menu of the game, initializing a Menu object to
     navigate different options: Play, Highscores, Settings and Quit.
     Relies on this Menu to handles events and display other than the
@@ -19,6 +20,7 @@ class MainMenuState(State):
 
     ### Attributes:
     - *State instance parameters and attributes*
+    - display: MainMenuDisplay => display the main_menu using its own methods
     - main_menu: Menu => Menu object used to navigate options and display them
 
     ### Methods
@@ -31,8 +33,6 @@ class MainMenuState(State):
     quit the game, otherwise pass down the pygame event received to main_menu's
     input_event method
     - update (override) => calls draw
-    - draw (override) => displays all visual elements, namely the background
-    and the main_menu with the dedicated method
     """
     def __init__(self, control: Control) -> None:
         """Initialize the menu with State's init, taking a Control object
@@ -44,16 +44,13 @@ class MainMenuState(State):
         self.main_menu: Menu
 
     def __init_menu__(self) -> None:
-        """Instantiate the main_menu attribute with set parameters, selecting
-        elements from the dialogs dict of control.
-        """
+        """Instantiate the main_menu attribute with set parameters."""
         self.main_menu = Menu(loop_cursor=False, options=[
-            ActivateOption(
-                "play", partial(self.switch_state, "game_menu")),
-            ActivateOption(
-                "highscores", partial(self.switch_state, "highscores_menu")),
-            ActivateOption(
-                "settings", partial(self.switch_state, "options_menu")),
+            ActivateOption("play", partial(self.switch_state, "game_menu")),
+            ActivateOption("highscores",
+                           partial(self.switch_state, "highscores_menu")),
+            ActivateOption("settings",
+                           partial(self.switch_state, "options_menu")),
             ActivateOption("quit", partial(lambda: "program_quit"))])
 
     def startup(self) -> None:
@@ -90,9 +87,7 @@ class MainMenuState(State):
 
     def update(self) -> None:
         """Called after the events have been parsed, calls the draw and mixer
-        Display methods. Updates the menu's current action to an empty string
-        to avoid sound repetitions.
+        Display methods.
         """
-        self.display.mixer(self.main_menu.action_done)
+        self.display.menu_mixer([self.main_menu])
         self.display.draw()
-        self.main_menu.action_done = ""

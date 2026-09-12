@@ -7,6 +7,7 @@ from pacman.views import MenuRender
 class MainMenuDisplay(Display):
     """Class MainMenuDisplay, subclass of Display
 
+    #### Description:
     Display class for the MainMenuState, initializing the menu rendering object
     and visual scalings. Implement the draw method to display all needed
     elements.
@@ -21,9 +22,12 @@ class MainMenuDisplay(Display):
     - draw => fills the screen with a background and draws the main menu
     """
     def __init__(self, control: Control) -> None:
+        """Initialized the class using a Control object, declares the
+        menu_render attribute and calls load_menu_assets.
+        """
         super().__init__(control)
         self.menu_render: MenuRender
-        self.load_menu_buttons()
+        self.load_menu_assets()
 
     def startup(self, menu: Menu) -> None:
         """Called when the MainMenuState comes up and initialize all needed

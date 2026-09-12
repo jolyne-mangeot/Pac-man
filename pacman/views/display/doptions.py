@@ -7,22 +7,28 @@ from pacman.controllers import Control, Menu
 class OptionsMenuDisplay(Display):
     """Class OptionsMenuDisplay, subclass of Display
 
+    #### Description:
     Display class for the OptionsMenuState, initializing the menu rendering
     object and visual scalings. Implement the draw method to display all needed
     elements.
 
     ### Attributes:
     - *Display instance attributes*
+    - menu_render: MenuRender => object used to display the main menu
 
     ### Methods:
     - *Display instance methods*
-    - startup => initialize a PlaceHolder and a MenuRender objects
+    - startup => initialize the menu_render using the menu passed as argument
     - cleanup => deletes the MenuRender object to save memory
     - draw => fills the screen with a background and draws the main menu
     """
     def __init__(self, control: Control) -> None:
+        """Initializes the class using Control, declared the menu_render
+        attribute and calls load_menu_assets.
+        """
         super().__init__(control)
         self.menu_render: MenuRender
+        self.load_menu_assets()
 
     def startup(self, menu: Menu) -> None:
         """Called when the OptionsMenuState comes up and initialize all needed

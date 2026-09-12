@@ -8,7 +8,15 @@ from .placeholder import PlaceHolder
 
 
 class MenuRender:
-    """
+    """Class MenuRender
+
+    #### Description:
+    Class used to Render and display a Menu and all its options. Depends on
+    many variables to place, space and style the options, and implements
+    multiple ways of aligning the options. The draw method called should have
+    an arrangement corresponding to the one passed to the get_event method
+    of the same Menu, if ever called.
+
     ### Attributes:
     - screen: pg.Surface => the screen onto which display the
     options
@@ -17,6 +25,17 @@ class MenuRender:
     - from_top: int => y coordinates of the screen to place the
     options, corresponds to the center of the upmost option.
     - spacer: int => multiplied factor separating the options
+    - menu: Menu => Menu object to be displayed on the screen
+    - holder: PlaceHolder => object used to place and render the text of each
+    options from the menu
+    - rendered: dict[str, list[tuple[pg.Surface, pg.Rect]]] => a dict of
+    lists, each containing the menu's list of options rendered in a specific
+    style
+    - renders: list[tuple[pg.Surface, pg.Rect]] => the current list of
+    renders to display each option in the right style
+    - self.draw_methods: dict[str, Callable[[], None]] => methods linked
+    to a string to be called with the draw method, namely "vertical",
+    "horizontal" and "selected"
 
     ### Methods:
     <u>Option rendering:</u>
@@ -38,6 +57,8 @@ class MenuRender:
     being displayed around.
     - draw_chart_options => displays the options in a grid of 2 columns
     - draw_selected_option => displays the selected option only
+    - draw => based on the draw_methods dict attribute, call a drawing method
+    corresponding to the string passed as argument
     """
     def __init__(
             self, screen: pg.Surface, menu: Menu, dialogs: dict[str, str],
@@ -67,10 +88,10 @@ class MenuRender:
         self.draw_methods: dict[str, Callable[[], None]] = {
             "vertical": self.draw_vertical_options,
             "horizontal": self.draw_horizontal_options,
-            "select": self.draw_selected_option}
+            "selected": self.draw_selected_option}
 
     # _________________________________________________________________________
-    #                         Rendering-related Methods
+    #                       RENDERING-RELATED METHODS
     # _________________________________________________________________________
     def pre_render_all_options(self, dialogs: dict[str, str]) -> None:
         """To be called when all options' visuals need to be updated.
@@ -129,7 +150,7 @@ class MenuRender:
             self.renders[select] = self.rendered["select"][select]
 
     # _________________________________________________________________________
-    #                          Display-related Methods
+    #                         DISPLAY-RELATED METHODS
     # _________________________________________________________________________
     def draw_vertical_options(self) -> None:
         """Places based on the from_left and from_top attributes and displays
@@ -236,4 +257,10 @@ class MenuRender:
         self.screen.blit(select_render[0], select_render[1])
 
     def draw(self, arrangement: str) -> None:
+        """Calls the drawing method saved in the draw_methods attribute
+        if an entry corresponds to the string passed in argument. Accepts
+        "vertical", "horizontal" and "selected". Their respective methods can
+        be called directly and this one serves purpose in the case of multiple
+        menues being called through a list, for example.
+        """
         self.draw_methods.get(arrangement, lambda: None)()
