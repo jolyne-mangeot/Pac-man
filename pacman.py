@@ -1,6 +1,7 @@
 
-import pygame as pg
+from sys import argv
 
+import pygame as pg
 from pydantic import ValidationError
 
 from pacman import (
@@ -8,7 +9,7 @@ from pacman import (
     MainMenuState, OptionsMenuState, HighscoresMenuState, GameState)
 
 
-def main() -> int:
+def main(config_path: str) -> int:
     """Pac-Man program's main script, initiating a Control object and
     calling its game_loop method, effectively launching the game.
 
@@ -19,7 +20,7 @@ def main() -> int:
     pg.init()
     pg.font.init()
 
-    game = Control("pacman/config.json")
+    game = Control(config_path)
 
     state_dict: dict[str, State] = {
         "main_menu": MainMenuState(game),
@@ -35,16 +36,17 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    config_path: str = argv[1] if len(argv) > 1 else ""
     try:
-        output: int = main()
-    # except KeyboardInterrupt:
-    #     output = 1
-    #     print("\r  ")
+        output: int = main(config_path)
+    except KeyboardInterrupt:
+        output = 1
+        print("\r  ")
     except ValidationError:
         output = 2
         print("Unexpected error during Parsing of configuration files.")
-    # except Exception:
-    #     output = 3
+    except Exception:
+        output = 3
     exits: tuple[str, ...] = (
         "Success", "Keyboard interrupt",
         "Configuration error", "Unknown error")

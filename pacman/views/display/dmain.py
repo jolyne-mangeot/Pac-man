@@ -1,7 +1,9 @@
 
+import pygame as pg
+
 from .display import Display
 from pacman.controllers import Control, Menu
-from pacman.views import MenuRender
+from pacman.views import PlaceHolder, Style, MenuRender, new_surface
 
 
 class MainMenuDisplay(Display):
@@ -19,6 +21,8 @@ class MainMenuDisplay(Display):
     - *Display instance methods*
     - startup => initialize a PlaceHolder and a MenuRender objects
     - cleanup => deletes the MenuRender object to save memory
+    - create_errors_holder => returns a PlaceHolder object used to display
+    error messages
     - draw => fills the screen with a background and draws the main menu
     """
     def __init__(self, control: Control) -> None:
@@ -27,19 +31,43 @@ class MainMenuDisplay(Display):
         """
         super().__init__(control)
         self.menu_render: MenuRender
+        self.error_list: MenuRender
         self.load_menu_assets()
 
-    def startup(self, menu: Menu) -> None:
+    def startup(self, menu: Menu, error_list: Menu) -> None:
         """Called when the MainMenuState comes up and initialize all needed
         visual variables.
         """
+        screen_h: int = self.control.interface.get_height()
         self.menu_render = self.init_menu(self.scale_menu_holders(), menu)
+        self.error_list = self.init_menu(
+            self.create_errors_holder(), error_list,
+            int(screen_h * 0.03), int(screen_h * 0.26),
+            int(screen_h * 0.03))
 
     def cleanup(self) -> None:
         """Called when the MainMenuState is left, deletes the menu_render
         attribute.
         """
         del self.menu_render
+
+    def create_errors_holder(self) -> PlaceHolder:
+        """Returns aPlaceHolder object used to display error messages in the
+        main menu.
+        """
+        screen_h: int = self.control.interface.get_height()
+        graphic: pg.Surface = new_surface(
+            (int(screen_h * 0.5), int(screen_h * 0.013)))
+        g_rect: pg.Rect = graphic.get_rect()
+        pg.draw.rect(graphic, pg.Color(15, 15, 15, 40), g_rect,
+                     int(screen_h * 0.05))
+        return PlaceHolder([
+            Style(pg.Color(0, 0, 0),
+                  pg.font.Font(self.font_path, int(screen_h * 0.012)),
+                  graphic, pg.Rect(g_rect.width * 0.05, g_rect.height * 0.05,
+                                   g_rect.width * 0.95, g_rect.height * 0.95),
+                  int(screen_h * 0.009)),
+            Style(), Style()])
 
     def draw(self) -> None:
         """Called by update to display all visual elements of the menu, namely
@@ -48,5 +76,6 @@ class MainMenuDisplay(Display):
         self.control.screen.fill((0, 0, 0))
         self.control.interface.fill((255, 120, 0))
         self.menu_render.draw_vertical_options()
+        self.error_list.draw_vertical_options()
         self.control.screen.blit(
             self.control.interface, self.control.interface_rect)

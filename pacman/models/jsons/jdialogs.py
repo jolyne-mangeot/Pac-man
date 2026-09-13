@@ -1,6 +1,4 @@
 
-from pydantic import Field
-
 from .utils import JSONModel
 
 
@@ -11,64 +9,77 @@ class Dialogs(JSONModel):
     values are in english, and should be updated in a different language from
     a dictionary parsed from its corresponding json file.
     """
-    title: str = Field(default="Pac-Man")
-    play: str = Field(default="Play")
-    highscores: str = Field(default="Highscores")
-    settings: str = Field(default="Settings")
-    quit: str = Field(default="Quit")
+    title: str = "Pac-Man"
+    play: str = "Play"
+    highscores: str = "Highscores"
+    settings: str = "Settings"
+    quit: str = "Quit"
 
-    lang: str = Field(default="Language")
-    res: str = Field(default="Window")
-    fullscreen: str = Field(default="fullscreen")
-    sfx_vol: str = Field(default="SFX volume")
-    bgm_vol: str = Field(default="BGM volume")
-    up_key: str = Field(default="up")
-    down_key: str = Field(default="down")
-    left_key: str = Field(default="left")
-    right_key: str = Field(default="right")
-    confirm_key: str = Field(default="confirm")
-    return_key: str = Field(default="return")
-    reset_settings: str = Field(default="reset settings")
-    apply: str = Field(default="apply")
-    back: str = Field(default="back")
+    arg_error: str = "No argument given, used default config path"
+    config_error: str = "The configuration file could not be opened"
+    settings_error: str = "The settings file could not be opened"
+    highscores_error: str = "The highscores file could not be opened"
+    dialogs_error: str = (
+        "The dialogs for the chosen language could not be loaded")
+    permission_error: str = "File permissions error"
+    error_occured: str = "An error occured..."
+    defaulted_values: str = (
+        "Faulty configurations replaced with default values")
 
-    highscores_menu: str = Field(default="Highscore menu")
-    no_highscores: str = Field(default="No highscores saved")
-    player: str = Field(default="Player")
-    score: str = Field(default="Total score")
-    level_reached: str = Field(default="Level reached")
-    time_taken: str = Field(default="Time taken")
-    remaining_lives: str = Field(default="Remaining lives")
-    reset_highscores: str = Field(default="reset")
+    options_menu: str = "Game options"
+    lang: str = "Language"
+    res: str = "Window"
+    fullscreen: str = "fullscreen"
+    sfx_vol: str = "SFX volume"
+    bgm_vol: str = "BGM volume"
+    up_key: str = "up"
+    down_key: str = "down"
+    left_key: str = "left"
+    right_key: str = "right"
+    confirm_key: str = "confirm"
+    return_key: str = "return"
+    reset_settings: str = "reset settings"
+    apply: str = "apply"
+    reload_config: str = "Reload config"
+    reset_config: str = "Reset config"
+    back: str = "back"
 
-    paused: str = Field(default="Pause menu")
-    resume: str = Field(default="Resume")
-    give_up: str = Field(default="give up")
+    highscores_menu: str = "Highscore menu"
+    no_highscores: str = "No highscores saved"
+    player: str = "Player"
+    score: str = "Total score"
+    level_reached: str = "Level reached"
+    time_taken: str = "Time taken"
+    remaining_lives: str = "Remaining lives"
+    reset_highscores: str = "reset"
 
-    cheats_menu: str = Field(default="Cheats menu")
-    true: str = Field(default="True")
-    false: str = Field(default="False")
-    invincibility: str = Field(default="Invincibility")
-    infinite_super: str = Field(default="Infinite Super")
-    super_speed: str = Field(default="Super speed")
-    life_gains: str = Field(default="Gain life")
-    skip_level: str = Field(default="Skip level")
+    paused: str = "Pause menu"
+    resume: str = "Resume"
+    give_up: str = "give up"
 
-    level_win: str = Field(default="Level complete !")
-    level_fail: str = Field(default="Level failed...")
-    gum: str = Field(default="Gums")
-    sup_gum: str = Field(default="Super gums")
-    ghost: str = Field(default="Ghosts")
-    level: str = Field(default="Level")
-    current_score: str = Field(default="Current score")
-    continue_next: str = Field(default="Continue")
+    cheats_menu: str = "Cheats menu"
+    true: str = "True"
+    false: str = "False"
+    invincibility: str = "Invincibility"
+    infinite_super: str = "Infinite Super"
+    super_speed: str = "Super speed"
+    life_gains: str = "Gain life"
+    skip_level: str = "Skip level"
 
-    run_end: str = Field(default="End of run")
-    playtime: str = Field(default="Run time")
+    level_win: str = "Level complete !"
+    level_fail: str = "Level failed..."
+    gum: str = "Gums"
+    sup_gum: str = "Super gums"
+    ghost: str = "Ghosts"
+    level: str = "Level"
+    current_score: str = "Current score"
+    continue_next: str = "Continue"
 
-    player_name: str = Field(default="Enter your name")
-    save_score: str = Field(default="Save score")
-    score_saved: str = Field(default="Score saved !")
-    error_occured: str = Field(default="An error occured...")
-    cheats_used: str = Field(default="Cheats were used...")
-    end_run: str = Field(default="Return to main menu")
+    run_end: str = "End of run"
+    playtime: str = "Run time"
+
+    player_name: str = "Enter your name"
+    save_score: str = "Save score"
+    score_saved: str = "Score saved !"
+    cheats_used: str = "Cheats were used..."
+    end_run: str = "Return to main menu"

@@ -4,7 +4,7 @@ from .jconfig import (
 from .jsettings import Settings, KeyConfig, Languages, Resolutions, ACTION_LIST
 from .jhighscores import Highscores, Score
 from .jdialogs import Dialogs
-from .utils import json_to_model, model_to_json
+from .utils import JSONModel, json_to_model, model_to_json
 
 
 __all__ = [
@@ -12,4 +12,4 @@ __all__ = [
     "Settings", "KeyConfig", "Languages", "Resolutions", "ACTION_LIST",
     "Highscores", "Score",
     "Dialogs",
-    "json_to_model", "model_to_json"]
+    "JSONModel", "json_to_model", "model_to_json"]

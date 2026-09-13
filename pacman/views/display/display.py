@@ -127,7 +127,8 @@ class Display:
     def scale_menu_holders(
             self, holder_size_factor: tuple[float, float] = (0.3, 0.08),
             text_rect_factor: tuple[float, float, float, float]
-            = (0.05, 0.05, 0.95, 0.95)) -> PlaceHolder:
+            = (0.05, 0.05, 0.95, 0.95),
+            font_factor: float = 0.03) -> PlaceHolder:
         """Create a PlaceHolder using multiple instantiated Style objects and
         assign it to self for later display usage.
 
@@ -147,12 +148,12 @@ class Display:
             int(scale[0] * text_rect_factor[2]),
             int(scale[1] * text_rect_factor[3]))
 
-        font_size: int = int(screen_h * 0.03)
+        font_size: int = int(screen_h * font_factor)
         plain_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
         picked_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
         picked_font.set_bold(True)
 
-        spacing: int = int(screen_h * 0.023)
+        spacing: int = int(screen_h * font_factor * 0.76)
         des_style: Style = Style(
             font=plain_font, graphic=self.deselect_hold, text_rect=rect,
             letter_spacing=spacing)

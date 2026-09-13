@@ -6,8 +6,9 @@ import pygame as pg
 
 from pacman.controllers import Control, State, Menu
 from pacman.models import (
-    Option, Spacer, ActivateOption, SliderOption, InputOption, SelectionOption,
-    Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
+    TextHolder, Spacer, ActivateOption, SliderOption, InputOption,
+    SelectionOption,
+    Config, Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
 from pacman.views import OptionsMenuDisplay
 
 
@@ -30,13 +31,13 @@ class OptionsMenuState(State):
     - *State instance methods*
     - init_menu => instantiate the Menu object into the options_menu attribute
     with set parameters
+    - startup (override) => calls init_menu to initialize navigation
+    - cleanup (override) => deletes the options_menu and settings attributes
     - reset_settings => updates the settings dict with default values by
     initializing a new Settings and KeyConfig object, then rerender all options
     - apply_settings => updates the control's settings object with a new one
     created from the settings dict, discarding any invalid arguments, then
     calls cleanup, control's update_options and startup to apply this settings
-    - startup (override) => calls init_menu to initialize navigation
-    - cleanup (override) => deletes the options_menu and settings attributes
     to save memory
     - get_event (override) => check if the return_key has been pressed to
     return to the main menu, otherwise pass down the pygame event received
@@ -56,6 +57,7 @@ class OptionsMenuState(State):
         State.__init__(self, control)
         self.display: OptionsMenuDisplay = OptionsMenuDisplay(self.control)
         self.settings: dict[str, Any]
+        self.options_title: Menu
         self.options_menu: Menu
 
     def __init_menu__(self) -> None:
@@ -64,12 +66,15 @@ class OptionsMenuState(State):
         elements from the dialogs dict of control.
         """
         self.settings = self.control.settings.model_dump()
-        options: list[Option] = [
+
+        self.options_title = Menu(options=[
+            TextHolder("options_menu", False, "picked")])
+
+        self.options_menu = Menu(loop_cursor=False, options=[
             SelectionOption(
                 "lang", self.settings, [str(lang) for lang in Languages]),
-            SelectionOption(
-                "res", self.settings, [res for res in Resolutions],
-                cycle=False),
+            SelectionOption("res", self.settings, [res for res in Resolutions],
+                            cycle=False),
             SliderOption(
                 "sfx_vol", self.settings, range(0, 11), 0, 0, cycle=False),
             SliderOption(
@@ -83,9 +88,28 @@ class OptionsMenuState(State):
             ActivateOption("reset_settings", partial(self.reset_settings),
                            "option_update"),
             ActivateOption("apply", partial(self.apply_settings)),
-            ActivateOption("back", partial(self.back_a_state))]
+            ActivateOption(
+                "reload_config", partial(self.control.reload_config)),
+            ActivateOption(
+                "reset_config", partial(self.control.save_config, Config())),
+            ActivateOption("back", partial(self.back_a_state))])
 
-        self.options_menu = Menu(loop_cursor=False, options=options)
+    def startup(self) -> None:
+        """Called when the state is awaken, calls init_menu to keep the options
+        up with the settings.
+        """
+        self.__init_menu__()
+        self.display.startup(self.options_title, self.options_menu)
+
+    def cleanup(self) -> None:
+        """Called when the state is deactivated, deleting the options_menu and
+        settings attributes to save on memory usage.
+        """
+        self.display.mixer("cursor_unpick")
+        self.display.cleanup()
+        del self.options_title
+        del self.options_menu
+        del self.settings
 
     def reset_settings(self) -> None:
         """Updates the settings dict that's being modified by the user's inputs
@@ -94,8 +118,8 @@ class OptionsMenuState(State):
         method.
         """
         self.settings["key_config"].update(KeyConfig().model_dump())
-        self.settings.update(Settings().model_dump())
-        self.display.menu_render.pre_render_all_options(self.control.dialogs)
+        self.settings.update(Settings(status=True).model_dump())
+        self.display.options_menu.pre_render_all_options(self.control.dialogs)
 
     def apply_settings(self) -> None:
         """Updates the control's settings object with one made from the
@@ -106,27 +130,13 @@ class OptionsMenuState(State):
         function, then call cleanup, control's update and startup to
         effectively apply the new settings.
         """
-        self.control.settings = Settings(**self.settings)
         self.cleanup()
-        self.control.update_options()
+        self.control.update_options(Settings(**self.settings))
         self.startup()
         self.display.mixer("option_activate")
 
-    def startup(self) -> None:
-        """Called when the state is awaken, calls init_menu to keep the options
-        up with the settings.
-        """
-        self.__init_menu__()
-        self.display.startup(self.options_menu)
-
-    def cleanup(self) -> None:
-        """Called when the state is deactivated, deleting the options_menu and
-        settings attributes to save on memory usage.
-        """
-        self.display.mixer("cursor_unpick")
-        self.display.cleanup()
-        del self.options_menu
-        del self.settings
+    def reset_config(self) -> None:
+        self.control.save_config(Config(status=True))
 
     def get_event(self, event: pg.event.Event) -> None:
         """Takes a pygame Event object as argument.
@@ -145,10 +155,8 @@ class OptionsMenuState(State):
             *self.read_input_events(event), "chart")
 
     def update(self) -> None:
-        """Called after the events have been parsed, rerender all options in
-        the options_menu object to keep up with the user's changes, then call
-        the draw and mixer Display methods.
+        """Called after the events have been parsed, calls the mixer and draw
+        Display methods.
         """
-        self.display.menu_render.pre_render_option(self.control.dialogs)
         self.display.menu_mixer([self.options_menu])
         self.display.draw()

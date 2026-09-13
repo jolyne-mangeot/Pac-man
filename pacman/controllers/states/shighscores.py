@@ -113,9 +113,8 @@ class HighscoresMenuState(State):
         """
         if self.control.highscores.scores == []:
             return
-        self.control.highscores = Highscores()
         self.cleanup()
-        self.control.update_highscores()
+        self.control.save_config(Highscores())
         self.startup()
 
     def get_event(self, event: pg.event.Event) -> None:

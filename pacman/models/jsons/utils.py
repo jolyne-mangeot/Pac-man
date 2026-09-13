@@ -29,6 +29,7 @@ class JSONModel(BaseModel):
     default value.
     """
     file_name: ClassVar[str] = ""
+    status: bool = False
 
     @field_validator("*", mode="before")
     @classmethod
@@ -132,7 +133,7 @@ def json_to_model(
             if sub_dict != "":
                 config_dict = config_dict[sub_dict]
             config_dict.update(extra_args)
-            return model(**config_dict)
+            return model(status=True, **config_dict)
     except (FileNotFoundError, PermissionError):
         return model(**extra_args)
 
@@ -149,12 +150,15 @@ def model_to_json(model: JSONModel, file_path: str = "") -> bool:
     success: bool = False
     path: str = (file_path if file_path != ""
                  else "pacman/" + model.file_name + ".json")
-    with open(path, "w") as file:
-        format: str = model.model_dump_json(
-            indent=4, exclude={"file_name"}, warnings="error")
-        print(format, file=file)
-        print(
-            "Information written out from Model of type "
-            f"{model.__class__.__name__}:\n{format}")
-        success = True
+    try:
+        with open(path, "w") as file:
+            format: str = model.model_dump_json(
+                indent=4, exclude={"file_name", "status"}, warnings="error")
+            print(format, file=file)
+            print(
+                "Information written out from Model of type "
+                f"{model.__class__.__name__}:\n{format}")
+            success = True
+    except PermissionError:
+        pass
     return success

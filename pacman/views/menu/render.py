@@ -129,9 +129,14 @@ class MenuRender:
         des, sel, pik = self.holder.pre_render(
             self.menu.options[index].get_texts(dialogs),
             self.menu.options[index].visible)
-        self.rendered["deselect"][index] = des
-        self.rendered["select"][index] = sel
-        self.rendered["picked"][index] = pik
+        try:
+            self.rendered["deselect"][index] = des
+            self.rendered["select"][index] = sel
+            self.rendered["picked"][index] = pik
+        except IndexError:
+            self.rendered["deselect"].append(des)
+            self.rendered["select"].append(sel)
+            self.rendered["picked"].append(pik)
 
     def update_rendered_list(self) -> None:
         """Updates the renders attribute by resetting it to the list of

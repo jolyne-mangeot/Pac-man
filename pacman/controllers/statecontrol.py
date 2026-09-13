@@ -5,7 +5,7 @@ from typing import cast
 import pygame as pg
 
 from pacman.models import (
-    Config, Settings, KeyConfig, Highscores, Dialogs,
+    JSONModel, Config, Settings, KeyConfig, Highscores, Dialogs,
     json_to_model, model_to_json)
 
 
@@ -56,15 +56,22 @@ class Control:
     access it as an attribute
 
     ### Methods:
+    - update_display => calls pygame functions related to the display based
+    on the current settings
     - update_options => reloads the dialog and updates the screen to fit new
     settings from the Setting object
+    - save_config => saves a JSONModel passed as argument in attributes and
+    files
+    - load_dialogs => loads up the dialog file with the json_to_model
+    function and transforms it into a dict[str, str]
+    - reload_config => reloads the Config using the config_path
     - set_up_states => Updates the state_dict with the one given as argument
     - flip_state => Calls cleaning of the current state and setup of the
     new state
-    - update => called every run of the game_loop, calling the current state's
-    update method
     - event_loop => check every event in the pg.event.get() queue and send them
     to the current state
+    - update => called every run of the game_loop, calling the current state's
+    update method
     - game_loop => runs a while loop on the done attribute and calls
     event_loop, update, updates the screen and the delta_time
     """
@@ -73,22 +80,20 @@ class Control:
         Dialogs and Highscores objects consequently. Initiate all instance
         attributes either using Pygame modules or with default values.
         """
-        self.config: Config = cast(Config, json_to_model(Config, config_path))
-        self.settings: Settings = cast(Settings, json_to_model(
-            Settings, extra_args={"key_config": json_to_model(
-                KeyConfig, sub_dict="key_config")}))
-        self.highscores: Highscores = cast(
-            Highscores, json_to_model(Highscores))
-        self.dialogs: dict[str, str] = cast(dict[str, str], json_to_model(
-            Dialogs,
-            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
-            ).model_dump())
+        self.config_path: str = config_path
+        self.config: Config
+        self.settings: Settings
+        self.highscores: Highscores
+        self.dialogs: dict[str, str]
+        self.reload_config()
 
         self.screen: pg.Surface
-        self.interface: pg.Surface = pg.Surface((100, 100))
+        self.interface: pg.Surface = pg.Surface((1, 1))
         self.interface_rect: pg.Rect
+        pg.display.set_icon(pg.image.load("pacman/assets/icon.png"))
+        pg.display.set_caption(self.dialogs["title"])
         self.update_display()
-        self.screen_rect: pg.Rect = self.screen.get_rect()
+
         self.bgm_channel: pg.mixer.Channel = pg.mixer.Channel(0)
         self.bgm_channel.set_volume(self.settings.bgm_vol / 10)
         self.sfx_channel: pg.mixer.Channel = pg.mixer.Channel(1)
@@ -129,28 +134,57 @@ class Control:
             self.interface_rect = self.interface.get_rect()
             self.interface_rect.topleft = (0, 0)
 
-    def update_options(self) -> None:
+    def update_options(self, new_settings: Settings) -> bool:
         """Updates Dialogs and screen attributes with updated settings.
 
         Calls json_to_model function again on Dialogs to reload them from
         file, update_display method to accord to new resolution settings and
         set new volumes for the sfx and bgm sound channels.
         """
-        model_to_json(self.settings)
-        self.dialogs = cast(dict[str, str], json_to_model(
-            Dialogs,
-            "pacman/assets/dialogs/" + self.settings.lang.value + ".json"
-            ).model_dump())
+        self.settings = new_settings
+        save_output: bool = model_to_json(self.settings)
+        self.load_dialogs()
         self.update_display()
         self.bgm_channel.set_volume(self.settings.bgm_vol / 10)
         self.sfx_channel.set_volume(self.settings.sfx_vol / 10)
-        self.screen_rect = self.screen.get_rect()
+        return save_output
 
-    def update_highscores(self) -> bool:
-        """Simply returns the model_to_json function with the highscores
-        attributes, keeping Control as the only class accessing external files.
+    def save_config(self, config: JSONModel) -> bool:
+        """Simply returns the model_to_json function with the given JSONModel
+        object, keeping Control as the only class accessing external files.
         """
-        return model_to_json(self.highscores)
+        setattr(self, config.__class__.__name__.lower(), config)
+        return model_to_json(config)
+
+    def load_dialogs(self) -> None:
+        """For better access, the Dialog JSONModel is casted to dict[str, str]
+        after being loaded if the language chosen isn't en-en.
+
+        But to show file opening-related errors, the status attribute is
+        added to the dict as a string, from a boolean.
+        """
+        if self.settings.lang.value == "en-en":
+            self.dialogs = Dialogs(status=True).model_dump(exclude={"status"})
+        else:
+            dialogs: Dialogs = cast(Dialogs, json_to_model(
+                Dialogs,
+                "pacman/assets/dialogs/" + self.settings.lang.value + ".json"))
+            self.dialogs = cast(dict[str, str],
+                                dialogs.model_dump(exclude={"status"}))
+            self.dialogs.update(
+                {"status": cast(str, dialogs.model_dump(include={"status"}))})
+
+    def reload_config(self) -> None:
+        """Reloads all configuration files from the path passed as argument
+        when the program started.
+        """
+        self.config = cast(
+            Config, json_to_model(Config, self.config_path))
+        self.settings = cast(Settings, json_to_model(
+            Settings, extra_args={"key_config": json_to_model(
+                KeyConfig, sub_dict="key_config")}))
+        self.highscores = cast(Highscores, json_to_model(Highscores))
+        self.load_dialogs()
 
     def set_up_states(self, state_dict: dict[str, State]) -> None:
         """Takes a dict of State objects given by the main function of the
@@ -181,14 +215,6 @@ class Control:
         self.current_state.startup()
         self.current_state.previous = previous
 
-    def update(self) -> None:
-        """Check for state done bool attribute to calls its own update method
-        or initialize a new state with flip_state.
-        """
-        if self.current_state.done:
-            self.flip_state()
-        self.current_state.update()
-
     def event_loop(self) -> None:
         """For loop running on each event in the pygame event queue. Checks for
         pygame.QUIT to switch the done attribute to True, then calls the
@@ -198,6 +224,14 @@ class Control:
             if event.type == pg.QUIT:
                 self.done = True
             self.current_state.get_event(event)
+
+    def update(self) -> None:
+        """Check for state done bool attribute to calls its own update method
+        or initialize a new state with flip_state.
+        """
+        if self.current_state.done:
+            self.flip_state()
+        self.current_state.update()
 
     def game_loop(self) -> None:
         """Runs while the done attribute is False.

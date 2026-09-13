@@ -90,18 +90,20 @@ class LevelDisplay:
         Sets the size based on either the width or height of the interface
         based on the aspect ratio of the maze.
         """
+        screen_w: int = self.display.control.interface.get_width()
+        screen_h: int = self.display.control.interface.get_height()
         if self.level.map.width > self.level.map.height * 1.7:
-            maze_width: int = int(
-                self.display.control.interface.get_width() * 0.98)
+            maze_width: int = int(screen_w * 0.98)
             maze_height: int = int(maze_width * self.level.map.height
                                    / self.level.map.width * 0.98)
         else:
-            maze_height = int(
-                self.display.control.interface.get_height() * 0.82)
+            maze_height = int(screen_h * 0.8)
             maze_width = int(maze_height * self.level.map.width
                              / self.level.map.height * 0.98)
 
         self.cell_size = maze_width // int(self.level.map.width * 1.5)
+        if self.cell_size > int(screen_h * 0.09):
+            self.cell_size = int(screen_h * 0.09)
         self.cell_gap = int(self.cell_size // 2.3)
 
     def coords(self, x: int, y: int, h_path: float = 0, v_path: float = 0
@@ -186,13 +188,13 @@ class LevelDisplay:
         """For every character, gum and super gum's sprites, scale them based
         on the cell_size and place these renders in their dedicated attributes.
         """
-        assets: LevelTheme = self.display.themed_assets[self.level.theme]
         cell_s: int = self.cell_size
+        gum_size: int = int(cell_s * 0.6)
 
-        self.gum = [pg.transform.scale(gum, (cell_s, cell_s))
-                    for gum in assets["gum"]]
+        self.gum = [pg.transform.scale(gum, (gum_size, gum_size))
+                    for gum in self.display.gums["gum"]]
         self.sup_gum = [pg.transform.scale(sup_gum, (cell_s, cell_s))
-                        for sup_gum in assets["sup_gum"]]
+                        for sup_gum in self.display.gums["sup_gum"]]
 
         self.characters = {}
         for char, sprites in self.display.characters.items():
@@ -278,6 +280,20 @@ class LevelDisplay:
                 direction.name][frame],
             pg.Rect(*position, self.cell_size, self.cell_size))
 
+    def render_gums(self) -> list[tuple[pg.Surface, pg.Rect]]:
+        cell_s: int = self.cell_size
+        gums: list[tuple[pg.Surface, pg.Rect]] = []
+        gums.extend([(
+            self.gum[self.level.level_timer % 3],
+            pg.Rect(*self.coords(*gum, 0.2, 0.2), cell_s, cell_s))
+            for gum in self.level.map.simple_gums])
+
+        gums.extend([(
+            self.sup_gum[self.level.level_timer % 3],
+            pg.Rect(*self.coords(*sup_gum), cell_s, cell_s))
+            for sup_gum in self.level.map.super_gums])
+        return gums
+
     def render_interface(self) -> tuple[pg.Surface, pg.Rect]:
         """Renders all interface visuals and return a tuple containing the
         full surface and a pygame.Rect object containing its positional
@@ -338,15 +354,7 @@ class LevelDisplay:
         maze_surf: pg.Surface = self.maze_surf.copy()
         visual_elements: list[tuple[pg.Surface, pg.Rect]] = []
 
-        visual_elements.extend([(
-            self.gum[self.level.level_timer % 3],
-            pg.Rect(*self.coords(*gum), self.cell_size, self.cell_size))
-            for gum in self.level.map.simple_gums])
-
-        visual_elements.extend([(
-            self.sup_gum[self.level.level_timer % 3],
-            pg.Rect(*self.coords(*sup_gum), self.cell_size, self.cell_size))
-            for sup_gum in self.level.map.super_gums])
+        visual_elements.extend(self.render_gums())
 
         for name, char in self.level.chars.items():
             if char.is_alive is True:
@@ -378,9 +386,6 @@ class LevelTheme(TypedDict):
     binary_cell_borders: list[pg.Surface]
     paths_and_walls: dict[str, pg.Surface]
     decorations: list[pg.Surface]
-
-    gum: list[pg.Surface]
-    sup_gum: list[pg.Surface]
 
 
 class CharacterSprites(TypedDict):
@@ -456,6 +461,7 @@ class GameDisplay(Display):
         self.themed_assets: dict[str, LevelTheme]
         self.interface: dict[str, pg.Surface]
         self.characters: dict[str, CharacterSprites]
+        self.gums: dict[str, list[pg.Surface]]
 
         self.level_display: LevelDisplay
         self.scaled_ui: dict[str, pg.Surface]
@@ -465,7 +471,6 @@ class GameDisplay(Display):
 
         self.load_menu_assets()
         self.load_level_assets()
-        self.load_characters_sprites()
 
     # _________________________________________________________________________
     #                        GAME STATE-RELATED METHODS
@@ -535,6 +540,7 @@ class GameDisplay(Display):
         self.themed_assets = {}
         for theme in ("grassy", "dungeon"):
             self.load_theme_sprites(theme)
+        self.load_characters_sprites()
         level_ui_sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/interface/life_and_energy.png")
         self.interface = {
@@ -553,7 +559,16 @@ class GameDisplay(Display):
         super_sht: SpriteSheet = SpriteSheet(
             "pacman/assets/level/skellies_premade_2.png")
         pacman_sht: SpriteSheet = SpriteSheet(
-            "pacman/assets/level/example_characters.png")
+            "pacman/assets/level/character_sprites.png")
+
+        gum: list[pg.Surface] = []
+        for x in range(3):
+            gum.append(pacman_sht.get_sprite((96 + x * 16, 0), (16, 16)))
+        sup_gum: list[pg.Surface] = []
+        for x in range(3):
+            sup_gum.append(pacman_sht.get_sprite((96 + x * 16, 16), (16, 16)))
+
+        self.gums = {"gum": gum, "sup_gum": sup_gum}
 
         def get_frames(coords: tuple[int, int], sheet: SpriteSheet
                        ) -> list[pg.Surface]:
@@ -576,15 +591,14 @@ class GameDisplay(Display):
                     "LEFT": get_frames((coords[0], coords[1] + 16), sheet),
                     "DOWN": get_frames((coords[0], coords[1]), sheet)}
 
-        pacman_pos: tuple[int, int] = (5 * 16 * 3, 4 * 16 * 4)
         sheet_pos: dict[str, tuple[int, int]] = {
             "Blinky": (10 * 16 * 3, 2 * 16 * 4),
             "Pinky": (8 * 16 * 3, 14 * 16 * 4),
             "Inky": (9 * 16 * 3, 29 * 16 * 4),
             "Clyde": (0, 0)}
         self.characters = {
-            "Pacman": {"normal": load_sprites(pacman_pos, pacman_sht),
-                       "super": load_sprites(pacman_pos, pacman_sht)}}
+            "Pacman": {"normal": load_sprites((0, 0), pacman_sht),
+                       "super": load_sprites((48, 0), pacman_sht)}}
         for name, coords in sheet_pos.items():
             self.characters.update({
                 name: {"normal": load_sprites(coords, normal_sht),
@@ -651,20 +665,10 @@ class GameDisplay(Display):
             sheet.get_sprite((coords), (16, 16)) for coords in (
                 (128, 0), (144, 0), (128, 16), (144, 16))]
 
-        gum: list[pg.Surface] = [new_surface((16, 16))] * 3
-        pg.draw.circle(gum[0], pg.Color(255, 255, 255), (8, 8), 1.2)
-
-        sup_gum_sht: SpriteSheet = SpriteSheet(
-            "pacman/assets/level/" + theme + "_sup_gum.png")
-        sup_gum: list[pg.Surface] = []
-        for x in range(3):
-            sup_gum.append(sup_gum_sht.get_sprite((x * 192, 192), (192, 192)))
-
         self.themed_assets.update({theme: {
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
-            "decorations": decorations,
-            "gum": gum, "sup_gum": sup_gum}})
+            "decorations": decorations}})
 
     # _________________________________________________________________________
     #                      SCALING AND RENDERING METHODS

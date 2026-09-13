@@ -163,7 +163,7 @@ class Map:
         available_cells: list[Cell] = []
         for x in range(self.width):
             for y in range(self.height):
-                if self.map[x][y].simple_gum is True:
+                if self.map[x][y].super_gum is True:
                     continue
                 if self.map[x][y].walls == 15:
                     continue

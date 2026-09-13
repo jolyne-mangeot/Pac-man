@@ -201,7 +201,7 @@ class Level:
         current speed.
         """
         self.pacman = Pacman(
-            config.pac_man_speed, config.super_pac_man_speed,
+            config.pacman_speed, config.pacman_super_speed,
             ((maze.width - 1) // 2, (maze.height - 1) // 2))
         self.pacman.speed = self.calc_speed(self.pacman.speed)
         self.pacman.super_speed = self.calc_speed(self.pacman.super_speed)

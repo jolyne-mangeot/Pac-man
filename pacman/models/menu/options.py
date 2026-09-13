@@ -163,7 +163,7 @@ class TextHolder(Option):
 
     #### Description:
     Option made to display some text. Can be selectable based on the arguments.
-    The name argument isn't used.
+    The name argument is used to browsed the dialogs like in other options.
 
     ### Attributes:
     - *Option instance parameters and attributes*
@@ -175,9 +175,7 @@ class TextHolder(Option):
     def __init__(self, name: str, selectable: bool = False,
                  static_style: str = "", text: str = "{name}") -> None:
         """Uses the name, selectable, static_style and text arguments to
-        create an Option made to display a single string. As the container
-        is declared an empty string, the text will be used to browse the
-        dialogs.
+        create an Option made to display a single string.
         """
         self.name: str = name
         self.text: str = text

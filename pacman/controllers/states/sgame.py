@@ -374,21 +374,22 @@ class GameState(State):
         the save score button to a success text, otherwise add a TextHolder
         with an error message to the menu.
         """
-        self.control.highscores = Highscores(
+        new_highscores: Highscores = Highscores(
             scores=self.control.highscores.scores + [Score(
                 player=self.player.player_name,
                 score=self.player.current_score,
                 level_reached=self.level_reached,
                 time_taken=self.player.playtime,
                 remaining_lives=self.player.lives)])
-        if self.control.update_highscores() is True:
+        if self.control.save_config(new_highscores) is True:
             self.menues["end"].options[10] = TextHolder("score_saved")
             self.menues["end"].select_index = 11
             self.display.update_menu(self.current_state, 10)
         else:
             if len(self.menues["end"].options) < 13:
-                self.menues["end"].options.append(TextHolder("error_occured"))
-                self.display.update_menu(self.current_state, 12)
+                self.menues["end"].options.append(
+                    TextHolder("permission_error"))
+                self.display.update_menu("end", 12)
 
     # _________________________________________________________________________
     #                           EVENTS-RELATED METHODS

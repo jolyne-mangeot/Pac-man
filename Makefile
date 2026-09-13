@@ -1,6 +1,6 @@
 
 NAME = pacman.py
-ARGS = config.json
+ARGS = pacman/config.json
 
 REQUIREMENTS = requirements.txt
 PROJECT = pacman

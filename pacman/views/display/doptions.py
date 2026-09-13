@@ -1,6 +1,6 @@
 
 from .display import Display
-from pacman.views import MenuRender
+from pacman.views import MenuRender, PlaceHolder
 from pacman.controllers import Control, Menu
 
 
@@ -14,35 +14,41 @@ class OptionsMenuDisplay(Display):
 
     ### Attributes:
     - *Display instance attributes*
-    - menu_render: MenuRender => object used to display the main menu
+    - options_menu: MenuRender => object used to display the main menu
 
     ### Methods:
     - *Display instance methods*
-    - startup => initialize the menu_render using the menu passed as argument
+    - startup => initialize the options_menu using the menu passed as argument
     - cleanup => deletes the MenuRender object to save memory
     - draw => fills the screen with a background and draws the main menu
     """
     def __init__(self, control: Control) -> None:
-        """Initializes the class using Control, declared the menu_render
+        """Initializes the class using Control, declared the options_menu
         attribute and calls load_menu_assets.
         """
         super().__init__(control)
-        self.menu_render: MenuRender
+        self.options_title: MenuRender
+        self.options_menu: MenuRender
         self.load_menu_assets()
 
-    def startup(self, menu: Menu) -> None:
+    def startup(self, options_title: Menu, options_menu: Menu) -> None:
         """Called when the OptionsMenuState comes up and initialize all needed
         visual variables.
         """
-        self.menu_render = self.init_menu(
-            self.scale_menu_holders((0.55, 0.08), (0.12, 0.07, 0.8, 0.86)),
-            menu, int(self.control.screen.get_height() / 10))
+        holder: PlaceHolder = self.scale_menu_holders(
+            (0.55, 0.08), (0.12, 0.07, 0.8, 0.86))
+        screen_h: int = self.control.screen.get_height()
+        self.options_title = self.init_menu(
+            holder, options_title, screen_h // 11)
+        self.options_menu = self.init_menu(
+            holder, options_menu, int(screen_h * 0.19),
+            spacer=int(screen_h * 0.04))
 
     def cleanup(self) -> None:
-        """Called when the OptionsMenuState is left, deletes the menu_render
+        """Called when the OptionsMenuState is left, deletes the options_menu
         attribute.
         """
-        del self.menu_render
+        del self.options_menu
 
     def draw(self) -> None:
         """Called by update to display all visual elements of the menu, namely
@@ -50,7 +56,9 @@ class OptionsMenuDisplay(Display):
         """
         self.control.screen.fill((0, 0, 0))
         self.control.interface.fill((255, 120, 0))
-        self.menu_render.draw_chart_options(int(
+        self.options_title.draw_vertical_options()
+        self.options_menu.pre_render_option(self.control.dialogs)
+        self.options_menu.draw_chart_options(int(
             self.control.interface.get_width() / 2))
         self.control.screen.blit(
             self.control.interface, self.control.interface_rect)

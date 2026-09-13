@@ -1,6 +1,7 @@
 
 from typing import ClassVar, Any, Iterable
 from random import randint, choice
+from functools import partial
 
 from pydantic import Field, field_validator, ValidationInfo
 
@@ -34,15 +35,16 @@ class MazeConfig(JSONModel):
     Contains attributes used to generate a level's maze.
 
     ### Attributes:
-    - width: int => greater than 3 and less than 100, defaulted to 11
+    - width: int => greater than 3 and less than 100
     - height: int => same as width
-    - gum_percent: int => between 0 and 100, defaulted to 80.
+    - gum_percent: int => between 0 and 100
     - seed: int => positive int randomized if unset
     """
-    width: int = Field(ge=3, le=100, default=11)
-    height: int = Field(ge=3, le=100, default=11)
-    gum_percent: int = Field(ge=0, le=100, default=80)
-    seed: int = Field(ge=0, default_factory=lambda: randint(0, 10000000))
+    width: int = Field(ge=3, le=100, default_factory=partial(randint, 6, 15))
+    height: int = Field(ge=3, le=100, default_factory=partial(randint, 6, 15))
+    gum_percent: int = Field(
+        ge=0, le=100, default_factory=partial(randint, 30, 95))
+    seed: int = Field(ge=0, default_factory=partial(randint, 0, 10000000))
 
 
 class GhostConfig(JSONModel):
@@ -71,15 +73,15 @@ class GhostConfig(JSONModel):
     strategies are effectively part of the literal list, otherwise returns the
     default value using a class attribute
     """
-    idle_strat: str = Field(default="AlternateAngleStrat")
-    chase_strat: str = Field(default="ChaseOnSpot")
-    escape_strat: str = Field(default="EscapeToCorner")
-    speed: int = Field(ge=0, le=20, default=10)
-    super_speed: int = Field(ge=0, le=20, default=10)
-    chase_radius: int = Field(ge=0, default=5)
-    escape_radius: int = Field(ge=0, default=5)
-    chasing_stamina: int = Field(ge=0, default=10)
-    down_time: int = Field(ge=0, le=20, default=3)
+    idle_strat: str = Field(default_factory=partial(choice, STRATS[:2]))
+    chase_strat: str = Field(default_factory=partial(choice, STRATS[2:5]))
+    escape_strat: str = Field(default_factory=partial(choice, STRATS[5:]))
+    speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
+    super_speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
+    chase_radius: int = Field(ge=0, default_factory=partial(randint, 3, 9))
+    escape_radius: int = Field(ge=0, default_factory=partial(randint, 3, 9))
+    chasing_stamina: int = Field(ge=0, default_factory=partial(randint, 6, 15))
+    down_time: int = Field(gt=0, default_factory=partial(randint, 2, 5))
 
     @field_validator("idle_strat", "chase_strat", "escape_strat",
                      mode="before")
@@ -91,7 +93,7 @@ class GhostConfig(JSONModel):
         """
         field_info: Any = (cls.model_fields[str(info.field_name)].asdict())
         if value not in STRATS:
-            return field_info["attributes"]["default"]
+            return field_info["attributes"]["default_factory"]()
         else:
             return value
 
@@ -107,8 +109,8 @@ class GameplayConfig(JSONModel):
     - life_regen: int => life given to the player upon entering the level
     - super_duration: int => time in second during which the super mode will
     last
-    - pac_man_speed: int => speed of pacman during the level
-    - super_pac_man_speed: int => speed of pacman in the super mode
+    - pacman_speed: int => speed of pacman during the level
+    - pacman_super_speed: int => speed of pacman in the super mode
     - ghosts: dict[str, GhostConfig] => dict of ghosts made of either
     GhostConfig objects or dicts containing all necessary information to
     generate one, also means not all 4 ghosts must be active at the same time
@@ -120,12 +122,13 @@ class GameplayConfig(JSONModel):
     - ghosts_validator (staticmethod) => parse the value given for each ghost
     to return a dict of GhostConfig
     """
-    timer: int = Field(gt=0, default=90)
-    theme: str = Field(default_factory=lambda: choice(THEMES))
-    life_regen: int = Field(ge=0, default=0)
+    timer: int = Field(gt=9, default=120)
+    theme: str = Field(default_factory=partial(choice, THEMES))
+    life_regen: int = Field(ge=0, default_factory=partial(randint, 0, 2))
     super_duration: int = Field(ge=0, default=8)
-    pac_man_speed: int = Field(ge=0, default=10)
-    super_pac_man_speed: int = Field(ge=0, default=11)
+    pacman_speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
+    pacman_super_speed: int = Field(
+        ge=0, default_factory=partial(randint, 12, 15))
     ghosts: dict[str, GhostConfig] = Field(
         min_length=0, max_length=4,
         default={"Blinky": GhostConfig(), "Pinky": GhostConfig(),
@@ -140,7 +143,7 @@ class GameplayConfig(JSONModel):
         """
         field_info: Any = (cls.model_fields[str(info.field_name)].asdict())
         if value not in THEMES:
-            return field_info["attributes"]["default"]
+            return field_info["attributes"]["default_factory"]()
         else:
             return value
 
@@ -247,10 +250,19 @@ class Config(JSONModel):
     file_name: ClassVar[str] = "config"
 
     player: PlayerConfig = Field(default_factory=PlayerConfig)
-    levels: list[LevelConfig] = Field(
-        min_length=1,
-        default=list([LevelConfig(maze=MazeConfig(seed=68771))]
-                     + [LevelConfig() for _ in range(9)]))
+    levels: list[LevelConfig] = Field(min_length=1, default=list([
+        LevelConfig(
+            maze=MazeConfig(width=6, height=6, gum_percent=50, seed=68771),
+            gameplay=GameplayConfig(
+                theme="grassy", super_duration=5,
+                pacman_speed=13, pacman_super_speed=14,
+                ghosts={"Blinky": GhostConfig(
+                    idle_strat="AlternateAngleStrat",
+                    chase_strat="ChaseOnSpot",
+                    escape_strat="EscapeToCorner",
+                    speed=13, super_speed=13, down_time=3,
+                    chase_radius=3, escape_radius=2, chasing_stamina=6)}))]
+        + [LevelConfig() for _ in range(9)]))
 
     @field_validator("player", mode="before")
     @staticmethod

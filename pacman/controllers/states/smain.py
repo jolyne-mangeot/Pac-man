@@ -1,11 +1,10 @@
 
 from functools import partial
-from typing import Any
 
 import pygame as pg
 
 from pacman.controllers import Control, State, Menu
-from pacman.models import ActivateOption
+from pacman.models import ActivateOption, TextHolder
 from pacman.views import MainMenuDisplay
 
 
@@ -22,6 +21,7 @@ class MainMenuState(State):
     - *State instance parameters and attributes*
     - display: MainMenuDisplay => display the main_menu using its own methods
     - main_menu: Menu => Menu object used to navigate options and display them
+    - error_list: Menu => object containing all current error messages
 
     ### Methods
     - *State instance methods*
@@ -29,6 +29,8 @@ class MainMenuState(State):
     with set parameters
     - startup (override) => calls init_menu to initialize navigation
     - cleanup (override) => deletes the main_menu attribute to save memory
+    - leave_game => switches the current state to "quit", informing Control to
+    stop the program
     - get_event (override) => check if the return_key has been pressed to
     quit the game, otherwise pass down the pygame event received to main_menu's
     input_event method
@@ -42,23 +44,40 @@ class MainMenuState(State):
         State.__init__(self, control)
         self.display: MainMenuDisplay = MainMenuDisplay(self.control)
         self.main_menu: Menu
+        self.error_list: Menu
 
     def __init_menu__(self) -> None:
-        """Instantiate the main_menu attribute with set parameters."""
+        """Instantiate the main_menu attribute with set parameters, and the
+        error_list menu with an empty list filled with all current errors.
+        """
         self.main_menu = Menu(loop_cursor=False, options=[
             ActivateOption("play", partial(self.switch_state, "game_menu")),
-            ActivateOption("highscores",
-                           partial(self.switch_state, "highscores_menu")),
-            ActivateOption("settings",
-                           partial(self.switch_state, "options_menu")),
-            ActivateOption("quit", partial(lambda: "program_quit"))])
+            ActivateOption(
+                "highscores", partial(self.switch_state, "highscores_menu")),
+            ActivateOption(
+                "settings", partial(self.switch_state, "options_menu")),
+            ActivateOption("quit", partial(self.leave_game))])
+
+        self.error_list = Menu(options=[])
+        if self.control.config_path == "":
+            self.error_list.options.append(TextHolder("arg_error"))
+        if self.control.config.status is False:
+            self.error_list.options.append(TextHolder("config_error"))
+        if self.control.settings.status is False:
+            self.error_list.options.append(TextHolder("settings_error"))
+        if self.control.highscores.status is False:
+            self.error_list.options.append(TextHolder("highscores_error"))
+        if self.control.dialogs["status"] == "False":
+            self.error_list.options.append(TextHolder("dialogs_error"))
+        if self.error_list.options != []:
+            self.error_list.options.append(TextHolder("defaulted_values"))
 
     def startup(self) -> None:
         """Called when the state is awaken, calls init_menu to keep the options
         up with the settings.
         """
         self.__init_menu__()
-        self.display.startup(self.main_menu)
+        self.display.startup(self.main_menu, self.error_list)
 
     def cleanup(self) -> None:
         """Called when the state is deactivated, deleting the main_menu
@@ -68,6 +87,14 @@ class MainMenuState(State):
         del self.main_menu
         self.display.cleanup()
 
+    def leave_game(self) -> None:
+        """Plays a sound and switches the Control's state to quit, efficiently
+        quitting the program.
+        """
+        self.display.mixer("program_quit")
+        pg.time.delay(240)
+        self.switch_state("quit")
+
     def get_event(self, event: pg.event.Event) -> None:
         """Takes a pygame Event object as argument.
 
@@ -76,14 +103,9 @@ class MainMenuState(State):
         switches the current state to "quit", effectively leaving the program.
         """
         return_key: str = self.control.settings.key_config.return_key
-        output: Any = self.main_menu.get_event(
-            *self.read_input_events(event), "vertical")
-        if (event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key
-                or output == "program_quit"):
-            self.display.mixer("program_quit")
-            pg.time.delay(240)
-            self.switch_state("quit")
-            return
+        self.main_menu.get_event(*self.read_input_events(event), "vertical")
+        if (event.type == pg.KEYDOWN and pg.key.name(event.key) == return_key):
+            self.leave_game()
 
     def update(self) -> None:
         """Called after the events have been parsed, calls the draw and mixer
