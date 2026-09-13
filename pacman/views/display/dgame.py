@@ -487,7 +487,8 @@ class GameDisplay(Display):
 
         holder: PlaceHolder = self.scale_menu_holders(
             (0.8, 0.075), (0.12, 0.12, 0.76, 0.76))
-        from_top: int = self.control.interface.get_height() // 8
+        screen_h: int = self.control.interface.get_height()
+        from_top: int = screen_h // 8
         level_end: MenuRender = self.init_menu(
             holder, menues["victory"], from_top)
 
@@ -497,7 +498,8 @@ class GameDisplay(Display):
             "cheats": self.init_menu(holder, menues["cheats"], from_top),
             "victory": level_end,
             "defeat": level_end,
-            "end": self.init_menu(holder, menues["end"], from_top)}
+            "end": self.init_menu(holder, menues["end"], screen_h // 10,
+                                  spacer=screen_h // 14)}
 
     def cleanup(self) -> None:
         """Deletes attributes that are scaled based on the current window's

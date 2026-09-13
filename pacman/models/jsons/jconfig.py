@@ -1,19 +1,20 @@
 
-from typing import ClassVar, Any, Iterable
+from typing import ClassVar, Any, Iterable, Final
 from random import randint, choice
 from functools import partial
 
 from pydantic import Field, field_validator, ValidationInfo
+from pydantic_core import PydanticUseDefault
 
 from .utils import JSONModel
 
 
-STRATS: tuple[str, ...] = (
+STRATS: Final[tuple[str, ...]] = (
     "AlternateAngleStrat", "PatrollingAngleStrat", "ChaseOnSpot",
     "ChaseFumbling", "ChaseDynamic", "EscapeMaxDistance", "EscapeToCorner",
     "EscapeDynamic")
 
-THEMES: tuple[str, ...] = ("grassy", "dungeon")
+THEMES: Final[tuple[str, ...]] = ("grassy", "dungeon")
 
 
 class PlayerConfig(JSONModel):
@@ -69,9 +70,9 @@ class GhostConfig(JSONModel):
     - down_time: int => time in seconds during which the ghost is inactive
 
     ### Method:
-    - strats_validator (classmethod) => checks if the idle, chase and escape
-    strategies are effectively part of the literal list, otherwise returns the
-    default value using a class attribute
+    - strats_validator (field_validator, staticmethod) =>
+    checks if the idle, chase and escape strategies are effectively part of the
+    literal list, otherwise returns the default value using a class attribute
     """
     idle_strat: str = Field(default_factory=partial(choice, STRATS[:2]))
     chase_strat: str = Field(default_factory=partial(choice, STRATS[2:5]))
@@ -85,17 +86,16 @@ class GhostConfig(JSONModel):
 
     @field_validator("idle_strat", "chase_strat", "escape_strat",
                      mode="before")
-    @classmethod
-    def strats_validator(cls, value: Any, info: ValidationInfo) -> Any:
+    @staticmethod
+    def strats_validator(value: Any) -> Any:
         """Effectively checks if the idle, chase and escape strategies passed
-        as argument are part of the STRAT literal list. If not, uses the
-        field's info to return its default value.
+        as argument are part of the STRAT literal list. If not, raises
+        PydanticUseDefault.
         """
-        field_info: Any = (cls.model_fields[str(info.field_name)].asdict())
-        if value not in STRATS:
-            return field_info["attributes"]["default_factory"]()
-        else:
+        if value in STRATS:
             return value
+        else:
+            raise PydanticUseDefault
 
 
 class GameplayConfig(JSONModel):
@@ -135,17 +135,16 @@ class GameplayConfig(JSONModel):
                  "Inky": GhostConfig(), "Clyde": GhostConfig()})
 
     @field_validator("theme", mode="before")
-    @classmethod
-    def theme_validator(cls, value: Any, info: ValidationInfo) -> Any:
+    @staticmethod
+    def theme_validator(value: Any) -> Any:
         """Effectively checks if the idle, chase and escape strategies passed
-        as argument are part of the THEMES literal list. If not, uses the
-        field's info to return its default value.
+        as argument are part of the THEMES literal list. If not, raises
+        PydanticUseDefault.
         """
-        field_info: Any = (cls.model_fields[str(info.field_name)].asdict())
-        if value not in THEMES:
-            return field_info["attributes"]["default_factory"]()
-        else:
+        if value in THEMES:
             return value
+        else:
+            raise PydanticUseDefault
 
     @field_validator("ghosts", mode="before")
     @staticmethod
@@ -217,8 +216,7 @@ class LevelConfig(JSONModel):
     def config_validator(cls, value: Any, info: ValidationInfo) -> Any:
         """Called for all attributes, if their value doesn't
         correspond to their correct type but rather a dict, instantiate them
-        using the dict's values, and otherwise return None to generate default
-        configs
+        using the dict's values, and otherwise raises PydanticUseDefault.
         """
         field_info: Any = (
             cls.model_fields[str(info.field_name)].asdict())
@@ -226,7 +224,7 @@ class LevelConfig(JSONModel):
             return value
         if isinstance(value, dict) and len(value) > 0:
             return field_info["attributes"]["default_factory"](**value)
-        return None
+        raise PydanticUseDefault
 
 
 class Config(JSONModel):
@@ -261,7 +259,7 @@ class Config(JSONModel):
                     chase_strat="ChaseOnSpot",
                     escape_strat="EscapeToCorner",
                     speed=13, super_speed=13, down_time=3,
-                    chase_radius=3, escape_radius=2, chasing_stamina=6)}))]
+                    chase_radius=2, escape_radius=3, chasing_stamina=6)}))]
         + [LevelConfig() for _ in range(9)]))
 
     @field_validator("player", mode="before")
@@ -269,14 +267,13 @@ class Config(JSONModel):
     def player_validator(value: Any) -> Any:
         """If the value passed is already a PlayerConfig, returns it. If it's
         a non-empty dict, return the instantiation of a PlayerConfig using
-        its values, and otherwise returns None to use the Field's default
-        value.
+        its values, and otherwise raises PydanticUseDefault.
         """
         if isinstance(value, PlayerConfig):
             return value
         if isinstance(value, dict) and len(value) > 0:
             return PlayerConfig(**value)
-        return None
+        raise PydanticUseDefault
 
     @field_validator("levels", mode="before")
     @staticmethod
@@ -300,4 +297,4 @@ class Config(JSONModel):
                     else:
                         level_list.append(LevelConfig())
             return level_list
-        return None
+        raise PydanticUseDefault

@@ -1,5 +1,5 @@
 
-from typing import ClassVar, Iterable, Final
+from typing import ClassVar, Iterable, Final, Any
 from enum import Enum
 
 from pydantic import Field, field_validator, model_validator
@@ -165,12 +165,15 @@ class Settings(JSONModel):
     - key_config: KeyConfig => KeyConfig object holding key configuration.
 
     ### Methods:
-    - lang_validator (field_validator, class_method) => checks if the incoming
+    - lang_validator (field_validator, static method) => checks if the incoming
     value is part of the Languages Enum to return it.
-    - res_validator (field_validator, class_method) => tries to parse the
+    - res_validator (field_validator, static method) => tries to parse the
     incoming resolution value into a member of the Resolutions Enum
+    - key_config_validator (field_validator, static method) => parses the
+    key_config argument
     """
     file_name: ClassVar[str] = "settings"
+
     lang: Languages = Field(default=Languages.ENGLISH)
     res: Resolutions = Field(default=Resolutions.SMALL)
     sfx_vol: int = Field(ge=0, le=10, default=10)
@@ -179,8 +182,8 @@ class Settings(JSONModel):
     key_config: KeyConfig = Field(default=KeyConfig())
 
     @field_validator("lang", mode="before")
-    @classmethod
-    def lang_validator(cls, value: str) -> Languages:
+    @staticmethod
+    def lang_validator(value: str) -> Languages:
         """Field validator for the lang field, returning a Languages Enum
         member based on the value passed as argument. Checks computed:
         - Returns the value if it's already a member of the Enum
@@ -199,8 +202,8 @@ class Settings(JSONModel):
             return Languages.ENGLISH
 
     @field_validator("res", mode="before")
-    @classmethod
-    def res_validator(cls, value: Iterable[int] | str) -> Resolutions:
+    @staticmethod
+    def res_validator(value: Iterable[int] | str) -> Resolutions:
         """Field validator for the lang field, returning a Resolutions Enum
         member based on the value passed as argument. Checks computed:
         - Returns the value if it's already a member of the Enum
@@ -225,3 +228,18 @@ class Settings(JSONModel):
             return Resolutions(list(value))
         except Exception:
             return Resolutions.SMALL
+
+    @field_validator("key_config", mode="before")
+    @staticmethod
+    def key_config_validator(value: Any) -> Any:
+        """Parses the value given for the key_config attribute to check if it
+        is already a KeyConfig object, or a non-empty dict to create an
+        instance of one with.
+
+        Raises PydanticUseDefault otherwise.
+        """
+        if isinstance(value, KeyConfig):
+            return value
+        if isinstance(value, dict) and len(value) > 0:
+            return KeyConfig(**value)
+        raise PydanticUseDefault

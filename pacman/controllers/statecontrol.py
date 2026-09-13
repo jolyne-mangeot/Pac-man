@@ -5,7 +5,7 @@ from typing import cast
 import pygame as pg
 
 from pacman.models import (
-    JSONModel, Config, Settings, KeyConfig, Highscores, Dialogs,
+    JSONModel, Config, Settings, Highscores, Dialogs,
     json_to_model, model_to_json)
 
 
@@ -101,7 +101,7 @@ class Control:
 
         self.clock: pg.time.Clock = pg.time.Clock()
         self.delta_time: float
-        self.fps: int = 30
+        self.fps: int = 60
         self.done: bool = False
 
         self.state_dict: dict[str, State]
@@ -178,11 +178,8 @@ class Control:
         """Reloads all configuration files from the path passed as argument
         when the program started.
         """
-        self.config = cast(
-            Config, json_to_model(Config, self.config_path))
-        self.settings = cast(Settings, json_to_model(
-            Settings, extra_args={"key_config": json_to_model(
-                KeyConfig, sub_dict="key_config")}))
+        self.config = cast(Config, json_to_model(Config, self.config_path))
+        self.settings = cast(Settings, json_to_model(Settings))
         self.highscores = cast(Highscores, json_to_model(Highscores))
         self.load_dialogs()
 
@@ -332,7 +329,7 @@ class State(ABC):
         model_dump BaseModel method.
         """
         for action, key in self.control.settings.key_config.model_dump(
-                exclude={"file_name"}).items():
+                exclude={"file_name", "status"}).items():
             if key == input:
                 return action
         return ""

@@ -21,6 +21,9 @@ class JSONModel(BaseModel):
     - file_name: ClassVar[str] => string containing the name of the json file
     from which the values used to instantiate the JSONModel object will be
     parsed.
+    - status: bool => used by Config, Settings, Dialogs and
+    Highscores only, to check if their respective file has been correctly
+    opened
 
     ### Method:
     validate_or_fallback (field_validator, class_method) => Field validator
@@ -102,40 +105,27 @@ class JSONCommentedDecoder(JSONDecoder):
         return super().decode(s)
 
 
-def json_to_model(
-        model: type[JSONModel], file_path: str = "",
-        extra_args: dict[str, Any] = {}, sub_dict: str = "") -> JSONModel:
+def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
     """Function made to easily import a json file into a JSONModel object.
-    Takes a JSONModel type, and optional file_path as string, extra_args as
-    dict and sub_dict as str.
+    Takes a JSONModel type and optional file_path as string.
 
     The model is inspected for its file_name to recreate the file's path if the
     file_path argument is empty. In a try except block, opens the file and
-    loading it using the json's module load funtion with the cls argument
-    being the above declared JSONCommentedDecoder. If sub_dict is not empty,
-    The config_dict that's later returned is zoomed on its entry corresponding
-    to the sub_dict string key. In any case, updates this config_dict with the
-    extra_args argument before returning an instantiation of the model type
-    by unpacking the config_dict in its constructor.
+    loading it using the json's module load function with the cls argument
+    being the above declared JSONCommentedDecoder. Returns an instantiation of
+    the model type by unpacking the config_dict in its constructor, with status
+    at True.
 
-    If any Exception is raised, return the model's constructor with the
-    extra_args.
-
-    *(for clarity, the sub_dict argument should be used if the dict that needs
-    to be parsed into the model is an entry in the json file, rather than
-    its general dictionary.)*
+    If any Exception is raised, return the model's constructor.
     """
     path: str = (file_path if file_path != ""
                  else "pacman/" + model.file_name + ".json")
     try:
         with open(path, "r") as file:
             config_dict: dict[str, Any] = load(file, cls=JSONCommentedDecoder)
-            if sub_dict != "":
-                config_dict = config_dict[sub_dict]
-            config_dict.update(extra_args)
             return model(status=True, **config_dict)
     except (FileNotFoundError, PermissionError):
-        return model(**extra_args)
+        return model()
 
 
 def model_to_json(model: JSONModel, file_path: str = "") -> bool:

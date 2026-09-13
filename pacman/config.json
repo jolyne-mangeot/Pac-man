@@ -18,19 +18,7 @@
                 "super_duration": 5,
                 "pacman_speed": 13,
                 "pacman_super_speed": 14,
-                "ghosts": {
-                    "Blinky": {
-                        "idle_strat": "AlternateAngleStrat",
-                        "chase_strat": "ChaseOnSpot",
-                        "escape_strat": "EscapeToCorner",
-                        "speed": 13,
-                        "super_speed": 13,
-                        "chase_radius": 3,
-                        "escape_radius": 2,
-                        "chasing_stamina": 6,
-                        "down_time": 3
-                    }
-                }
+                "ghosts": []
             },
             "scores": {
                 "gum": 10,

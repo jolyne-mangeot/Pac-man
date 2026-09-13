@@ -375,6 +375,7 @@ class GameState(State):
         with an error message to the menu.
         """
         new_highscores: Highscores = Highscores(
+            status=True,
             scores=self.control.highscores.scores + [Score(
                 player=self.player.player_name,
                 score=self.player.current_score,

@@ -162,7 +162,7 @@ class Level:
         self.score: int = 0
         self.scores: dict[str, int] = {
             "gum": 0, "sup_gum": 0, "ghost": 0, "level": 0}
-        self.map: Map = Map(**maze_config.model_dump())
+        self.map: Map = Map(**maze_config.model_dump(exclude={"status"}))
         self.map.super_gum_placement()
         self.map.simple_gum_placement()
         self.map.generate_cell_graph()
@@ -224,7 +224,7 @@ class Level:
         for name, pos in positions.items():
             if config.ghosts.get(name, None) is not None:
                 new_ghost: Ghost = Ghost(
-                    **config.ghosts[name].model_dump(),
+                    **config.ghosts[name].model_dump(exclude={"status"}),
                     initial_pos=pos, maze=self.map)
                 new_ghost.speed = self.calc_speed(new_ghost.speed)
                 new_ghost.super_speed = self.calc_speed(new_ghost.super_speed)
