@@ -111,6 +111,13 @@ class Strategy(ABC):
             passages.append(direction)
         return choice(passages)
 
+    def apply_movement(self, ghost_pos: coords) -> tuple[coords, Directions]:
+        """"""
+        self.ghost_saved_pos = (
+            ghost_pos[0] + Movements[self.path[0].name].value[0],
+            ghost_pos[1] + Movements[self.path[0].name].value[1])
+        return (self.ghost_saved_pos, self.path.pop(0))
+
     def find_path(self, ghost: coords, target: coords) -> list[Directions]:
         """Find the shortest path from ghost to target using a A* Algorithm.
         """
@@ -256,10 +263,7 @@ class ChaseFumbling(Strategy):
                 return (random_pos, random_dir)
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             self.path = self.find_path(ghost_pos, pacman_pos)
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 class ChaseDynamic(Strategy):
@@ -309,10 +313,7 @@ class ChaseDynamic(Strategy):
         if self.path == []:
             self.path.append(self.random_direction(ghost_pos))
 
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 class ChaseOnSpot(Strategy):
@@ -359,10 +360,7 @@ class ChaseOnSpot(Strategy):
         if self.path == []:
             self.path.append(self.random_direction(ghost_pos))
 
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 # _________________________________________________________________________
@@ -432,10 +430,7 @@ class AlternateAngleStrat(Strategy):
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             target: coords = self.choose_target(ghost_pos)
             self.path = self.find_path(ghost_pos, target)
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 class PatrollingAngleStrat(Strategy):
@@ -524,10 +519,7 @@ class PatrollingAngleStrat(Strategy):
             target: coords = self.choose_target(area, ghost_pos)
             self.path = self.find_path(ghost_pos, target)
 
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 # _________________________________________________________________________
@@ -657,10 +649,7 @@ class EscapeToCorner(Strategy):
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             target: coords = self.choose_target(pacman_pos)
             self.path = self.find_path(ghost_pos, target)
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[self.path[0].name].value[0],
-            ghost_pos[1] + Movements[self.path[0].name].value[1])
-        return (self.ghost_saved_pos, self.path.pop(0))
+        return self.apply_movement(ghost_pos)
 
 
 class EscapeDynamic(Strategy):
@@ -723,11 +712,8 @@ class EscapeDynamic(Strategy):
             elif distance == best_distance:
                 best_directions.append(direction)
 
-        chosen_direction: Directions = choice(best_directions)
-        self.ghost_saved_pos = (
-            ghost_pos[0] + Movements[chosen_direction.name].value[0],
-            ghost_pos[1] + Movements[chosen_direction.name].value[1])
-        return (self.ghost_saved_pos, chosen_direction)
+        self.path = [choice(best_directions)]
+        return self.apply_movement(ghost_pos)
 
 
 def calculate_manhattan(ghost: coords, target: coords) -> int:
