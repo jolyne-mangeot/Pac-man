@@ -23,7 +23,7 @@ For easier variety, it was decided not to accustom to mouse inputs, and controll
 
 ## The Option class family
 
-*file: "pacman/controllers/menu/utils.py"*
+*file: "pacman/models/menu/options.py"*
 
 Prioritizing polyvalence and expandable features mean finding the way that organizes the code best to our way of thinking and working. In an object-oriented language, it's fast done by deriving a structural class into many that hold different goals, and ways to be interacted with. It also allows for subtle features to be coded in as it would always only impact the class we're working on, and not the main structure.
 

@@ -33,7 +33,7 @@ And to run it, ensure python is installed on your computer or virtual environmen
 
 ```bash
 pip install -r requirements.txt
-python pacman.py config.json
+python pacman.py pacman/config.json
 ```
 
 If you're unsure of these commands' action or want to run the program in a virtual environment without typing every command, see the instruction for the Makefile just below.
@@ -64,12 +64,15 @@ Executing `make` alone is an equivalent to `make run`.
 ## General sofware architecture
 We used a MVC architecture which is a fundamental design pattern that helps us organize code by separating the project into three interconnected components : Model - View - Controller. These three distinct layers work together to create well-structured applications. 
 
-![MVC architecture](https://www.crio.do/blog/content/images/2021/07/Components-of-MVC-Architecture-Pattern.png)
+<img src="https://www.crio.do/blog/content/images/2021/07/Components-of-MVC-Architecture-Pattern.png" alt="" align="right" width="520"/>
 
 ### Controller
 Description de ce qu'il y a dans controller
+
 ### Model
 The “models” module contains all of the game's logic and state, independent of the display (View) and input handling/game loop (Controller). It is divided into several submodules:
+- [Entity module](#Entity)
+- [MazeMap module](#MazeMap)
 
 ### View
 Description de ce qu'il y a dans view
@@ -81,7 +84,7 @@ The config file uses JSON. This JSON file handles comments. Lines starting with 
 
 ## Highscore
 
-## Maze generation
+## Maze-generator
 Unfortunately, the scope of this project did not allow us to use the maze generator we had created for the `Amazing` project. We had to use a pre-built generator. It was provided as a `.whl` file. So we simply ran `pip install` in our virtual environment to make it available in our Python library, and then imported it into the `utils.py` file in our `pacman/models/mazemap/` module.
 
 The generator creates a maze in the form of a y-by-x matrix containing, in binary, information about the maze's walls. 0 represents a cell with no wall, 1 represents a single wall to the north, 2 represents a single wall to the east, 4 represents a single wall to the south, and 8 represents a single wall to the west. Thus:
@@ -98,9 +101,13 @@ Our approach to managing wall information was also different: we used a list of 
 
 ## Implementation
 
-### Entity submodule
+### Entity
 
 #### Architecture
+
+![](docs/img/entity-diagrams.png)
+<img src="docs/img/strategies-diagram.png" alt="" align="right" width="520"/>
+
 The module is divided into two files with distinct responsibilities:
 
 - `entity.py`: defines what the entities are (Entity, Pacman, Ghost)—their state (position, velocity, direction, lives) and their specific attributes.
@@ -124,7 +131,7 @@ All strategies also inherit from `Strategy.find_path()`, which implements the A*
 - Various escape, chase, or idle methods. These allow us to give our ghosts a variety of behaviors and thus adjust the difficulty of the levels by using more or less aggressive strategies.
 - `next_direction` (distinct from `direction` in Pac-Man). Allows the player to anticipate a turn before reaching the intersection that allows it, rather than requiring the player to enter at exactly the right moment.
 
-### Mazemap submodule
+### MazeMap
 
 #### Architecture
 The module is divided into two files:

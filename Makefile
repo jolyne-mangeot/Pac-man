@@ -49,4 +49,4 @@ lint-strict: install
 	&& flake8 . \
 	&& mypy --strict .
 
-.PHONY = run debug edit install clean fclean lint lint-strict
+.PHONY = run debug skip-install install clean fclean lint lint-strict
