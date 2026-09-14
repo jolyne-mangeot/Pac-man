@@ -6,6 +6,13 @@
             "level_reached": 7,
             "time_taken": 372,
             "remaining_lives": 0
+        },
+        {
+            "player": "Player",
+            "score": 1100,
+            "level_reached": 2,
+            "time_taken": 52,
+            "remaining_lives": 0
         }
     ]
 }

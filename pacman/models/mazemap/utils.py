@@ -25,7 +25,7 @@ instance containing its coordinates, walls and gum states.
 """
 from enum import IntEnum, Enum
 
-from mazegenerator import MazeGenerator
+from .mazegenerator import MazeGenerator
 
 
 class Directions(IntEnum):

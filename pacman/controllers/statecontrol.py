@@ -165,7 +165,7 @@ class Control:
         """
         if self.settings.lang.value == "en-en":
             self.dialogs = Dialogs(status=True).model_dump()
-            self.dialogs["status"] = True
+            self.dialogs["status"] = "True"
         else:
             dialogs: Dialogs = cast(Dialogs, json_to_model(
                 Dialogs,

@@ -22,7 +22,17 @@ This project allowed us to greatly improve the following skills:
 - Dependancy management
 - Application packaging & deployment
 
-## Instructions
+## Features
+
+### Customizable levels
+
+### Languages and Keybinds support
+
+### Cheats
+
+### Highscore
+
+## Instructions / Installation
 To use this project, you can download its zip file from github, or by running this command in a terminal located in the chosen destination:
 
 ```bash
@@ -61,6 +71,10 @@ make install
 
 Executing `make` alone is an equivalent to `make run`.
 
+### Configuration
+The config file uses JSON. This JSON file handles comments. Lines starting with # or // are comments and are ignored.
+
+
 ## General sofware architecture
 We used a MVC architecture which is a fundamental design pattern that helps us organize code by separating the project into three interconnected components : Model - View - Controller. These three distinct layers work together to create well-structured applications. 
 
@@ -76,13 +90,6 @@ The “models” module contains all of the game's logic and state, independent 
 
 ### View
 Description de ce qu'il y a dans view
-
-### Class diagram
-
-## Configuration
-The config file uses JSON. This JSON file handles comments. Lines starting with # or // are comments and are ignored.
-
-## Highscore
 
 ## Maze-generator
 Unfortunately, the scope of this project did not allow us to use the maze generator we had created for the `Amazing` project. We had to use a pre-built generator. It was provided as a `.whl` file. So we simply ran `pip install` in our virtual environment to make it available in our Python library, and then imported it into the `utils.py` file in our `pacman/models/mazemap/` module.
@@ -105,8 +112,8 @@ Our approach to managing wall information was also different: we used a list of 
 
 #### Architecture
 
-![](docs/img/entity-diagrams.png)
-<img src="docs/img/strategies-diagram.png" alt="" align="right" width="520"/>
+![Class diagram for the entity.py file](docs/img/entity-diagram.png)
+<img src="docs/img/strategies-diagram.png" alt="Class diagram for the strategies.py file" align="right" width="520"/>
 
 The module is divided into two files with distinct responsibilities:
 
@@ -169,6 +176,8 @@ Pygame was the main reason we opted for a MVC pattern. With numerous modules, th
 - The same way, a common Display class, parent of all state displaying class, helped centralizing the file accesses for sprites and reducing endless lines of scaling.
 
 ## Project management
+
+![](docs/img/project-kanban.png)
 
 ## Resources
 

@@ -2,6 +2,9 @@
 
 ## JSON parsing with comments
 
+![](img/jsons-diagram.png)
+**Class diagram for the pacman/models/jsons module**
+
 *file: "pacman/models/jsons/utils.py"*
 
 The parsing was done using JSON files parsed by the json module and turned into object with Pydantic's BaseModel classes

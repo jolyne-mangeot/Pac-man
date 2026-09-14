@@ -10,11 +10,14 @@ We chose Pygame for this project, which comes with its own set of modules and me
 
 ## Creating a settings menu
 
+![](img/options-diagram.png)
+**Class diagram for the pacman/models/menu module**
+
 A preferences menu, or settings menu, is the perfect example of a range of option that need to be modified in each their own way. Numeric sliders for the sound volumes, selections for set resolutions or languages, but also input for keybindings, it can easily become overwhelming to manage each type all at the same time.
 
 And as multiple projects can have needs for different types of options, and a same game feature infinite menues and sub-menues, the key in finding the balance in autonomy and efficiency lies in expandable features and generalized behaviors.
 
-<img src="Pygame Settings menu.png" align="right" width="500">
+<img src="img/settings-menu.png" align="right" width="500">
 See on the right a bare settings menu. It features all listed-above examples of preferences options, action buttons to reset, apply or leave the settings, and a dummy text field for testing.
 
 It shows where the cursor is, and, when the confirm key is pressed, allows the picking up of fields to modify their value.

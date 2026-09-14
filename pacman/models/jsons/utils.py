@@ -40,7 +40,8 @@ class JSONModel(BaseModel):
     status: bool = False
 
     @model_serializer(mode='wrap')
-    def serialize_model(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+    def serialize_model(self, handler: SerializerFunctionWrapHandler
+                        ) -> dict[str, Any]:
         """As file_name and status are used internally, they are excluded when
         dumping the model into a dictionary.
         """
