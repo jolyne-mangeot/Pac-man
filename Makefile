@@ -15,17 +15,13 @@ run: install
 	source $(BIN)/activate \
 	&& $(PYTHON) $(NAME) $(ARGS)
 
-skip_install:
+skip-install:
 	source $(BIN)/activate \
 	&& $(PYTHON) $(NAME) $(ARGS)
 
 debug: install
 	source $(BIN)/activate \
 	&& $(PYTHON) -m pdb $(NAME) $(ARGS)
-
-edit: install
-	source $(BIN)/activate \
-	&& pip install -e .
 
 venv:
 	$(PYTHON) -m venv $(VENV)

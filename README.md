@@ -17,26 +17,61 @@ This project allowed us to greatly improve the following skills:
 - Application packaging & deployment
 
 ## Instructions
+To use this project, you can download its zip file from github, or by running this command in a terminal located in the chosen destination:
+
+```bash
+git clone https://github.com/jolyne-mangeot/Pac-man
+```
+
+And to run it, ensure python is installed on your computer or virtual environment, and run the following commands:
+
+```bash
+pip install -r requirements.txt
+python pacman.py config.json
+```
+
+If you're unsure of these commands' action or want to run the program in a virtual environment without typing every command, see the instruction for the Makefile just below.
+
+### Makefile
+
+This project contains a Makefile, a file that is used to pre-enter commands to run to perform different tasks like installation, running and cleaning. The following rules are integrated here:
+
+| Rules | Action |
+|---|---|
+| run | run the pacman file with arguments, ensuring everything is installed |
+| skip-install | when dependencies are installed, run the pacman file without checking dependencies |
+| debug | run the pacman file with arguments through pdb |
+| install | create a virtual environment and install dependencies |
+| clean | remove mypy cache, python cache, build files and output_file |
+| fclean | run clean and remove the virtual environment |
+| lint | run flake8 and mypy with flexible rules |
+| lint-strict | run flake8 and mypy with strict rules |
+
+To run any, enter 'make' followed by the selected rule in a terminal located at the project's root folder, like so:
+
+```bash
+make install
+```
+
+Executing `make` alone is an equivalent to `make run`.
 
 ## General sofware architecture
-We used a MVC architecture wich is a fundamental design pattern that helps us organize code by separating the project into three interconnected components : Model - View - Controller. These three distinct layers work together to create well-structured applications. 
+We used a MVC architecture which is a fundamental design pattern that helps us organize code by separating the project into three interconnected components : Model - View - Controller. These three distinct layers work together to create well-structured applications. 
 
 ![MVC architecture](https://www.crio.do/blog/content/images/2021/07/Components-of-MVC-Architecture-Pattern.png)
 
-#### Controller
+### Controller
 Description de ce qu'il y a dans controller
-#### Model
+### Model
 The “models” module contains all of the game's logic and state, independent of the display (View) and input handling/game loop (Controller). It is divided into several submodules:
 
-
-Description de ce qu'il y a dans model
-
-#### View
+### View
 Description de ce qu'il y a dans view
 
-#### Class diagram
+### Class diagram
 
 ## Configuration
+The config file uses JSON. This JSON file handles comments. Lines starting with # or // are comments and are ignored.
 
 ## Highscore
 
@@ -83,7 +118,7 @@ The concrete strategies are divided into three families, each of which inherits 
 |Type|Role|Implementations|
 |---|---|---|
 |Chase|Chase Pac-Man|ChaseStrumbling, ChaseDynamic, ChaseOnSpot|
-|Idel|Patrolling without a pursuit|AlternateAngleStrat, PattrolingAngleStrat|
+|Idle|Patrolling without a pursuit|AlternateAngleStrat, PattrolingAngleStrat|
 |Escape|Escape Pacman|EscapeMaxDistance, EscapeToCorner, EscapeDynamic|
 
 All strategies also inherit from `Strategy.find_path()`, which implements the A* algorithm to calculate the shortest path from the ghost to the target.
@@ -95,18 +130,6 @@ All strategies also inherit from `Strategy.find_path()`, which implements the A*
 - Stamina mechanics. `chase()` artificially limits the duration during which a ghost can continuously chase Pac-Man (`current_stamina`), which regenerates during idle/escape phases.This design prevents a ghost from chasing indefinitely and makes the game more playable.
 - Various escape, chase, or idle methods. These allow us to give our ghosts a variety of behaviors and thus adjust the difficulty of the levels by using more or less aggressive strategies.
 - `next_direction` (distinct from `direction` in Pac-Man). Allows the player to anticipate a turn before reaching the intersection that allows it, rather than requiring the player to enter at exactly the right moment.
-
-#### Dependancies
-Standard library: abc (ABC, abstractmethod), random (choice, randint), heapq (heappush, heappop), collections.deque, typing.Type.
-
-Parent import: Map, Directions, Movements, OPPOSITE_DIRECTION from `pacman/models/mazemap`.
-
-#### Limits
-- Strategy.find_path() assumes that a path exists between the ghost and
-its target. In the case of our maze, which has many loops, this isn't a problem. But with a different maze generator, the A* search could enter an infinite loop.
-
-- The idle/chase/escape strategies are set when the ghost is created and cannot be changed dynamically during the game without reinstantiating the ghost.
-
 
 ### Mazemap submodule
 
@@ -128,13 +151,23 @@ parallel, the sets simple_gums/super_gums of coordinates, allowing direct access
 - Turn dictionaries (RIGHT_TURN, LEFT_TURN, OPPOSITE_DIRECTION). Rather than recalculating these relationships on the fly, they are precalculated as module constants, used by
 both `find_intersect()` and `Strategy.find_path()`.
 
-#### Dependancies
-Standard library: enum (IntEnum, Enum) dans utils.py, random.shuffle dans map.py.
-
-mazegenerator (external library provided as a .whl file): generates the raw maze matrix used by `maze_interface()`.
-
-
-
 ## Project management
 
 ## Resources
+
+### Parsing
+JSON parsing with comment:
+- [Code snippet (StackOverflow)](https://stackoverflow.com/questions/29959191/how-to-parse-json-file-with-c-style-comments#:~:text=This%20implementation%20slightly%20improves%20the%20previous%20answer%20by%20replacing%20the%20comment%20line%20by%20an%20empty%20line%20rather%20than%20removing%20it%20completely%20because%20this%20breaks%20the%20line%20count)
+
+Pydantic's documentation:
+- [Models](https://pydantic.dev/docs/validation/dev/concepts/models/)
+- [Field](https://pydantic.dev/docs/validation/latest/concepts/fields/)
+- [Validators](https://pydantic.dev/docs/validation/latest/concepts/validators/)
+- [Creating dynamic Fields](https://pydantic.dev/docs/validation/dev/examples/dynamic_models/)
+
+### Menu and options
+- [Pygame's keys list](https://www.pygame.org/docs/ref/key.html#:~:text=pygame%20Constant%20ASCII%20Description)
+- [TEXTINPUT event type](https://www.pygame.org/docs/ref/event.html#:~:text=When%20compiled%20with%20SDL2%2C%20pygame%20has%20these%20additional%20events%20and%20their%20attributes)
+
+### Architecture
+- [MVC Structure](https://www.geeksforgeeks.org/system-design/mvc-design-pattern/)
