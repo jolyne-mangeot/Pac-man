@@ -118,8 +118,7 @@ class OptionsMenuState(State):
         values, then rerender all options_menu visuals with the dedicated
         method.
         """
-        self.settings["key_config"].update(KeyConfig().model_dump(
-            exclude={"status", "file_path"}))
+        self.settings["key_config"].update(KeyConfig().model_dump())
         self.settings.update(Settings(status=True).model_dump())
         self.display.options_menu.pre_render_all_options(self.control.dialogs)
 

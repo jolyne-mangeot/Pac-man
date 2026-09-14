@@ -67,7 +67,7 @@ class MainMenuState(State):
             self.error_list.options.append(TextHolder("settings_error"))
         if self.control.highscores.status is False:
             self.error_list.options.append(TextHolder("highscores_error"))
-        if self.control.dialogs["status"] == "False":
+        if self.control.dialogs.get("status", False) == "False":
             self.error_list.options.append(TextHolder("dialogs_error"))
         if self.error_list.options != []:
             self.error_list.options.append(TextHolder("defaulted_values"))

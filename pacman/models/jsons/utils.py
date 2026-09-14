@@ -3,7 +3,9 @@ from json import JSONDecoder, load
 from typing import Any, ClassVar, Annotated
 from collections.abc import Callable
 
-from pydantic import BaseModel, Field, field_validator, ValidationInfo
+from pydantic import (
+    BaseModel, Field, field_validator, ValidationInfo, model_serializer,
+    SerializerFunctionWrapHandler)
 from pydantic_core import PydanticUseDefault
 
 
@@ -26,13 +28,26 @@ class JSONModel(BaseModel):
     opened
 
     ### Method:
-    validate_or_fallback (field_validator, class_method) => Field validator
+    - serialize_model (model_serializer) => returns the dict normally obtained
+    through the model_dump method after popping the file_name and status
+    entries
+    - validate_or_fallback (field_validator, class_method) => Field validator
     applied to every Field the subclasses can have, checking if the inserted
     value can fit in the field before returning it, otherwise returning the set
     default value.
     """
     file_name: ClassVar[str] = ""
     status: bool = False
+
+    @model_serializer(mode='wrap')
+    def serialize_model(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """As file_name and status are used internally, they are excluded when
+        dumping the model into a dictionary.
+        """
+        serialized: dict[str, Any] = handler(self)
+        serialized.pop("file_name", None)
+        serialized.pop("status", None)
+        return serialized
 
     @field_validator("*", mode="before")
     @classmethod
@@ -125,7 +140,7 @@ def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
             config_dict: dict[str, Any] = load(file, cls=JSONCommentedDecoder)
             return model(status=True, **config_dict)
     except (FileNotFoundError, PermissionError):
-        return model()
+        return model(status=False)
 
 
 def model_to_json(model: JSONModel, file_path: str = "") -> bool:
@@ -143,7 +158,7 @@ def model_to_json(model: JSONModel, file_path: str = "") -> bool:
     try:
         with open(path, "w") as file:
             format: str = model.model_dump_json(
-                indent=4, exclude={"file_name", "status"}, warnings="error")
+                indent=4, warnings="error")
             print(format, file=file)
             print(
                 "Information written out from Model of type "

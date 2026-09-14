@@ -45,8 +45,8 @@ if __name__ == "__main__":
     except ValidationError:
         output = 2
         print("Unexpected error during Parsing of configuration files.")
-    except Exception:
-        output = 3
+    # except Exception:
+    #     output = 3
     exits: tuple[str, ...] = (
         "Success", "Keyboard interrupt",
         "Configuration error", "Unknown error")

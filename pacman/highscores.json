@@ -1,3 +1,11 @@
 {
-    "scores": []
+    "scores": [
+        {
+            "player": "Suri",
+            "score": 7150,
+            "level_reached": 7,
+            "time_taken": 372,
+            "remaining_lives": 0
+        }
+    ]
 }

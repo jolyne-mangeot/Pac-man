@@ -77,9 +77,9 @@ class GhostConfig(JSONModel):
     idle_strat: str = Field(default_factory=partial(choice, STRATS[:2]))
     chase_strat: str = Field(default_factory=partial(choice, STRATS[2:5]))
     escape_strat: str = Field(default_factory=partial(choice, STRATS[5:]))
-    speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
-    super_speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
-    chase_radius: int = Field(ge=0, default_factory=partial(randint, 3, 9))
+    speed: int = Field(ge=0, default_factory=partial(randint, 3, 5))
+    super_speed: int = Field(ge=0, default_factory=partial(randint, 4, 7))
+    chase_radius: int = Field(ge=0, default_factory=partial(randint, 4, 8))
     escape_radius: int = Field(ge=0, default_factory=partial(randint, 3, 9))
     chasing_stamina: int = Field(ge=0, default_factory=partial(randint, 6, 15))
     down_time: int = Field(gt=0, default_factory=partial(randint, 2, 5))
@@ -126,9 +126,9 @@ class GameplayConfig(JSONModel):
     theme: str = Field(default_factory=partial(choice, THEMES))
     life_regen: int = Field(ge=0, default_factory=partial(randint, 0, 2))
     super_duration: int = Field(ge=0, default=8)
-    pacman_speed: int = Field(ge=0, default_factory=partial(randint, 12, 15))
+    pacman_speed: int = Field(ge=0, default_factory=partial(randint, 5, 8))
     pacman_super_speed: int = Field(
-        ge=0, default_factory=partial(randint, 12, 15))
+        ge=0, default_factory=partial(randint, 6, 8))
     ghosts: dict[str, GhostConfig] = Field(
         min_length=0, max_length=4,
         default={"Blinky": GhostConfig(), "Pinky": GhostConfig(),

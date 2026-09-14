@@ -164,15 +164,14 @@ class Control:
         added to the dict as a string, from a boolean.
         """
         if self.settings.lang.value == "en-en":
-            self.dialogs = Dialogs(status=True).model_dump(exclude={"status"})
+            self.dialogs = Dialogs(status=True).model_dump()
+            self.dialogs["status"] = True
         else:
             dialogs: Dialogs = cast(Dialogs, json_to_model(
                 Dialogs,
                 "pacman/assets/dialogs/" + self.settings.lang.value + ".json"))
-            self.dialogs = cast(dict[str, str],
-                                dialogs.model_dump(exclude={"status"}))
-            self.dialogs.update(
-                {"status": cast(str, dialogs.model_dump(include={"status"}))})
+            self.dialogs = cast(dict[str, str], dialogs.model_dump())
+            self.dialogs["status"] = str(dialogs.status)
 
     def reload_config(self) -> None:
         """Reloads all configuration files from the path passed as argument
@@ -328,8 +327,8 @@ class State(ABC):
         looping on items in the dict version of the KeyConfig object by the
         model_dump BaseModel method.
         """
-        for action, key in self.control.settings.key_config.model_dump(
-                exclude={"file_name", "status"}).items():
+        for action, key in (
+                self.control.settings.key_config.model_dump().items()):
             if key == input:
                 return action
         return ""
