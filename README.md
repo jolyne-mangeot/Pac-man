@@ -1,3 +1,9 @@
+## Enter the crypt
+
+*And put down the dead before they get the chance to rise from their tomb again.*
+
+![Demonstration gif showing the main character running inside a dungeon-themed maze from armed skeletons before taking a weapon and chasing them down.](docs/gifs/demo.gif)
+
 ## Description
 
 First released in 1980 by Namco, Pac-Man quickly became a cultural icon and one of the most influential video games of all time. Designed by Toru Iwatani, its goal was to create a game that could appeal to women and casual players, contrasting with the space shooters of the era. The game introduced the now-famous ghost AI, each with unique behavior.
@@ -105,7 +111,7 @@ The concrete strategies are divided into three families, each of which inherits 
 |Type|Role|Implementations|
 |---|---|---|
 |Chase|Chase Pac-Man|ChaseStrumbling, ChaseDynamic, ChaseOnSpot|
-|Idle|Patrolling without a pursuit|AlternateAngleStrat, PattrolingAngleStrat|
+|Idle|Patrolling without a pursuit|AlternateAngleStrat, PatrollingAngleStrat|
 |Escape|Escape Pacman|EscapeMaxDistance, EscapeToCorner, EscapeDynamic|
 
 All strategies also inherit from `Strategy.find_path()`, which implements the A* algorithm to calculate the shortest path from the ghost to the target.
@@ -158,6 +164,9 @@ Pygame was the main reason we opted for a MVC pattern. With numerous modules, th
 ## Project management
 
 ## Resources
+
+> [!NOTE]
+> No AI was used in the making of this project.
 
 ### Parsing
 JSON parsing with comment:
