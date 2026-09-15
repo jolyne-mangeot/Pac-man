@@ -98,6 +98,18 @@ class Display:
     #                    COMMON METHODS TO MAIN MENUES
     # _________________________________________________________________________
 
+    def load_background_assets(self) -> None:
+        self.bground_assets = {
+            "backg": pg.image.load("pacman/assets/menues/menu-background.png"),
+            "cloud_1": pg.image.load("pacman/assets/menues/cloud-1.png"),
+            "cloud_2": pg.image.load("pacman/assets/menues/cloud-2.png"),
+            "foreg": pg.image.load("pacman/assets/menues/menu-foreground.png")}
+
+    def scale_background_assets(self) -> None:
+        screen_s: tuple[int, int] = self.control.interface.get_size()
+        for key, value in self.bground_assets.items():
+            self.bground_assets[key] = pg.transform.scale(value, screen_s)
+
     def load_menu_assets(self) -> None:
         """Loads all necessary assets for the main and options menus and
         place them in self assigned attributes to be used later.
@@ -109,7 +121,7 @@ class Display:
         ending
         """
         sheet: SpriteSheet = SpriteSheet(
-            "pacman/assets/interface/text_holder.png")
+            "pacman/assets/menues/text_holder.png")
         self.deselect_hold: pg.Surface = sheet.get_sprite((0, 60), (122, 28))
         self.select_hold: pg.Surface = sheet.get_sprite((0, 0), (122, 28))
         self.picked_hold: pg.Surface = sheet.get_sprite((0, 30), (122, 28))

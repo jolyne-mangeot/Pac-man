@@ -544,7 +544,7 @@ class GameDisplay(Display):
             self.load_theme_sprites(theme)
         self.load_characters_sprites()
         level_ui_sheet: SpriteSheet = SpriteSheet(
-            "pacman/assets/interface/life_and_energy.png")
+            "pacman/assets/level/level-interface.png")
         self.interface = {
             "level_ui": level_ui_sheet.get_sprite((0, 0), (640, 72)),
             "life_bar": level_ui_sheet.get_sprite((498, 94), (30, 21)),

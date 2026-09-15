@@ -131,8 +131,7 @@ class OptionsMenuState(State):
         function, then call cleanup, control's update and startup to
         effectively apply the new settings.
         """
-        self.cleanup()
-        self.control.update_options(Settings(**self.settings))
+        self.control.update_options(Settings(status=True, **self.settings))
         self.startup()
         self.display.mixer("option_activate")
 
