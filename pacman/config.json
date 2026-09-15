@@ -41,64 +41,19 @@
         },
         {
             "maze": {
-                "width": 8,
-                "height": 9,
-                "gum_percent": 73,
+                "width": 30,
+                "height": 20,
+                "gum_percent": 15,
                 "seed": 7676769
             },
             "gameplay": {
                 "timer": 120,
-                "theme": "grassy",
+                "theme": "dungeon",
                 "life_regen": 2,
                 "super_duration": 8,
                 "pacman_speed": 7,
                 "pacman_super_speed": 7,
-                "ghosts": {
-                    "Blinky": {
-                        "idle_strat": "PatrollingAngleStrat",
-                        "chase_strat": "ChaseDynamic",
-                        "escape_strat": "EscapeDynamic",
-                        "speed": 4,
-                        "super_speed": 7,
-                        "chase_radius": 4,
-                        "escape_radius": 7,
-                        "chasing_stamina": 12,
-                        "down_time": 2
-                    },
-                    "Pinky": {
-                        "idle_strat": "PatrollingAngleStrat",
-                        "chase_strat": "ChaseOnSpot",
-                        "escape_strat": "EscapeDynamic",
-                        "speed": 5,
-                        "super_speed": 7,
-                        "chase_radius": 8,
-                        "escape_radius": 5,
-                        "chasing_stamina": 15,
-                        "down_time": 4
-                    },
-                    "Inky": {
-                        "idle_strat": "AlternateAngleStrat",
-                        "chase_strat": "ChaseDynamic",
-                        "escape_strat": "EscapeToCorner",
-                        "speed": 4,
-                        "super_speed": 5,
-                        "chase_radius": 6,
-                        "escape_radius": 8,
-                        "chasing_stamina": 13,
-                        "down_time": 2
-                    },
-                    "Clyde": {
-                        "idle_strat": "AlternateAngleStrat",
-                        "chase_strat": "ChaseOnSpot",
-                        "escape_strat": "EscapeToCorner",
-                        "speed": 3,
-                        "super_speed": 6,
-                        "chase_radius": 6,
-                        "escape_radius": 8,
-                        "chasing_stamina": 8,
-                        "down_time": 5
-                    }
-                }
+                "ghosts": {}
             },
             "scores": {
                 "gum": 10,
