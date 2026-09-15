@@ -253,12 +253,12 @@ class Config(JSONModel):
             maze=MazeConfig(width=6, height=6, gum_percent=50, seed=68771),
             gameplay=GameplayConfig(
                 theme="grassy", super_duration=5,
-                pacman_speed=13, pacman_super_speed=14,
+                pacman_speed=6, pacman_super_speed=6,
                 ghosts={"Blinky": GhostConfig(
                     idle_strat="AlternateAngleStrat",
                     chase_strat="ChaseOnSpot",
                     escape_strat="EscapeToCorner",
-                    speed=13, super_speed=13, down_time=3,
+                    speed=6, super_speed=6, down_time=3,
                     chase_radius=2, escape_radius=3, chasing_stamina=6)}))]
         + [LevelConfig() for _ in range(9)]))
 

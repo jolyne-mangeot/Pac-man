@@ -65,6 +65,10 @@ class LevelDisplay:
         self.display: GameDisplay = display
         self.level: Level = level
 
+        self.background: pg.Surface
+        self.dim: pg.Surface = new_surface(
+            self.display.control.interface.get_size(),
+            pg.Color(30, 30, 30, 150))
         self.maze_surf: pg.Surface
         self.characters: dict[str, CharacterSprites]
         self.life_bar: pg.Surface
@@ -210,6 +214,15 @@ class LevelDisplay:
         life bit's size based on the player's max lives, and renders them
         on a the life_bar attribute until the bar is full.
         """
+        screen_s: tuple[int, int] = self.display.control.interface.get_size()
+        backs: dict[str, pg.Surface] = (
+            self.display.themed_assets[self.level.theme]["backgrounds"])
+        self.background = new_surface(screen_s)
+        self.background.blits([
+            (pg.transform.scale(backs["background"], screen_s), (0, 0)),
+            (pg.transform.scale(backs["middleground"], screen_s), (0, 0)),
+            (pg.transform.scale(backs["foreground"], screen_s), (0, 0))])
+
         ui_size: tuple[int, int] = (
             self.display.scaled_ui["level_ui"].get_size())
         bar_w: int = int(ui_size[1] * 2.92)
@@ -369,10 +382,10 @@ class LevelDisplay:
                         name, char, speed))
 
         maze_surf.blits(visual_elements)
-        game_surf.fill((15, 15, 15))
         game_surf.blit(maze_surf, maze_surf.get_rect(
             center=game_surf.get_rect().center))
         control_interface.blits([
+            (self.background, (0, 0)), (self.dim, (0, 0)),
             (game_surf, (0, int(control_interface.get_height() * 0.15))),
             self.render_interface()])
 
@@ -383,6 +396,7 @@ class LevelTheme(TypedDict):
     to hold multiple animations sprites, except for the path_and_walls,
     containing named surfaces for the maze's environment.
     """
+    backgrounds: dict[str, pg.Surface]
     binary_cell_borders: list[pg.Surface]
     paths_and_walls: dict[str, pg.Surface]
     decorations: list[pg.Surface]
@@ -557,9 +571,9 @@ class GameDisplay(Display):
         and modes using nested functions.
         """
         normal_sht: SpriteSheet = SpriteSheet(
-            "pacman/assets/level/skellies_premade_1.png")
+            "pacman/assets/level/skeletons_normal_sprites.png")
         super_sht: SpriteSheet = SpriteSheet(
-            "pacman/assets/level/skellies_premade_2.png")
+            "pacman/assets/level/skeletons_super_sprites.png")
         pacman_sht: SpriteSheet = SpriteSheet(
             "pacman/assets/level/character_sprites.png")
 
@@ -594,10 +608,11 @@ class GameDisplay(Display):
                     "DOWN": get_frames((coords[0], coords[1]), sheet)}
 
         sheet_pos: dict[str, tuple[int, int]] = {
-            "Blinky": (10 * 16 * 3, 2 * 16 * 4),
-            "Pinky": (8 * 16 * 3, 14 * 16 * 4),
-            "Inky": (9 * 16 * 3, 29 * 16 * 4),
-            "Clyde": (0, 0)}
+            "Blinky": (0, 0),
+            "Pinky": (48, 0),
+            "Inky": (96, 0),
+            "Clyde": (144, 0)}
+
         self.characters = {
             "Pacman": {"normal": load_sprites((0, 0), pacman_sht),
                        "super": load_sprites((48, 0), pacman_sht)}}
@@ -611,6 +626,14 @@ class GameDisplay(Display):
         This includes cells floor, borders and walls, decorations, gums and
         supergums. Place everything in the themed_assets dict attribute.
         """
+        backgrounds: dict[str, pg.Surface] = {
+            "background": pg.image.load(
+                "pacman/assets/level/" + theme + "_background.png"),
+            "middleground": pg.image.load(
+                "pacman/assets/level/" + theme + "_middleground.png"),
+            "foreground": pg.image.load(
+                "pacman/assets/level/" + theme + "_foreground.png")}
+
         sheet: SpriteSheet = SpriteSheet(
             "pacman/assets/level/" + theme + "_tiles_sheet.png")
         tile_sprites: dict[str, pg.Surface] = {
@@ -668,6 +691,7 @@ class GameDisplay(Display):
                 (128, 0), (144, 0), (128, 16), (144, 16))]
 
         self.themed_assets.update({theme: {
+            "backgrounds": backgrounds,
             "binary_cell_borders": binary_cell_borders,
             "paths_and_walls": paths_and_walls,
             "decorations": decorations}})
@@ -713,10 +737,10 @@ class GameDisplay(Display):
         """Based on the given game_state, calls the draw method of either the
         LevelDisplay, or the current menu.
         """
-        self.control.interface.fill((71, 71, 71))
         if game_state == "level":
             self.level_display.draw()
         if game_state in self.menu_renders.keys():
+            self.control.interface.blit(self.level_display.background, (0, 0))
             menu_render: MenuRender = self.menu_renders[game_state]
             menu_render.pre_render_option(self.control.dialogs)
             menu_render.draw_vertical_options()

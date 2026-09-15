@@ -263,6 +263,8 @@ class ChaseFumbling(Strategy):
                 return (random_pos, random_dir)
         if self.path == [] or ghost_pos != self.ghost_saved_pos:
             self.path = self.find_path(ghost_pos, pacman_pos)
+        if self.path == []:
+            self.path.append(self.random_direction(ghost_pos))
         return self.apply_movement(ghost_pos)
 
 

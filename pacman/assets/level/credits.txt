@@ -1,9 +1,0 @@
-dungeon_tiles.png:
-	- Dungeon tileset by Buch on OpenGameArt: https://opengameart.org/users/buch
-grassy_tiles.png:
-	- Outdoor tiles, again by Buch on OpenGameArt: https://opengameart.org/users/buch
-character_sprites.png (made with config.json, see link):
-	- 16x16 Chibi RPG character builder v3 by Emcee Flesher on OpenGameArt: https://opengameart.org/content/16x16-chibi-rpg-character-builder-v3
-	- Coin Animation [Bronze, Silver, Gold] by zaphgames on OpenGameArt: https://opengameart.org/content/coin-animation-bronze-silver-gold
-skellies_premade_ 1 / 2:
-	- 16x16 Chibi RPG character builder v3 by Emcee Flesher on OpenGameArt: https://opengameart.org/content/16x16-chibi-rpg-character-builder-v3

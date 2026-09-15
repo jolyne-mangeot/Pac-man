@@ -33,12 +33,14 @@ class HighscoresMenuDisplay(Display):
         self.highscore_list: MenuRender
         self.reset_menu: MenuRender
         self.load_menu_assets()
+        self.load_background_assets()
 
     def startup(self, highscore_title: Menu, highscore_index: Menu,
                 highscore_list: Menu, reset_menu: Menu) -> None:
         """Called when the HighScoreMenu comes up and initialize all Menu
         renders using differently sized PlaceHolders objects and placements.
         """
+        self.scale_background_assets()
         holder: PlaceHolder = self.scale_menu_holders(
             (0.8, 0.075), (0.12, 0.12, 0.76, 0.76))
         height: int = self.control.interface.get_height()
@@ -66,7 +68,9 @@ class HighscoresMenuDisplay(Display):
         method.
         """
         self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 120, 0))
+        self.control.interface.blits([
+            (self.bground_assets["backg"], (0, 0)),
+            (self.bground_assets["foreg"], (0, 0))])
         self.highscore_index.pre_render_option(self.control.dialogs)
         self.highscore_index.draw_vertical_options()
         self.highscore_title.draw_vertical_options()

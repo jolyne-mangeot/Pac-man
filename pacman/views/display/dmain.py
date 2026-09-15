@@ -79,15 +79,14 @@ class MainMenuDisplay(Display):
         the background and the main_menu object using its dedicated method.
         """
         screen_w: int = self.control.interface.get_width()
-        self.parallax_1 += screen_w * 0.0005
-        self.parallax_2 += screen_w * 0.0007
+        self.parallax_1 += screen_w * 0.0002
+        self.parallax_2 += screen_w * 0.0006
         if self.parallax_1 > screen_w:
             self.parallax_1 = 0
         if self.parallax_2 > screen_w:
             self.parallax_2 = 0
 
         self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 120, 0))
         self.control.interface.blits([
             (self.bground_assets["backg"], (0, 0)),
             (self.bground_assets["cloud_1"], (screen_w - self.parallax_1, 0)),

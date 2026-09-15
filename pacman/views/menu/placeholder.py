@@ -2,15 +2,15 @@
 import pygame as pg
 
 
-def new_surface(size: tuple[int, int] = (0, 0), alpha: int = 0,
-                color: pg.Color = pg.Color(0, 0, 0)) -> pg.Surface:
+def new_surface(size: tuple[int, int] = (0, 0),
+                color: pg.Color = pg.Color(0, 0, 0, 0)) -> pg.Surface:
     """Returns a new pygame.Surface object based on the given arguments.
     The color argument will be used to fill in the surface, and the alpha
     will be this color's. An alpha of 0 means the surface will be completely
     transparent.
     """
     surface: pg.Surface = pg.Surface(size, pg.SRCALPHA)
-    surface.fill((color[0], color[1], color[2], alpha))
+    surface.fill(color)
     return surface
 
 
@@ -21,8 +21,7 @@ def render_word(style: Style, word: str, margin: int = 1) -> pg.Surface:
     sometimes look weird.
     """
     render_width: int = style.letter_spacing * (len(word) + margin)
-    surface: pg.Surface = new_surface(
-        (render_width, style.text_rect.height), 0)
+    surface: pg.Surface = new_surface((render_width, style.text_rect.height))
     for index, letter in enumerate(word):
         letter_render: pg.Surface = style.font.render(
             letter, True, style.color)
@@ -50,7 +49,7 @@ class Style:
     def __init__(
             self, color: pg.Color = pg.Color(0, 0, 0),
             font: pg.font.Font = pg.font.SysFont("Times New Roman", 22),
-            graphic: pg.Surface = new_surface((250, 30), 0),
+            graphic: pg.Surface = new_surface((250, 30)),
             text_rect: pg.Rect = pg.Rect(10, 5, 230, 20),
             letter_spacing: int = 8) -> None:
         """Instantiate method for a PlaceHolder object, all attributes have

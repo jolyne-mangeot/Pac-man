@@ -57,7 +57,6 @@ class OptionsMenuDisplay(Display):
         the background and the main_menu object using its dedicated method.
         """
         self.control.screen.fill((0, 0, 0))
-        self.control.interface.fill((255, 120, 0))
         self.control.interface.blits([
             (self.bground_assets["backg"], (0, 0)),
             (self.bground_assets["foreg"], (0, 0))])
