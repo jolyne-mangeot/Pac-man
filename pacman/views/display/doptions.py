@@ -30,11 +30,13 @@ class OptionsMenuDisplay(Display):
         self.options_title: MenuRender
         self.options_menu: MenuRender
         self.load_menu_assets()
+        self.load_background_assets()
 
     def startup(self, options_title: Menu, options_menu: Menu) -> None:
         """Called when the OptionsMenuState comes up and initialize all needed
         visual variables.
         """
+        self.scale_background_assets()
         holder: PlaceHolder = self.scale_menu_holders(
             (0.55, 0.08), (0.12, 0.07, 0.8, 0.86))
         screen_h: int = self.control.screen.get_height()
@@ -56,6 +58,9 @@ class OptionsMenuDisplay(Display):
         """
         self.control.screen.fill((0, 0, 0))
         self.control.interface.fill((255, 120, 0))
+        self.control.interface.blits([
+            (self.bground_assets["backg"], (0, 0)),
+            (self.bground_assets["foreg"], (0, 0))])
         self.options_title.draw_vertical_options()
         self.options_menu.pre_render_option(self.control.dialogs)
         self.options_menu.draw_chart_options(int(

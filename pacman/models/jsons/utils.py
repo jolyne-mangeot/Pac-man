@@ -80,8 +80,7 @@ class JSONModel(BaseModel):
                 from a ValidationInfo object.
                 """
                 field_copy: Annotated[
-                    Any,
-                    *field_info["metadata"],
+                    Any, *field_info["metadata"],
                     Field(**field_info["attributes"])]
 
             DummyClass(field_copy=value)
