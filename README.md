@@ -177,7 +177,54 @@ Pygame was the main reason we opted for a MVC pattern. With numerous modules, th
 
 ## Project management
 
+To facilitate the implementation of this project, we took the time to go through a conception phase. We used the Obsidian software to centralize our documentation and organize the tasks to be completed. We made a list of the prerequisites for the project so we wouldn't forget anything.
+
+
 ![](docs/img/project-kanban.png)
+
+The next step was to think about how to organize the project using the MVC architecture. We considered the various submodules needed and assigned them to the model, controller, or view components of the project. The goal was to optimize the dependencies and communication between these different submodules so that the architecture would be clear and well-organized.
+
+### Timeline
+
+**1st Week:** 
+- Initialize all project folders and files.
+- JSON configuration file and parsing.
+- Realization of the Makefile.
+
+**2nd Week:** 
+- Start and organization of the menu module.
+- Add docstrings for the files that have already been completed.
+
+**3rd Week:**
+- Optimization and continuity of the Menu module.
+- Start and organization of the Entity module.
+
+**4th Week:**
+- Optimization and continuity of the Entity module.
+- Creating a tester to test the various subcomponents of the Entity module.
+
+**5th Week:**
+- Start and organization of the display module.
+- Add and update of docstrings.
+- Add the level module to link the maze, Pac-Man, and the ghosts.
+- Fix of bugs and conception issues.
+
+**6th Week:**
+- Finalization of map management.
+- Conceptualization and start of ghost Strategies.
+- Optimization and continuity of the display module.
+
+**7th Week:**
+- Research and implementation of assets and sprites.
+- Continuity and optimization of previous modules and submodules.
+- Add and update of docstrings.
+- Fix of bugs and conception issues.
+
+**8th Week:**
+- README.md creation.
+- Optimization of the project.
+- Finalization of display.
+- Building the game executable file.
 
 ## Resources
 

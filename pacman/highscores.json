@@ -8,6 +8,13 @@
             "remaining_lives": 0
         },
         {
+            "player": "Bella",
+            "score": 2440,
+            "level_reached": 3,
+            "time_taken": 113,
+            "remaining_lives": 0
+        },
+        {
             "player": "Player",
             "score": 1100,
             "level_reached": 2,
