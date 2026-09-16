@@ -54,8 +54,8 @@ class MainMenuDisplay(Display):
             scaled_title,
             scaled_title.get_rect(center=(screen_w // 2, screen_h * 0.27)))
 
-        self.menu_render = self.init_menu(self.scale_menu_holders(), menu,
-                                          int(screen_h * 0.55))
+        self.menu_render = self.init_menu(
+            self.scale_menu_holders(), menu, int(screen_h * 0.55))
         self.error_list = self.init_menu(
             self.create_errors_holder(), error_list,
             int(screen_h * 0.03), int(screen_h * 0.26),

@@ -3,6 +3,7 @@ import pygame as pg
 
 from .display import Display
 from pacman.views import MenuRender
+from pacman.models import Languages
 from pacman.controllers import Control, Menu
 
 
@@ -31,11 +32,11 @@ class InstructionsMenuDisplay(Display):
         """
         super().__init__(control)
         self.instructions_menu: MenuRender
-        self.instructions: pg.Surface = pg.image.load(
-                    "pacman/assets/menues/instructions.png").convert_alpha()
+        self.instructions: dict[str, pg.Surface]
         self.scaled_instructions: tuple[pg.Surface, pg.Rect]
         self.load_menu_assets()
         self.load_background_assets()
+        self.load_instructions()
 
     def startup(self, instructions_menu: Menu) -> None:
         """Called when the OptionsMenuState comes up and initialize all needed
@@ -43,7 +44,8 @@ class InstructionsMenuDisplay(Display):
         """
         self.scale_background_assets()
         self.scaled_instructions = (pg.transform.scale(
-            self.instructions, self.control.interface.get_size()),
+            self.instructions[self.control.settings.lang.value],
+            self.control.interface.get_size()),
             pg.Rect(0, 0, 0, 0))
         screen_h: int = self.control.screen.get_height()
         self.instructions_menu = self.init_menu(
@@ -55,6 +57,12 @@ class InstructionsMenuDisplay(Display):
         attribute.
         """
         del self.instructions_menu
+
+    def load_instructions(self) -> None:
+        self.instructions = {
+            lang.value: pg.image.load(
+                "pacman/assets/menues/instructions-" + lang.value + ".png"
+            ).convert_alpha() for lang in Languages}
 
     def draw(self) -> None:
         """Called by update to display all visual elements of the menu, namely
