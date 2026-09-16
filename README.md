@@ -2,9 +2,11 @@
 
 *And put down the dead before they get the chance to rise from their tomb again.*
 
-![Demonstration gif showing the main character running inside a dungeon-themed maze from armed skeletons before taking a weapon and chasing them down.](docs/gifs/demo.gif)
+![Banner for the game Enter the Crypt](docs/gifs/banner.gif)
 
 ## Description
+
+![Demonstration gif showing the main character running inside a dungeon-themed maze from armed skeletons before taking a weapon and chasing them down.](docs/gifs/demo.gif)
 
 First released in 1980 by Namco, Pac-Man quickly became a cultural icon and one of the most influential video games of all time. Designed by Toru Iwatani, its goal was to create a game that could appeal to women and casual players, contrasting with the space shooters of the era. The game introduced the now-famous ghost AI, each with unique behavior.
 

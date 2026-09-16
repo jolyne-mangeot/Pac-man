@@ -34,6 +34,9 @@ class MainMenuDisplay(Display):
         self.error_list: MenuRender
         self.parallax_1: float = 0
         self.parallax_2: float = 0
+        self.title: pg.Surface = pg.image.load(
+            "pacman/assets/menues/title.png").convert_alpha()
+        self.scaled_title: tuple[pg.Surface, pg.Rect]
         self.load_menu_assets()
         self.load_background_assets()
 
@@ -42,7 +45,15 @@ class MainMenuDisplay(Display):
         visual variables.
         """
         screen_h: int = self.control.interface.get_height()
+        screen_w: int = self.control.interface.get_width()
+
         self.scale_background_assets()
+        scaled_title: pg.Surface = pg.transform.scale(
+            self.title, (screen_w * 0.6, screen_h * 0.27))
+        self.scaled_title = (
+            scaled_title,
+            scaled_title.get_rect(center=(screen_w // 2, screen_h * 0.27)))
+
         self.menu_render = self.init_menu(self.scale_menu_holders(), menu,
                                           int(screen_h * 0.55))
         self.error_list = self.init_menu(
@@ -55,6 +66,7 @@ class MainMenuDisplay(Display):
         attribute.
         """
         del self.menu_render
+        del self.scaled_title
 
     def create_errors_holder(self) -> PlaceHolder:
         """Returns aPlaceHolder object used to display error messages in the
@@ -93,7 +105,8 @@ class MainMenuDisplay(Display):
             (self.bground_assets["cloud_1"], (-self.parallax_1, 0)),
             (self.bground_assets["cloud_2"], (screen_w - self.parallax_2, 0)),
             (self.bground_assets["cloud_2"], (-self.parallax_2, 0)),
-            (self.bground_assets["foreg"], (0, 0))])
+            (self.bground_assets["foreg"], (0, 0)),
+            self.scaled_title])
         self.menu_render.draw_vertical_options()
         self.error_list.draw_vertical_options()
         self.control.screen.blit(
