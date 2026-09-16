@@ -54,6 +54,8 @@ class MainMenuState(State):
             ActivateOption("play", partial(self.switch_state, "game_menu")),
             ActivateOption(
                 "highscores", partial(self.switch_state, "highscores_menu")),
+            ActivateOption("instructions",
+                           partial(self.switch_state, "instructions_menu")),
             ActivateOption(
                 "settings", partial(self.switch_state, "options_menu")),
             ActivateOption("quit", partial(self.leave_game))])

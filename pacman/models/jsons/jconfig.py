@@ -250,7 +250,7 @@ class Config(JSONModel):
     player: PlayerConfig = Field(default_factory=PlayerConfig)
     levels: list[LevelConfig] = Field(min_length=1, default=list([
         LevelConfig(
-            maze=MazeConfig(width=6, height=6, gum_percent=50, seed=68771),
+            maze=MazeConfig(width=8, height=8, gum_percent=50, seed=68771),
             gameplay=GameplayConfig(
                 theme="grassy", super_duration=5,
                 pacman_speed=6, pacman_super_speed=6,
@@ -258,8 +258,26 @@ class Config(JSONModel):
                     idle_strat="AlternateAngleStrat",
                     chase_strat="ChaseOnSpot",
                     escape_strat="EscapeToCorner",
-                    speed=6, super_speed=6, down_time=3,
-                    chase_radius=2, escape_radius=3, chasing_stamina=6)}))]
+                    speed=5, super_speed=5, down_time=5,
+                    chase_radius=2, escape_radius=3, chasing_stamina=9),
+                    "Pinky": GhostConfig(
+                    idle_strat="PatrollingAngleStrat",
+                    chase_strat="ChaseOnSpot",
+                    escape_strat="EscapeMaxDistance",
+                    speed=3, super_speed=4, down_time=5,
+                    chase_radius=2, escape_radius=6, chasing_stamina=6),
+                    "Inky": GhostConfig(
+                    idle_strat="AlternateAngleStrat",
+                    chase_strat="ChaseDynamic",
+                    escape_strat="EscapeDynamic",
+                    speed=3, super_speed=5, down_time=5,
+                    chase_radius=2, escape_radius=3, chasing_stamina=5),
+                    "Clyde": GhostConfig(
+                    idle_strat="PatrollingAngleStrat",
+                    chase_strat="ChaseFumbling",
+                    escape_strat="EscapeToCorner",
+                    speed=4, super_speed=5, down_time=5,
+                    chase_radius=4, escape_radius=3, chasing_stamina=13)}))]
         + [LevelConfig() for _ in range(9)]))
 
     @field_validator("player", mode="before")

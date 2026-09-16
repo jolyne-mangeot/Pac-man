@@ -12,6 +12,7 @@ class Dialogs(JSONModel):
     title: str = "Pac-Man"
     play: str = "Play"
     highscores: str = "Highscores"
+    instructions: str = "How to play"
     settings: str = "Settings"
     quit: str = "Quit"
 
@@ -25,6 +26,17 @@ class Dialogs(JSONModel):
     error_occured: str = "An error occured..."
     defaulted_values: str = (
         "Faulty configurations replaced with default values")
+
+    highscores_menu: str = "Highscore menu"
+    no_highscores: str = "No highscores saved"
+    player: str = "Player"
+    score: str = "Total score"
+    level_reached: str = "Level reached"
+    time_taken: str = "Time taken"
+    remaining_lives: str = "Remaining lives"
+    reset_highscores: str = "reset"
+
+    instructions_menu: str = "Instructions"
 
     options_menu: str = "Game options"
     lang: str = "Language"
@@ -43,15 +55,6 @@ class Dialogs(JSONModel):
     reload_config: str = "Reload config"
     reset_config: str = "Reset config"
     back: str = "back"
-
-    highscores_menu: str = "Highscore menu"
-    no_highscores: str = "No highscores saved"
-    player: str = "Player"
-    score: str = "Total score"
-    level_reached: str = "Level reached"
-    time_taken: str = "Time taken"
-    remaining_lives: str = "Remaining lives"
-    reset_highscores: str = "reset"
 
     paused: str = "Pause menu"
     resume: str = "Resume"

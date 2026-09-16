@@ -183,6 +183,8 @@ class GameState(State):
         pause_menu = Menu(loop_cursor=False, options=[
             TextHolder("paused", static_style="picked"), Spacer(), Spacer(),
             ActivateOption("resume", partial(self.change_game_state, "level")),
+            ActivateOption("instructions",
+                           partial(self.switch_state, "instructions_menu")),
             ActivateOption("settings",
                            partial(self.switch_state, "options_menu")),
             Spacer(), ActivateOption("give_up", partial(self.leave_game))])

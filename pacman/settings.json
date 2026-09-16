@@ -1,6 +1,9 @@
 {
     "lang": "en-en",
-    "res": "fullscreen",
+    "res": [
+        1440,
+        1080
+    ],
     "sfx_vol": 10,
     "bgm_vol": 10,
     "key_config": {

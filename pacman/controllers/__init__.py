@@ -4,7 +4,8 @@ from .statecontrol import Control, State
 from .menu import Menu
 
 from .states import (
-    MainMenuState, OptionsMenuState, HighscoresMenuState, GameState)
+    MainMenuState, InstructionsMenuState, HighscoresMenuState,
+    OptionsMenuState, GameState)
 
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
 
     "Menu",
 
-    "MainMenuState", "OptionsMenuState", "HighscoresMenuState", "GameState"]
+    "MainMenuState", "InstructionsMenuState", "OptionsMenuState",
+    "HighscoresMenuState", "GameState"]

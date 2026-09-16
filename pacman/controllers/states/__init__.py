@@ -1,10 +1,12 @@
 
 from .smain import MainMenuState
-from .soptions import OptionsMenuState
+from .sinstructions import InstructionsMenuState
 from .shighscores import HighscoresMenuState
+from .soptions import OptionsMenuState
 from .sgame import GameState
 
 
 __all__ = [
     "State",
-    "MainMenuState", "OptionsMenuState", "HighscoresMenuState", "GameState"]
+    "MainMenuState", "InstructionsMenuState", "OptionsMenuState",
+    "HighscoresMenuState", "GameState"]
