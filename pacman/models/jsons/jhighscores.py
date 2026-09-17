@@ -39,7 +39,7 @@ class Score(BaseModel):
         max length 10. If the names is only made of letters and numbers,
         returns it, and otherwise raise a ValidationError.
         """
-        if value.isalnum() is True:
+        if all(char.isalnum() or char == " " for char in value) is True:
             return value
         else:
             raise ValidationError

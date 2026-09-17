@@ -92,7 +92,7 @@ class MainMenuDisplay(Display):
         """
         screen_w: int = self.control.interface.get_width()
         self.parallax_1 += screen_w * 0.0002
-        self.parallax_2 += screen_w * 0.0006
+        self.parallax_2 += screen_w * 0.0003
         if self.parallax_1 > screen_w:
             self.parallax_1 = 0
         if self.parallax_2 > screen_w:

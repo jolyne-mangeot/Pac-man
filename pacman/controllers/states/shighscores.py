@@ -114,7 +114,7 @@ class HighscoresMenuState(State):
         if self.control.highscores.scores == []:
             return
         self.cleanup()
-        self.control.save_config(Highscores())
+        self.control.save_model(Highscores())
         self.startup()
 
     def get_event(self, event: pg.event.Event) -> None:

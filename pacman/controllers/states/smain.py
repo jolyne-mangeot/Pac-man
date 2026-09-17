@@ -29,6 +29,8 @@ class MainMenuState(State):
     with set parameters
     - startup (override) => calls init_menu to initialize navigation
     - cleanup (override) => deletes the main_menu attribute to save memory
+    - start_game => generates a new Config for the levels using Control's
+    method and switches the state to "game_menu"
     - leave_game => switches the current state to "quit", informing Control to
     stop the program
     - get_event (override) => check if the return_key has been pressed to
@@ -51,7 +53,7 @@ class MainMenuState(State):
         error_list menu with an empty list filled with all current errors.
         """
         self.main_menu = Menu(loop_cursor=False, options=[
-            ActivateOption("play", partial(self.switch_state, "game_menu")),
+            ActivateOption("play", partial(self.start_game)),
             ActivateOption(
                 "highscores", partial(self.switch_state, "highscores_menu")),
             ActivateOption("instructions",
@@ -63,7 +65,7 @@ class MainMenuState(State):
         self.error_list = Menu(options=[])
         if self.control.config_path == "":
             self.error_list.options.append(TextHolder("arg_error"))
-        if self.control.config.status is False:
+        if self.control.config_base["status"] is False:
             self.error_list.options.append(TextHolder("config_error"))
         if self.control.settings.status is False:
             self.error_list.options.append(TextHolder("settings_error"))
@@ -88,6 +90,13 @@ class MainMenuState(State):
         self.display.mixer("option_activate")
         del self.main_menu
         self.display.cleanup()
+
+    def start_game(self) -> None:
+        """Calls Control's method to generate a new configuration for the
+        levels, then switches the game's state to "game_menu".
+        """
+        self.control.generate_config_from_base()
+        self.switch_state("game_menu")
 
     def leave_game(self) -> None:
         """Plays a sound and switches the Control's state to quit, efficiently

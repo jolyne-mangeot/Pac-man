@@ -13,7 +13,8 @@ dependencies = [
 	"pydantic",
 	"mypy",
 	"types-setuptools",
-	"setuptools"
+	"setuptools",
+	"pyinstaller"
 ]
 license = "MIT"
 license-files = ["LICENCE"]

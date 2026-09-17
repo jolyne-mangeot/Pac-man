@@ -2,7 +2,9 @@
 from .jsons import (
     Config, MazeConfig, GameplayConfig, ScoresConfig, LevelConfig,
     Settings, KeyConfig, Highscores, Score, Dialogs, ACTION_LIST,
-    JSONModel, json_to_model, model_to_json, Languages, Resolutions)
+    JSONModel, json_to_model, model_to_json,
+    json_to_config_base, config_base_to_json,
+    generate_level_one, Languages, Resolutions)
 
 from .menu import (
     Option, Spacer, TextHolder, TextValueHolder, InputOption, SliderOption,
@@ -18,7 +20,8 @@ from .level import Level, LevelOutput, Cheats
 __all__ = [
     "Config", "MazeConfig", "GameplayConfig", "ScoresConfig", "LevelConfig",
     "Settings", "KeyConfig", "Highscores", "Score", "Dialogs", "ACTION_LIST",
-    "JSONModel", "json_to_model", "model_to_json", "Languages", "Resolutions",
+    "JSONModel", "json_to_model", "model_to_json", "json_to_config_base",
+    "config_base_to_json", "generate_level_one", "Languages", "Resolutions",
 
     "Option", "Spacer", "TextHolder", "TextValueHolder", "InputOption",
     "SliderOption", "ActivateOption", "SelectionOption", "ToggleOption",

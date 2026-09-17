@@ -8,7 +8,7 @@ from pacman.controllers import Control, State, Menu
 from pacman.models import (
     TextHolder, Spacer, ActivateOption, SliderOption, InputOption,
     SelectionOption,
-    Config, Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
+    Settings, KeyConfig, Languages, Resolutions, ACTION_LIST)
 from pacman.views import OptionsMenuDisplay
 
 
@@ -91,8 +91,7 @@ class OptionsMenuState(State):
             ActivateOption(
                 "reload_config", partial(self.control.reload_config)),
             ActivateOption(
-                "reset_config", partial(self.control.save_config,
-                                        Config(status=True))),
+                "reset_config", partial(self.control.reset_config)),
             ActivateOption("back", partial(self.back_a_state))])
 
     def startup(self) -> None:
@@ -134,9 +133,6 @@ class OptionsMenuState(State):
         self.control.update_options(Settings(status=True, **self.settings))
         self.startup()
         self.display.mixer("option_activate")
-
-    def reset_config(self) -> None:
-        self.control.save_config(Config(status=True))
 
     def get_event(self, event: pg.event.Event) -> None:
         """Takes a pygame Event object as argument.

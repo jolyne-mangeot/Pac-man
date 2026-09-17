@@ -1,6 +1,7 @@
 
 from .jconfig import (
-    Config, MazeConfig, GameplayConfig, ScoresConfig, LevelConfig)
+    Config, MazeConfig, GameplayConfig, ScoresConfig, LevelConfig,
+    json_to_config_base, config_base_to_json, generate_level_one)
 from .jsettings import Settings, KeyConfig, Languages, Resolutions, ACTION_LIST
 from .jhighscores import Highscores, Score
 from .jdialogs import Dialogs
@@ -9,6 +10,7 @@ from .utils import JSONModel, json_to_model, model_to_json
 
 __all__ = [
     "Config", "MazeConfig", "GameplayConfig", "ScoresConfig", "LevelConfig",
+    "json_to_config_base", "config_base_to_json", "generate_level_one",
     "Settings", "KeyConfig", "Languages", "Resolutions", "ACTION_LIST",
     "Highscores", "Score",
     "Dialogs",

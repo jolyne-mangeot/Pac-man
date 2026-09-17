@@ -1,39 +1,25 @@
 {
-    "scores": [
-        {
-            "player": "Suri",
-            "score": 7150,
-            "level_reached": 7,
-            "time_taken": 372,
-            "remaining_lives": 0
-        },
-        {
-            "player": "Player",
-            "score": 3780,
-            "level_reached": 4,
-            "time_taken": 185,
-            "remaining_lives": 0
-        },
-        {
-            "player": "Suri",
-            "score": 3740,
-            "level_reached": 4,
-            "time_taken": 233,
-            "remaining_lives": 0
-        },
-        {
-            "player": "Bella",
-            "score": 2440,
-            "level_reached": 3,
-            "time_taken": 113,
-            "remaining_lives": 0
-        },
-        {
-            "player": "Player",
-            "score": 1100,
-            "level_reached": 2,
-            "time_taken": 52,
-            "remaining_lives": 0
-        }
-    ]
+	"scores": [
+		{
+			"player": "Suri",
+			"score": 7150,
+			"level_reached": 7,
+			"time_taken": 372,
+			"remaining_lives": 0
+		},
+		{
+			"player": "Bella",
+			"score": 5440,
+			"level_reached": 3,
+			"time_taken": 113,
+			"remaining_lives": 0
+		},
+		{
+			"player": "Suri",
+			"score": 3740,
+			"level_reached": 4,
+			"time_taken": 233,
+			"remaining_lives": 0
+		}
+	]
 }

@@ -217,7 +217,7 @@ class GameState(State):
               for name in self.player.scores.keys()], Spacer(),
             TextValueHolder("current_score", self.player),
             InputOption("player_name", self.player, 10,
-                        char_checker=lambda s: s.isalnum()),
+                        char_checker=lambda s: s.isalnum() or s == " "),
             ActivateOption("save_score", partial(self.save_score)),
             ActivateOption("end_run", partial(self.leave_game))])
 
@@ -384,7 +384,8 @@ class GameState(State):
                 level_reached=self.level_reached,
                 time_taken=self.player.playtime,
                 remaining_lives=self.player.lives)])
-        if self.control.save_config(new_highscores) is True:
+        self.player_name = self.player.player_name
+        if self.control.save_model(new_highscores) is True:
             self.menues["end"].options[10] = TextHolder("score_saved")
             self.menues["end"].select_index = 11
             self.display.update_menu(self.current_state, 10)

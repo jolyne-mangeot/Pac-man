@@ -100,10 +100,14 @@ class Display:
 
     def load_background_assets(self) -> None:
         self.bground_assets = {
-            "backg": pg.image.load("pacman/assets/menues/menu-background.png"),
-            "cloud_1": pg.image.load("pacman/assets/menues/cloud-1.png"),
-            "cloud_2": pg.image.load("pacman/assets/menues/cloud-2.png"),
-            "foreg": pg.image.load("pacman/assets/menues/menu-foreground.png")}
+            "backg": pg.image.load(
+                "pacman/assets/menues/menu-background.png").convert_alpha(),
+            "cloud_1": pg.image.load(
+                "pacman/assets/menues/cloud-1.png").convert_alpha(),
+            "cloud_2": pg.image.load(
+                "pacman/assets/menues/cloud-2.png").convert_alpha(),
+            "foreg": pg.image.load(
+                "pacman/assets/menues/menu-foreground.png").convert_alpha()}
 
     def scale_background_assets(self) -> None:
         screen_s: tuple[int, int] = self.control.interface.get_size()

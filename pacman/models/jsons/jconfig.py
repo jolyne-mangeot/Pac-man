@@ -2,11 +2,12 @@
 from typing import ClassVar, Any, Iterable, Final
 from random import randint, choice
 from functools import partial
+from json import load, dumps
 
 from pydantic import Field, field_validator, ValidationInfo
 from pydantic_core import PydanticUseDefault
 
-from .utils import JSONModel, check_missing_json_entry
+from .utils import JSONModel, JSONCommentedDecoder, check_missing_json_entry
 
 
 STRATS: Final[tuple[str, ...]] = (
@@ -230,6 +231,41 @@ class LevelConfig(JSONModel):
         raise PydanticUseDefault
 
 
+def generate_level_one() -> LevelConfig:
+    """Function returning a single LevelConfig with default values thought
+    out to make a first level for a run.
+    """
+    return LevelConfig(
+        maze=MazeConfig(width=8, height=8, gum_percent=50, seed=68771),
+        gameplay=GameplayConfig(
+            theme="grassy", super_duration=5,
+            pacman_speed=6, pacman_super_speed=6,
+            ghosts={"Blinky": GhostConfig(
+                idle_strat="AlternateAngleStrat",
+                chase_strat="ChaseOnSpot",
+                escape_strat="EscapeToCorner",
+                speed=5, super_speed=5, down_time=5,
+                chase_radius=2, escape_radius=3, chasing_stamina=9),
+                "Pinky": GhostConfig(
+                idle_strat="PatrollingAngleStrat",
+                chase_strat="ChaseOnSpot",
+                escape_strat="EscapeMaxDistance",
+                speed=3, super_speed=4, down_time=5,
+                chase_radius=2, escape_radius=6, chasing_stamina=6),
+                "Inky": GhostConfig(
+                idle_strat="AlternateAngleStrat",
+                chase_strat="ChaseDynamic",
+                escape_strat="EscapeDynamic",
+                speed=3, super_speed=5, down_time=5,
+                chase_radius=2, escape_radius=3, chasing_stamina=5),
+                "Clyde": GhostConfig(
+                idle_strat="PatrollingAngleStrat",
+                chase_strat="ChaseFumbling",
+                escape_strat="EscapeToCorner",
+                speed=4, super_speed=5, down_time=5,
+                chase_radius=4, escape_radius=3, chasing_stamina=13)}))
+
+
 class Config(JSONModel):
     """Class Config, subclass of JSONModel
 
@@ -251,37 +287,8 @@ class Config(JSONModel):
     file_name: ClassVar[str] = "config"
 
     player: PlayerConfig = Field(default_factory=PlayerConfig)
-    levels: list[LevelConfig] = Field(min_length=1, default=list([
-        LevelConfig(
-            maze=MazeConfig(width=8, height=8, gum_percent=50, seed=68771),
-            gameplay=GameplayConfig(
-                theme="grassy", super_duration=5,
-                pacman_speed=6, pacman_super_speed=6,
-                ghosts={"Blinky": GhostConfig(
-                    idle_strat="AlternateAngleStrat",
-                    chase_strat="ChaseOnSpot",
-                    escape_strat="EscapeToCorner",
-                    speed=5, super_speed=5, down_time=5,
-                    chase_radius=2, escape_radius=3, chasing_stamina=9),
-                    "Pinky": GhostConfig(
-                    idle_strat="PatrollingAngleStrat",
-                    chase_strat="ChaseOnSpot",
-                    escape_strat="EscapeMaxDistance",
-                    speed=3, super_speed=4, down_time=5,
-                    chase_radius=2, escape_radius=6, chasing_stamina=6),
-                    "Inky": GhostConfig(
-                    idle_strat="AlternateAngleStrat",
-                    chase_strat="ChaseDynamic",
-                    escape_strat="EscapeDynamic",
-                    speed=3, super_speed=5, down_time=5,
-                    chase_radius=2, escape_radius=3, chasing_stamina=5),
-                    "Clyde": GhostConfig(
-                    idle_strat="PatrollingAngleStrat",
-                    chase_strat="ChaseFumbling",
-                    escape_strat="EscapeToCorner",
-                    speed=4, super_speed=5, down_time=5,
-                    chase_radius=4, escape_radius=3, chasing_stamina=13)}))]
-        + [LevelConfig() for _ in range(9)]))
+    levels: list[LevelConfig] = Field(min_length=1, default_factory=(
+        lambda: [generate_level_one()] + [LevelConfig() for _ in range(9)]))
 
     @field_validator("player", mode="before")
     @classmethod
@@ -321,3 +328,47 @@ class Config(JSONModel):
                         level_list.append(LevelConfig())
             return level_list
         raise PydanticUseDefault
+
+
+def json_to_config_base(file_path: str = "") -> dict[str, Any]:
+    """Function specialized for the parsing of the configuration file, which
+    contains data for the generation of the levels. Instead of returning a
+    Config object, it returns a dict containing only relevant values to be
+    used when starting the game. This way, all missing values are randomized
+    for each new game run.
+    """
+    path: str = (file_path if file_path != ""
+                 else "pacman/" + Config.file_name + ".json")
+    try:
+        with open(path, "r") as file:
+            config_dict: dict[str, Any] = load(file, cls=JSONCommentedDecoder)
+            for key in [key for key in config_dict.keys()
+                        if key not in Config.model_fields.keys()]:
+                config_dict.pop(key)
+            config_dict.update({"status": True})
+            return config_dict
+    except (FileNotFoundError, PermissionError):
+        return {"status": False}
+
+
+def config_base_to_json(config_base: dict[str, Any],
+                        file_path: str = "") -> bool:
+    """Function specialized for the saving of the configuration, saving the
+    config_base dict rather than a Config object. This helps during the
+    serialization of default values to insert blank dictionaries, which will
+    later create randomized values.
+    """
+    success: bool = False
+    path: str = (file_path if file_path != ""
+                 else "pacman/" + Config.file_name + ".json")
+    try:
+        with open(path, "w") as file:
+            config_base.pop("status", "")
+            config_base.pop("file_name", "")
+            format: str = dumps(config_base, indent=4)
+            print(format, file=file)
+            print(f"Information written out from config base:\n{format}")
+            success = True
+    except PermissionError:
+        pass
+    return success

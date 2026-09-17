@@ -125,6 +125,9 @@ class JSONCommentedDecoder(JSONDecoder):
 
 def check_missing_json_entry(
         model: type[JSONModel], config: dict[Any, Any]) -> None:
+    """For each missing key to create a JSONModel object in the given config
+    dict, print an explicit warning message in the terminal
+    """
     missings: list[str] = [
         key for key in model.model_fields.keys()
         if key not in (*config.keys(), "status", "file_name")]
@@ -158,6 +161,7 @@ def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
                 print(
                     f"On {model.__name__} parsing, entry {key} is missing, "
                     "defaulting or randomizing value.")
+            config_dict.pop("status", "")
             return model(status=True, **config_dict)
     except (FileNotFoundError, PermissionError):
         return model(status=False)

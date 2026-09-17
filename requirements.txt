@@ -3,3 +3,4 @@ pydantic
 mypy
 setuptools
 types-setuptools
+pyinstaller

@@ -1,12 +1,12 @@
 
 from abc import ABC, abstractmethod
-from typing import cast
+from typing import cast, Any
 
 import pygame as pg
 
 from pacman.models import (
-    JSONModel, Config, Settings, Highscores, Dialogs,
-    json_to_model, model_to_json)
+    JSONModel, Config, Settings, Highscores, Dialogs, generate_level_one,
+    json_to_model, model_to_json, json_to_config_base, config_base_to_json)
 
 
 pg.init()
@@ -27,6 +27,8 @@ class Control:
     data to use.
 
     ### Attributes:
+    - config_base: dict[str, Any] => dict representing the configuration file
+    parsed at the program's load-up
     - config: Config => Config object containing values to pass down to game
     related states
     - settings: Settings => Settings object reference to be accessed by states
@@ -60,12 +62,17 @@ class Control:
     on the current settings
     - update_options => reloads the dialog and updates the screen to fit new
     settings from the Setting object
-    - save_config => saves a JSONModel passed as argument in attributes and
+    - save_model => saves a JSONModel passed as argument in attributes and
     files
     - load_dialogs => loads up the dialog file with the json_to_model
     function and transforms it into a dict[str, str]
-    - reload_config => reloads the Config using the config_path
-    - set_up_states => Updates the state_dict with the one given as argument
+    - generate_config_from_base => from the config_base, instantiate the config
+    attribute
+    - reload_config => reload JSONModels objects and the config_base using the
+    config_path
+    - reset_config => reinitializes the config_base to default values, and
+    saves it using the dedicated function.
+    - set_up_states => updates the state_dict with the one given as argument
     - flip_state => Calls cleaning of the current state and setup of the
     new state
     - event_loop => check every event in the pg.event.get() queue and send them
@@ -82,6 +89,7 @@ class Control:
         """
         self.config_path: str = config_path
         self.config: Config
+        self.config_base: dict[str, Any]
         self.settings: Settings
         self.highscores: Highscores
         self.dialogs: dict[str, str]
@@ -149,7 +157,7 @@ class Control:
         self.sfx_channel.set_volume(self.settings.sfx_vol / 10)
         return save_output
 
-    def save_config(self, config: JSONModel) -> bool:
+    def save_model(self, config: JSONModel) -> bool:
         """Simply returns the model_to_json function with the given JSONModel
         object, keeping Control as the only class accessing external files.
         """
@@ -173,14 +181,32 @@ class Control:
             self.dialogs = cast(dict[str, str], dialogs.model_dump())
             self.dialogs["status"] = str(dialogs.status)
 
+    def generate_config_from_base(self) -> None:
+        """Punctual method generating a new Config object as Control's
+        attribute using the config_base loaded from the configuration file at
+        the start of the program.
+        """
+        self.config = Config(**self.config_base)
+
     def reload_config(self) -> None:
         """Reloads all configuration files from the path passed as argument
         when the program started.
         """
-        self.config = cast(Config, json_to_model(Config, self.config_path))
+        self.config_base = json_to_config_base(self.config_path)
         self.settings = cast(Settings, json_to_model(Settings))
         self.highscores = cast(Highscores, json_to_model(Highscores))
         self.load_dialogs()
+
+    def reset_config(self) -> None:
+        """Method dedicated to creating a base for randomized levels apart
+        from the first one generated using the generate_level_one function.
+        Saves this new config_base in the file at the config_path.
+        """
+        self.config_base = Config(
+            status=True, levels=[generate_level_one()]).model_dump()
+        self.config_base["levels"].extend([{}] * 9)
+        self.config_base["status"] = config_base_to_json(
+            self.config_base, self.config_path)
 
     def set_up_states(self, state_dict: dict[str, State]) -> None:
         """Takes a dict of State objects given by the main function of the

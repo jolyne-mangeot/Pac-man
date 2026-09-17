@@ -223,8 +223,10 @@ class Ghost(Entity):
         If not, it use a idling strategy to move.Each move in idling strategy
         augment the ghost current_stamina if it is inferior to max_stamina.
         """
-        if (calculate_manhattan(self.pos, pacman_pos) <= self.chase_radius and
-                (self.max_stamina == 0 or self.current_stamina > 0)):
+        ghost_pac_distance: int = calculate_manhattan(self.pos, pacman_pos)
+        if (ghost_pac_distance <= self.chase_radius
+                and (self.max_stamina == 0 or (self.current_stamina > 0
+                     and ghost_pac_distance >= self.current_stamina // 2))):
             self.pos, self.direction = self.chase_strat.move(
                 self.pos, pacman_pos)
             self.current_stamina -= 1
@@ -232,7 +234,7 @@ class Ghost(Entity):
             self.pos, self.direction = self.idle_strat.move(
                 self.pos, pacman_pos)
             if self.current_stamina < self.max_stamina:
-                self.current_stamina += 1
+                self.current_stamina += 2
 
     def escape(self, pacman_pos: tuple[int, int]) -> None:
         """Function to move away from Pacman according to the escape
