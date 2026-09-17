@@ -3,9 +3,9 @@
 ## JSON parsing with comments
 
 ![](img/jsons-diagram.png)
-**Class diagram for the pacman/models/jsons module**
+**Class diagram for the game/models/jsons module**
 
-*file: "pacman/models/jsons/utils.py"*
+*file: "game/models/jsons/utils.py"*
 
 The parsing was done using JSON files parsed by the json module and turned into object with Pydantic's BaseModel classes
 
@@ -28,7 +28,7 @@ Using this class, the load function of the json module will, before parsing the 
 
 ## Building a BaseModel with fallback validations
 
-*file: "pacman/models/jsons/utils.py"*
+*file: "game/models/jsons/utils.py"*
 
 When loaded into a dict of type `dict[str, Any]`, the information can be unpacked into the constructor of a BaseModel class using `**`. This means declaring BaseModel classes, and attributing them Fields with restraints.
 
@@ -90,7 +90,7 @@ The `validate_or_fallback` method goes this way:
 
 ### Concrete examples of Field validators
 
-*file: "pacman/models/jsons/settings.py"*
+*file: "game/models/jsons/settings.py"*
 
 Because we need to use `Enum` classes to access literal values within our program, we have to account of the fact JSON files can't store any type of values. They can hold dictionaries, iterators, integers and strings, and we have to work around this fact to parse what the user writes it their JSON files to try and link it back to our own `Enum`s.
 

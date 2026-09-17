@@ -1,6 +1,4 @@
-pygame-ce
-pydantic
+pygame-ce==2.5.8
+pydantic==2.13.5
 mypy
-setuptools
-types-setuptools
 pyinstaller

@@ -4,7 +4,7 @@ from sys import argv
 import pygame as pg
 from pydantic import ValidationError
 
-from pacman import (
+from game import (
     Control, State,
     MainMenuState, InstructionsMenuState, HighscoresMenuState,
     OptionsMenuState, GameState)

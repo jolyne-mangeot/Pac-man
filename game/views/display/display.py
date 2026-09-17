@@ -1,0 +1,196 @@
+
+import pygame as pg
+
+from game.controllers import Control, Menu
+from game.views import PlaceHolder, Style, MenuRender
+
+
+class SpriteSheet:
+    """Class SpriteSheet
+
+    #### Description:
+    Can be instantiated with the path to an image to then create Pygame
+    Surfaces from fractions of it.
+
+    ### Attributes:
+    - sheet: pygame.Surface => Surface of the whole image loaded from the
+    file path in constructor argument
+
+    ### Methods:
+    - get_sprite => using a set of coordinates and dimensions, retrieve a
+    surface from the sheet attribute to return a new surface
+    """
+    def __init__(self, filepath: str) -> None:
+        """Loads the image from the file path as a sprite sheet."""
+        self.sheet: pg.Surface = pg.image.load(filepath).convert_alpha()
+
+    def get_sprite(self, pos: tuple[int, int], size: tuple[int, int],
+                   colorkey: pg.Color | int | None = None) -> pg.Surface:
+        """Use the position and size tuples from arguments to crop out a new
+        surface from the sheet attribute.
+
+        Uses the convert_alpha Surface method to apply the image's
+        transparency, and, if the colorkey argument is not None, turns
+        transparent all pixels in the surface corresponding to the color.
+        If the argument is -1, uses the color of the top-left pixel instead.
+
+        Returns the new surface.
+        """
+        rect: pg.Rect = pg.Rect(*pos, *size)
+        image: pg.Surface = pg.Surface(size, pg.SRCALPHA, 32).convert_alpha()
+        image.blit(self.sheet, (0, 0), rect)
+
+        if colorkey is not None:
+            if colorkey == -1:
+                colorkey = image.get_at((0, 0))
+            image.set_colorkey(colorkey)
+
+        return image
+
+
+class Display:
+    """Class Display
+
+    #### Description:
+    Parent class of all State displaying classes. Contains attributes and
+    methods common to multiple states to avoid repetitions.
+
+    ### Parameter:
+    - control: Control => used to access all configuration variables
+
+    ### Methods:
+    - mixer => plays a sound from the sounds dict on the sfx channel
+    - menu_mixer => plays sounds from the sound dict based on the action_done
+    attribute of all given menues on the sfx channel
+    - load_menu_assets => loads up all graphics, fonts and sounds to run
+    a classic Menu object
+    - scale_menu_holders => scales the graphics loaded based on factors in
+    arguments and the interface's size
+    - init_menu => instantiate a MenuRender object with reduced arguments
+    to improve code clarity elsewheres
+    """
+    font_path: str = "game/assets/fonts/dogica.otf"
+
+    def __init__(self, control: Control) -> None:
+        """Init method for all Display subclasses, takes a Control object to
+        add as attribute.
+        """
+        self.control: Control = control
+
+    def mixer(self, sound: str) -> None:
+        """Plays a sound from the sounds dict attribute if the given action
+        exists in the sfx control channel.
+        """
+        if self.sounds.get(sound, None) is not None:
+            self.control.sfx_channel.play(self.sounds[sound])
+
+    def menu_mixer(self, menues: list[Menu] = []) -> None:
+        """For all menues in the given list, plays a sound based on its
+        action_done attribute, then reset it to an empty string to avoid
+        repeating sounds. Plays it all in the sfx channel.
+        """
+        for menu in menues:
+            if self.sounds.get(menu.action_done, None) is not None:
+                self.control.sfx_channel.play(self.sounds[menu.action_done])
+                menu.action_done = ""
+
+    # _________________________________________________________________________
+    #                    COMMON METHODS TO MAIN MENUES
+    # _________________________________________________________________________
+
+    def load_background_assets(self) -> None:
+        self.bground_assets = {
+            "backg": pg.image.load(
+                "game/assets/menues/menu-background.png").convert_alpha(),
+            "cloud_1": pg.image.load(
+                "game/assets/menues/cloud-1.png").convert_alpha(),
+            "cloud_2": pg.image.load(
+                "game/assets/menues/cloud-2.png").convert_alpha(),
+            "foreg": pg.image.load(
+                "game/assets/menues/menu-foreground.png").convert_alpha()}
+
+    def scale_background_assets(self) -> None:
+        screen_s: tuple[int, int] = self.control.interface.get_size()
+        for key, value in self.bground_assets.items():
+            self.bground_assets[key] = pg.transform.scale(value, screen_s)
+
+    def load_menu_assets(self) -> None:
+        """Loads all necessary assets for the main and options menus and
+        place them in self assigned attributes to be used later.
+
+        Loads:
+        - Sprites for the buttons from a sprite sheet as they can be rescaled
+        as many times as needed, reducing file access
+        - Sounds for the buttons navigation and other actions like the program
+        ending
+        """
+        sheet: SpriteSheet = SpriteSheet(
+            "game/assets/menues/text_holder.png")
+        self.deselect_hold: pg.Surface = sheet.get_sprite((0, 60), (122, 28))
+        self.select_hold: pg.Surface = sheet.get_sprite((0, 0), (122, 28))
+        self.picked_hold: pg.Surface = sheet.get_sprite((0, 30), (122, 28))
+        path: str = "game/assets/sfx/ui/"
+        self.sounds: dict[str, pg.mixer.Sound] = {
+            "cursor_pick": pg.mixer.Sound(path + "Confirm.wav"),
+            "cursor_unpick": pg.mixer.Sound(path + "Close.wav"),
+            "cursor_move": pg.mixer.Sound(path + "Cursor.wav"),
+            "option_update": pg.mixer.Sound(path + "Open.wav"),
+            "option_activate": pg.mixer.Sound(path + "Purchase.wav"),
+            "option_input_write": pg.mixer.Sound(path + "Confirm.wav"),
+            "option_input_erase": pg.mixer.Sound(path + "Close.wav"),
+            "program_quit": pg.mixer.Sound(path + "Equip.wav")}
+
+    def scale_menu_holders(
+            self, holder_size_factor: tuple[float, float] = (0.3, 0.08),
+            text_rect_factor: tuple[float, float, float, float]
+            = (0.05, 0.05, 0.95, 0.95),
+            font_factor: float = 0.03) -> PlaceHolder:
+        """Create a PlaceHolder using multiple instantiated Style objects and
+        assign it to self for later display usage.
+
+        Uses multiple scaling factors based on which state calls this method.
+        """
+        screen_h: int = self.control.screen.get_height()
+        scale: tuple[int, int] = (
+            int(screen_h * holder_size_factor[0]),
+            int(screen_h * holder_size_factor[1]))
+        self.deselect_hold = pg.transform.scale(self.deselect_hold, scale)
+        self.select_hold = pg.transform.scale(self.select_hold, scale)
+        self.picked_hold = pg.transform.scale(self.picked_hold, scale)
+
+        rect: pg.Rect = pg.Rect(
+            int(scale[0] * text_rect_factor[0]),
+            int(scale[1] * text_rect_factor[1]),
+            int(scale[0] * text_rect_factor[2]),
+            int(scale[1] * text_rect_factor[3]))
+
+        font_size: int = int(screen_h * font_factor)
+        plain_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
+        picked_font: pg.font.Font = pg.font.Font(self.font_path, font_size)
+        picked_font.set_bold(True)
+
+        spacing: int = int(screen_h * font_factor * 0.76)
+        des_style: Style = Style(
+            font=plain_font, graphic=self.deselect_hold, text_rect=rect,
+            letter_spacing=spacing)
+        sel_style: Style = Style(
+            font=plain_font, graphic=self.select_hold, text_rect=rect,
+            letter_spacing=spacing)
+        pik_style: Style = Style(
+            font=picked_font, graphic=self.picked_hold, text_rect=rect,
+            letter_spacing=spacing)
+
+        return PlaceHolder([des_style, sel_style, pik_style])
+
+    def init_menu(self, place_holder: PlaceHolder, menu: Menu,
+                  from_top: int = -1, from_left: int = -1, spacer: int = -1
+                  ) -> MenuRender:
+        """Method instantiating a MenuRender object and taking it as attribute.
+        Pre-enter the control's interface and dialogs, the display's place
+        holder and inserts the arguments menu and from_top, which is the only
+        changing parameter between different calls.
+        """
+        return MenuRender(
+            self.control.interface, menu,
+            from_top=from_top, from_left=from_left, spacer=spacer,
+            holder=place_holder, dialogs=self.control.dialogs)

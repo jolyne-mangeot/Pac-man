@@ -1,5 +1,5 @@
 [project]
-name = "pacman"
+name = "EnterTheCrypt"
 version = "1.0.0"
 description = "Pac-Man inspired Pygame team project as part of a learning course."
 authors = [

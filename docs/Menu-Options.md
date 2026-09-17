@@ -11,7 +11,7 @@ We chose Pygame for this project, which comes with its own set of modules and me
 ## Creating a settings menu
 
 ![](img/options-diagram.png)
-**Class diagram for the pacman/models/menu module**
+**Class diagram for the game/models/menu module**
 
 A preferences menu, or settings menu, is the perfect example of a range of option that need to be modified in each their own way. Numeric sliders for the sound volumes, selections for set resolutions or languages, but also input for keybindings, it can easily become overwhelming to manage each type all at the same time.
 
@@ -26,7 +26,7 @@ For easier variety, it was decided not to accustom to mouse inputs, and controll
 
 ## The Option class family
 
-*file: "pacman/models/menu/options.py"*
+*file: "game/models/menu/options.py"*
 
 Prioritizing polyvalence and expandable features mean finding the way that organizes the code best to our way of thinking and working. In an object-oriented language, it's fast done by deriving a structural class into many that hold different goals, and ways to be interacted with. It also allows for subtle features to be coded in as it would always only impact the class we're working on, and not the main structure.
 
@@ -146,7 +146,7 @@ The one option type that uses them all is the InputOption subclass, however, as 
 
 ## Menues to put everything together
 
-*file: "pacman/controllers/menu/menu.py"*
+*file: "game/controllers/menu/menu.py"*
 
 With our different options ready to go, it's time to put them together to create multi-purpose menues. With the same will of giving as many different ways of visualizing and interacting with the menu as there are needs for various options types, we structured our Menu class this way:
 
@@ -356,7 +356,7 @@ Otherwise, using the `next` function, the selection will stay on either the firs
 
 ## Instantiating all this
 
-*file: "pacman/controllers/states/soptions.py"*
+*file: "game/controllers/states/soptions.py"*
 
 So, to make everything work together, we know we need: a container for the different values that will be changed by our menu, Option objects with each their own type and arguments, as well as a Menu object, from which must be called the render, display and event methods.
 

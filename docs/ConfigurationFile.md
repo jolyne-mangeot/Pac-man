@@ -10,7 +10,7 @@ Using our [JSONModel class](JSONModels.md), parsing json files stopped being a p
 
 First and foremost, as everything in this file is parsed using an implementation of [Pydantic](JSONModels.md#Building a BaseModel with fallback validations), any faulty value will be reset to either a default, or a randomized value.
 
-Each Config listed below is parsed using its dedicated class, which you can all find declared in this [python file](../pacman/models/jsons/jconfig.py).
+Each Config listed below is parsed using its dedicated class, which you can all find declared in this [python file](../game/models/jsons/jconfig.py).
 
 ### PlayerConfig
 
@@ -154,7 +154,7 @@ Every attribute of the ghosts are randomized if missing, with values relatively 
 
 - `idle_strat`, `chase_strat`, `escape_strat`
 
-The idle, chase and escape strats are strategies, classes we declare in this [python file](../pacman/models/entity/strategies.py) and that manages how each ghost moves. Here is the currently available list of strategies:
+The idle, chase and escape strats are strategies, classes we declare in this [python file](../game/models/entity/strategies.py) and that manages how each ghost moves. Here is the currently available list of strategies:
 
 | Strategy name | Description |
 |---|---|

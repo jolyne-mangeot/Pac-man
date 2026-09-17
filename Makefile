@@ -1,6 +1,6 @@
 
 NAME = pacman.py
-ARGS = pacman/config.json
+ARGS = game/config.json
 
 REQUIREMENTS = requirements.txt
 PROJECT = pacman
@@ -9,7 +9,7 @@ VENV = venv
 BIN = $(VENV)/bin
 PYTHON = python3
 
-CACHE = .mypy_cache
+CACHE = .mypy_cache build dist EnterTheCrypt.spec
 
 run: install
 	source $(BIN)/activate \
@@ -22,6 +22,9 @@ skip-install:
 debug: install
 	source $(BIN)/activate \
 	&& $(PYTHON) -m pdb $(NAME) $(ARGS)
+
+build: install
+	pyinstaller --onefile --name EnterTheCrypt --contents-directory pacman --noconsole --icon game/assets/icon.png pacman.py
 
 venv:
 	$(PYTHON) -m venv $(VENV)
@@ -49,4 +52,4 @@ lint-strict: install
 	&& flake8 . \
 	&& mypy --strict .
 
-.PHONY = run debug skip-install install clean fclean lint lint-strict
+.PHONY = run debug build skip-install install clean fclean lint lint-strict
