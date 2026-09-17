@@ -86,6 +86,9 @@ class JSONModel(BaseModel):
             DummyClass(field_copy=value)
             return value
         except Exception:
+            print(
+                f"On {cls.__name__} parsing, the value {value} for the entry",
+                f"{info.field_name} is invalid, defaulting value.")
             raise PydanticUseDefault
 
 
@@ -120,6 +123,18 @@ class JSONCommentedDecoder(JSONDecoder):
         return super().decode(s)
 
 
+def check_missing_json_entry(
+        model: type[JSONModel], config: dict[Any, Any]) -> None:
+    missings: list[str] = [
+        key for key in model.model_fields.keys()
+        if key not in (*config.keys(), "status", "file_name")]
+    if missings != []:
+        print(
+            f"On {model.__name__} parsing, entries: {missings} are "
+            "missing, defaulting or randomizing value.")
+        print()
+
+
 def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
     """Function made to easily import a json file into a JSONModel object.
     Takes a JSONModel type and optional file_path as string.
@@ -138,6 +153,11 @@ def json_to_model(model: type[JSONModel], file_path: str = "") -> JSONModel:
     try:
         with open(path, "r") as file:
             config_dict: dict[str, Any] = load(file, cls=JSONCommentedDecoder)
+            for key in [key for key in config_dict.keys()
+                        if key not in model.model_fields.keys()]:
+                print(
+                    f"On {model.__name__} parsing, entry {key} is missing, "
+                    "defaulting or randomizing value.")
             return model(status=True, **config_dict)
     except (FileNotFoundError, PermissionError):
         return model(status=False)

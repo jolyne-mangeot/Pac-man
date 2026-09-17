@@ -6,7 +6,7 @@ from functools import partial
 from pydantic import Field, field_validator, ValidationInfo
 from pydantic_core import PydanticUseDefault
 
-from .utils import JSONModel
+from .utils import JSONModel, check_missing_json_entry
 
 
 STRATS: Final[tuple[str, ...]] = (
@@ -119,7 +119,7 @@ class GameplayConfig(JSONModel):
     - theme_validator (classmethod) => checks if the theme attribute is part
     of the literal list, otherwise return the default value using a class
     attribute
-    - ghosts_validator (staticmethod) => parse the value given for each ghost
+    - ghosts_validator (classmethod) => parse the value given for each ghost
     to return a dict of GhostConfig
     """
     timer: int = Field(gt=9, default=120)
@@ -147,8 +147,8 @@ class GameplayConfig(JSONModel):
             raise PydanticUseDefault
 
     @field_validator("ghosts", mode="before")
-    @staticmethod
-    def ghosts_validator(value: Any) -> Any:
+    @classmethod
+    def ghosts_validator(cls, value: Any) -> Any:
         """If the value's type isn't a dict, return None to use the default
         value. Otherwise, remove any entry in the dict which name doesn't
         correspond to one of the ghosts, and update the remaining ones either
@@ -166,6 +166,7 @@ class GameplayConfig(JSONModel):
             if isinstance(info, GhostConfig):
                 value.update({ghost: info})
             elif isinstance(info, dict) and len(info) > 0:
+                check_missing_json_entry(GhostConfig, info)
                 value.update({ghost: GhostConfig(**info)})
             else:
                 value.update({ghost: GhostConfig()})
@@ -220,10 +221,12 @@ class LevelConfig(JSONModel):
         """
         field_info: Any = (
             cls.model_fields[str(info.field_name)].asdict())
-        if isinstance(value, field_info["attributes"]["default_factory"]):
+        model_type: Any = field_info["attributes"]["default_factory"]
+        if isinstance(value, model_type):
             return value
         if isinstance(value, dict) and len(value) > 0:
-            return field_info["attributes"]["default_factory"](**value)
+            check_missing_json_entry(model_type, value)
+            return model_type(**value)
         raise PydanticUseDefault
 
 
@@ -281,8 +284,8 @@ class Config(JSONModel):
         + [LevelConfig() for _ in range(9)]))
 
     @field_validator("player", mode="before")
-    @staticmethod
-    def player_validator(value: Any) -> Any:
+    @classmethod
+    def player_validator(cls, value: Any) -> Any:
         """If the value passed is already a PlayerConfig, returns it. If it's
         a non-empty dict, return the instantiation of a PlayerConfig using
         its values, and otherwise raises PydanticUseDefault.
@@ -290,12 +293,13 @@ class Config(JSONModel):
         if isinstance(value, PlayerConfig):
             return value
         if isinstance(value, dict) and len(value) > 0:
+            check_missing_json_entry(PlayerConfig, value)
             return PlayerConfig(**value)
         raise PydanticUseDefault
 
     @field_validator("levels", mode="before")
-    @staticmethod
-    def levels_validator(value: Any) -> Any:
+    @classmethod
+    def levels_validator(cls, value: Any) -> Any:
         """If the value passed isn't an iterable, return None to use the
         Field's default value. Otherwise, for each elements, if it's a
         LevelConfig, appends it to a new list, if it's a non-empty dict, use
@@ -311,6 +315,7 @@ class Config(JSONModel):
                     level_list.append(config)
                 elif isinstance(config, dict):
                     if len(config) > 0:
+                        check_missing_json_entry(LevelConfig, config)
                         level_list.append(LevelConfig(**config))
                     else:
                         level_list.append(LevelConfig())

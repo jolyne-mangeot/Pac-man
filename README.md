@@ -235,6 +235,8 @@ Various of the modules we eventually coded are documented in the docs folder.
 
 ### Timeline
 
+![](docs/gifs/dev.gif)
+
 **1st Week:** 
 - Initialize all project folders and files.
 - JSON configuration file and parsing.

@@ -80,6 +80,9 @@ class Highscores(JSONModel):
                     try:
                         scores.append(Score(**score))
                     except ValidationError:
+                        print(
+                            "In Score parsing, a value is either missing or"
+                            "invalid, discarding score:", score)
                         continue
             scores = sorted(scores, key=lambda sc: sc.score, reverse=True)
             if len(scores) > 10:
