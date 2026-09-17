@@ -26,16 +26,39 @@ This project allowed us to greatly improve the following skills:
 
 ## Features
 
+![](docs/itch.io/game-instructions.png)
+
+Collect all the coins scattered in each level to progress to the next, but beware of the skeletons risen from the dead !
+
+Taken by surprise, you dropped your weapon. But all hope is not lost ! Gain extra points by picking up knives lost by those more unfortunate than you, and by vanquishing your enemies !
+
 ### Customizable levels
+
+10 levels are available by default, with the first alone remaining the same every run. However, the game is bundled with a configuration file that you can modify and which you can find a breakdown of just [below](#Configuration), to create endless possibilities for your adventure !
 
 ### Languages and Keybinds support
 
+The game comes right now with english and french support, but is made to be expandable ! All dialogs in addtional languages can come from a new json file in the dedicated assets folder.
+
+On that matter, the game's resolution, sound volumes and keybinds can also all be configurable in and out of game ! This is done using the settings.json file, or the settings menu.
+
+### Highscores
+
+Celebrate your run by saving its statistics next to your name ! Up to ten highscores can be saved at a time, so keep steady to stay on the board !
+
 ### Cheats
 
-### Highscore
+Feeling stuck, or eager to experiment ? Cheats are included ! Test out levels and the skeleton's limits with invincibility, super speed or infinite timer. Note however that you won't be able to save your score this way.
+
+To access the dedicated menu during a level, enter the Konami code using your set keybinds:
+
+|||||||||||
+|-|-|-|-|-|-|-|-|-|-|
+| Up | Up | Down | Down | Left | Right | Left | Right | Confirm | Return |
 
 ## Instructions / Installation
-To use this project, you can download its zip file from github, or by running this command in a terminal located in the chosen destination:
+
+To use this project, you can download it from its zip file from github, or by running this command in a terminal located in the chosen destination:
 
 ```bash
 git clone https://github.com/jolyne-mangeot/Pac-man
@@ -56,13 +79,13 @@ This project contains a Makefile, a file that is used to pre-enter commands to r
 
 | Rules | Action |
 |---|---|
-| run | run the pacman file with arguments, ensuring everything is installed |
+| run | run the pacman file with preset arguments, ensuring everything is installed |
 | skip-install | when dependencies are installed, run the pacman file without checking dependencies |
-| debug | run the pacman file with arguments through pdb |
+| debug | run the pacman file with preset arguments through pdb |
 | install | create a virtual environment and install dependencies |
 | clean | remove mypy cache, python cache, build files and output_file |
 | fclean | run clean and remove the virtual environment |
-| lint | run flake8 and mypy with flexible rules |
+| lint | run flake8 and mypy with flexible rules (code styling and typing) |
 | lint-strict | run flake8 and mypy with strict rules |
 
 To run any, enter 'make' followed by the selected rule in a terminal located at the project's root folder, like so:
@@ -74,8 +97,15 @@ make install
 Executing `make` alone is an equivalent to `make run`.
 
 ### Configuration
-The config file uses JSON. This JSON file handles comments. Lines starting with # or // are comments and are ignored.
 
+This programs runs using a configuration file situated in the pacman folder, named `config.json`. Its path must be indicated when running the game, and it's then parsed. This parsing shows multiple caracteristics:
+- The `config.json` file supports comments, which are lines starting with `#` or `//`.
+- Missing values are replaced with a default one, sometimes randomized to fit gameplay replayability.
+- Faulty values are also replaced or randomized.
+
+Any inaccessible files either for retrieving data or saving a highscore will display an error message in relevant areas (main menu or score saving screen).
+
+For a full breakdown of the configuration file and how to customize levels, [see here](docs/ConfigurationFile.md).
 
 ## General sofware architecture
 We used a MVC architecture which is a fundamental design pattern that helps us organize code by separating the project into three interconnected components : Model - View - Controller. These three distinct layers work together to create well-structured applications. 
@@ -83,15 +113,23 @@ We used a MVC architecture which is a fundamental design pattern that helps us o
 <img src="https://www.crio.do/blog/content/images/2021/07/Components-of-MVC-Architecture-Pattern.png" alt="" align="right" width="520"/>
 
 ### Controller
-Description de ce qu'il y a dans controller
+"Controllers" are the carrier of the user's inputs to the models, and initiators of the display by the viewers. Here are the modules our program relies on:
+- [Control Class](#Architecture-2): head of the program, responsible to cycle through the States and reference models needed in multiple places.
+- [States Class family](#Architecture-2): Each state correspond to an independant phase the game can be in, with its own parsing of inputs and data updates, to help divide responsibilities and keep clean a growing game with multiple menues.
+- [Menu module](docs/Menu-Options.md): offers the user various ways of manipulating values in real-time. Contains a list of Options models that it manipulates using the user's inputs.
 
 ### Model
-The “models” module contains all of the game's logic and state, independent of the display (View) and input handling/game loop (Controller). It is divided into several submodules:
-- [Entity module](#Entity)
-- [MazeMap module](#MazeMap)
+The "models" module contains all of the game's logic and data, independent of the display (View) and input handling/game loop (Controller). It is divided into several submodules:
+- [Entity module](#Entity): contains the logic of movement and variables for all entities.
+- [MazeMap module](#MazeMap): Contains an interface to the given maze generator that it takes data from to serialize for the GameState to use along the entities.
+- Level module: Heart of the game in itself, pulling data from the JSONModels and keeping the Entities and the MazeMap objects updated.
+- [JSONS module](docs/JSONModels.md): BaseModel classes handling the parsing of configuration files, replacing every faulty or missing value with a default one.
+- [Menu - Options module](docs/Menu-Options.md): Options class family of the Menu module, taking in simple actions to perform in the purpose of manipulating back-end variables.
 
 ### View
-Description de ce qu'il y a dans view
+The "views" modules effectively handle all visual depiction of the models' data, either it be backgrounds, menues or interfaces.
+- [State - Display module](#Display): These classes each are dedicated to the rendering of a single State, dividing even more responsibilities. The `dgame.py` file contains the LevelDisplay class, scaling and displaying everything related to a running level.
+- [Menu - Render module](docs/Menu-Options.md): The MenuRender, PlaceHolder and Style classes are utility helping the display of text, buttons and entire menues, tying together to try and optimize thse operations.
 
 ## Maze-generator
 Unfortunately, the scope of this project did not allow us to use the maze generator we had created for the `Amazing` project. We had to use a pre-built generator. It was provided as a `.whl` file. So we simply ran `pip install` in our virtual environment to make it available in our Python library, and then imported it into the `utils.py` file in our `pacman/models/mazemap/` module.
@@ -165,7 +203,15 @@ both `find_intersect()` and `Strategy.find_path()`.
 #### Architecture
 Pygame being the game's "engine", it had to be implemented in most of our modules and architecture choices. The library is imported in all controllers, many models and all views modules, used to receive the player's output as well as display everything on a graphical interface.
 
-For inputs and menu management, State classes were created in the controllers/states module to divide our program into standalone pages, such as the main menu, the options menu and the game itself. Managed by the [Control class](pacman/controllers/statecontrol.py) and depending on the user's inputs, these states are activated and deactivated, enabling an easier memory management and how the game progresses.
+##### Control and States
+
+[See the detailed class diagram for this module](docs/img/controllers-diagram.png)
+
+For inputs and menu management, State classes were created in the controllers/states module to divide our program into standalone pages, such as the main menu, the options menu and the game itself. Managed by the [Control class](pacman/controllers/statecontrol.py) and depending on the user's inputs, these states are activated and deactivated, enabling an easier memory management and how the game progresses. This structure was inspired by this [thread on the python forum by metulburr](https://python-forum.io/thread-336-post-103792.html#pid103792)
+
+##### Display
+
+[See the detailed class diagram for this module](docs/img/statesdisplay-diagram.png)
 
 And for displaying, the views/menu module helps rendering option menues described in this [documentation file](docs/Menu-Options.md), while the Display subclasses, each dedicated to their own state, also have the unique responsibility of rendering assets and variables.
 
@@ -181,10 +227,11 @@ Pygame was the main reason we opted for a MVC pattern. With numerous modules, th
 
 To facilitate the implementation of this project, we took the time to go through a conception phase. We used the Obsidian software to centralize our documentation and organize the tasks to be completed. We made a list of the prerequisites for the project so we wouldn't forget anything.
 
-
 ![](docs/img/project-kanban.png)
 
 The next step was to think about how to organize the project using the MVC architecture. We considered the various submodules needed and assigned them to the model, controller, or view components of the project. The goal was to optimize the dependencies and communication between these different submodules so that the architecture would be clear and well-organized.
+
+Various of the modules we eventually coded are documented in the docs folder.
 
 ### Timeline
 
@@ -232,6 +279,17 @@ The next step was to think about how to organize the project using the MVC archi
 
 > [!NOTE]
 > No AI was used in the making of this project.
+
+### Credits
+
+Apart fom the game's logo, all assets come from OpenGameArt, by diverse artists. Some were used as is, and other modified. You can find details on how each asset was assembled in this [credits file](pacman/assets/credits.md), and here is a quick list of all artists:
+- https://opengameart.org/users/buch
+- https://opengameart.org/users/zaphgames
+- https://opengameart.org/users/emcee-flesher
+- https://opengameart.org/users/craftpixnet-2d-game-assets
+- https://opengameart.org/users/trulio
+- https://opengameart.org/users/ansimuz
+- https://opengameart.org/users/killamaaki
 
 ### Parsing
 JSON parsing with comment:

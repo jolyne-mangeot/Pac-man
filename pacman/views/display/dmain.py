@@ -76,10 +76,10 @@ class MainMenuDisplay(Display):
         graphic: pg.Surface = new_surface(
             (int(screen_h * 0.5), int(screen_h * 0.013)))
         g_rect: pg.Rect = graphic.get_rect()
-        pg.draw.rect(graphic, pg.Color(15, 15, 15, 40), g_rect,
+        pg.draw.rect(graphic, pg.Color(15, 15, 15, 150), g_rect,
                      int(screen_h * 0.05))
         return PlaceHolder([
-            Style(pg.Color(0, 0, 0),
+            Style(pg.Color(255, 255, 255),
                   pg.font.Font(self.font_path, int(screen_h * 0.012)),
                   graphic, pg.Rect(g_rect.width * 0.05, g_rect.height * 0.05,
                                    g_rect.width * 0.95, g_rect.height * 0.95),

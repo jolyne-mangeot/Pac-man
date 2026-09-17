@@ -15,6 +15,13 @@
             "remaining_lives": 0
         },
         {
+            "player": "Suri",
+            "score": 3740,
+            "level_reached": 4,
+            "time_taken": 233,
+            "remaining_lives": 0
+        },
+        {
             "player": "Bella",
             "score": 2440,
             "level_reached": 3,
